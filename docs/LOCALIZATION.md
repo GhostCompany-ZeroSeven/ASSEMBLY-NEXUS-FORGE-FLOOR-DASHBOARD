@@ -72,6 +72,64 @@ text, and all TSX/CSS for uncovered characters. Use an icon instead: arrows are 
 drawn `arrow-right` icon (`MoreLink`), not `→`. The one exception is
 `branding.hierarchy`, which is rendered verbatim by contract and masked in visual tests.
 
+## Locale-aware numbers, dates and times (Phase 5)
+
+`useI18n()` exposes `num`, `pct`, `dateTime` and `time`, built on cached
+`Intl.NumberFormat` / `Intl.DateTimeFormat` instances (`src/i18n/intl.ts`):
+
+- `num(1234)` gives a grouped count, and `pct(42)` gives `42%` in English and `42 %` in Spanish.
+- `dateTime(iso)` gives an absolute date and time in 24-hour form, for example
+  "Sep 30, 2026, 14:05" or "30 sept 2026, 14:05".
+- `time(iso)` gives a 24-hour clock time with seconds, in the viewer's time zone.
+
+Clock times use the 24-hour cycle in every locale, so operators comparing logs
+never confuse AM and PM. Invalid or missing input shows "unknown" and never a
+guess.
+
+These formatters are for display text only. Identifiers, enum values, authority
+names and backend strings are never passed through them. Machine-readable values
+stay in attributes such as `<time dateTime="…">`, and the event log keeps the
+source's ISO timestamps unchanged.
+
+## Pseudo-locale (diagnostic, Phase 5)
+
+Open any page with `?pseudo=1` before the `#`, for example
+`/?pseudo=1#/approvals`. The pseudo text is derived from the English catalog at
+runtime (`src/i18n/pseudo.ts`), so it is always complete:
+
+- Every letter becomes an accented look-alike, so any plain-ASCII word left on
+  screen is hard-coded English or data.
+- Text is padded by about 40% and wrapped in `[!! … !!]`, so truncation (a
+  missing `!!]`) and overflow are obvious.
+- Interpolated arguments stay exact. Ids, names, numbers and `Founder #0007`
+  are inserted untouched, and plurals and Intl formats use English rules.
+- Config display text (room, crew and theme labels) is pseudo-localized too.
+  Ids, routes and the authority value are not.
+- `<html lang>` is `en-XA`. The flag is never stored, never offered in the
+  language picker, and its code is a separate chunk that loads only when the
+  flag is present. Settings shows a note while it is active.
+
+`e2e/phase5.spec.ts` runs every surface, the palette (with results), the
+shortcuts dialog and the brief under the pseudo-locale at 320, 390, 1440 and
+2560px. It fails on any of these:
+
+- a visible or labelling word (text, `aria-label`, `title`, `placeholder`)
+  that is plain ASCII and is not demo or config data
+- pseudo text clipped by its box without its full text in a `title`
+- horizontal overflow
+
+Code identifiers shown on purpose (feature-flag keys, mapping values) carry
+`translate="no"` and are skipped. Month names produced by `Intl` are allowed.
+
+Findings fixed in Phase 5:
+
+- the hard-coded `ms` unit on health latency
+- untagged config identifiers in Settings
+- truncated palette commands on phones (they now wrap)
+- the activity stream's text column collapsing to 0px at 320px
+- a status badge overflowing mission details at 320px
+- room labels truncated without their full text (they now have a `title`)
+
 ## Adding a language
 
 1. Add the code to `SUPPORTED_LOCALES` and its own name to `LOCALE_NAMES` (`locales.ts`).

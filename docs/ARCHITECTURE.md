@@ -157,6 +157,90 @@ shown, because events do not record where a worker was at the time. The log is
 bounded (500 events in memory, 200 shown), and the Activity page can filter by
 category, worker and mission (URL-persisted).
 
+### Operations timeline (Phase 5)
+
+The Activity page is now an operations timeline built only from observed events,
+ordered by **event time** (newest first) and never interpolated. Each entry
+keeps three facts apart:
+
+- **Event time** is the source's claimed `at`. It is shown as a 24-hour time and
+  is the exact value in the tooltip.
+- **Arrival** is the adapter-stamped `via` and `receivedAt`. With "Show arrival
+  details" it shows "received HH:MM:SS". An **ARRIVED LATE** marker appears when
+  an event was received after another event whose event time is later. Events
+  that arrived together, such as a history load, are never flagged against each
+  other.
+- **Now** is the linked mission's or worker's current state from the latest
+  data. It is labelled as current, never as the state when the event happened.
+  It reads "no longer reported" when the record is gone.
+
+The filters are category, worker, mission, time range (15m, 1h, 6h or 24h, or
+"since my last view") and ingest path (stream, poll or simulated). All of them
+are URL-persisted and validated. The page states where retained history starts
+and says when the 500-event log is at capacity.
+
+Ingest facts belong to the first arrival. A REST re-sync that lists an event
+already received over the stream keeps `via: stream` and the original
+`receivedAt` (Phase 5 defect fix).
+
+## Founder brief, change digest and attention queue (Phase 5)
+
+The brief lives at `#/brief` (nav "Brief", `G then B`, and the palette command
+"What changed since I last looked?"). It is information and navigation only.
+
+- **Last-view checkpoint** (`domain/checkpoint.ts`, `store/lastView.ts`,
+  `store/LastViewProvider.tsx`):
+  - A bounded fingerprint of ids and enum states per resource, plus the newest
+    event time, the source id and the mode. It stores no labels, no authority
+    and no decisions.
+  - A resource that could not be loaded is stored as absent, not empty.
+  - Parsing is fail-closed. A wrong version, bad time, future time, unknown
+    enum, oversized map or wrong type rejects the whole record; unknown fields
+    are dropped, and maps have no prototype.
+  - It is saved on `pagehide` and when the tab is hidden, but only from
+    complete, connected data; otherwise the older complete checkpoint is kept.
+  - After at least 5 minutes away, the saved view becomes the baseline.
+  - "Mark all as seen" and "Forget last view" are explicit controls.
+- **Change digest** (`domain/digest.ts`):
+  - A per-category count is a number only when both sides are known.
+    Otherwise it is `null` (UNKNOWN) with a reason: `no-baseline`,
+    `different-source`, `unavailable-then`, `unavailable-now`,
+    `history-truncated` or `baseline-truncated`.
+  - A missing record is reported as "no longer reported", never as deleted or
+    completed.
+  - The event count is exact only when retained history reaches back to the
+    checkpoint. Otherwise it is UNKNOWN, with "at least N retained" as a
+    labelled lower bound.
+  - Late arrivals of old events are not counted as happening since.
+  - Records are compared by id, so renamed labels are not reported as changes.
+  - The item list is capped at 150, and counts stay exact.
+- **Attention queue** (`domain/attention.ts`): each entry has a source, reason,
+  current state, freshness and target, and is derived only from explicit facts:
+  - an open gate whose required authority is the human authority
+  - an open gate that cannot be decided (authority missing or a worker)
+  - a gate whose status is UNKNOWN
+  - an unresolved, unacknowledged alert that says human action is required
+  - an unavailable resource (the queue is marked INCOMPLETE, and its count is
+    UNKNOWN)
+  - items shown from stale or disconnected data
+
+  Severity alone never creates attention, and room location never does. Related
+  records are only those the data links explicitly.
+
+- **Brief** (`domain/brief.ts`): shows RUNNING, COMPLETED (with "since last
+  view"), BLOCKED, FAILED, NEEDS FOUNDER, NEW SINCE LAST VIEW, and data or
+  transport problems, next to the freshness source and its qualifiers. Missing
+  inputs make a figure UNKNOWN, never 0.
+
+### Cross-surface context
+
+Links appear only where the data carries a relationship:
+
+- Mission detail and worker focus link to their filtered timeline.
+- Approval gates list the alerts that name them as affected.
+- Queue items link to the gate's mission and to the workers blocked on it.
+- The activity stream links the ids an event carries.
+
 ## Loading and code splitting
 
 - `main.tsx` loads the viewer's language catalog (English is bundled, Spanish is a

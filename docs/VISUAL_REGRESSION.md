@@ -57,6 +57,12 @@ old 1% budget let through. Do not loosen the tolerance to hide a difference.
 | `rest-partial`                                                              | Malformed workers + HTTP 500 missions: LIVE · STALE · PARTIAL, answers UNKNOWN |
 | `rest-down`                                                                 | Backend unavailable: DISCONNECTED, no reassurance                              |
 | `rest-empty-missions`                                                       | Backend reports zero missions                                                  |
+| `brief-first-visit`                                                         | Founder brief with no recorded last view: history UNKNOWN, not "nothing"       |
+| `brief-changes-{desktop,phone}`                                             | Brief after "Mark all as seen" and 6 simulated steps (+1 min): digest items    |
+| `es-brief-desktop`                                                          | Spanish brief                                                                  |
+| `rest-brief-approvals-down`                                                 | REST, approvals failing: Needs Founder UNKNOWN, queue INCOMPLETE               |
+| `activity-timeline-details`, `activity-timeline-phone`                      | Operations timeline with arrival details and "Now" state; phone layout         |
+| `pseudo-approvals-phone`                                                    | Pseudo-locale diagnostic (`?pseudo=1`) on a 390px phone                        |
 
 The `rest-*` and `settings-transport-rest` shots run against a second build
 (`npm run build:e2e-rest`, `.env.e2e-rest`) whose REST adapter points at
@@ -77,6 +83,23 @@ uses. No credentials are involved.
   characters outside the bundled fonts).
 - The page is ready when the lazy surface reports `data-surface="ready"`,
   `document.fonts.ready` resolves, and (for Spanish shots) `<html lang="es">` is set.
+
+## Phase 5 baseline changes (reviewed before regeneration)
+
+Every changed baseline was diffed against its predecessor (expected vs actual,
+by region) and attributed to an intended change before regenerating in the
+pinned image:
+
+| Baselines                                                                     | Cause                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All desktop/wide shots with the sidebar (22)                                  | New "Brief" navigation item (sidebar pixels only; the main area was pixel-identical)                                                                          |
+| `approvals-{desktop,tablet}`, `approval-confirm-deny`, `es-approvals-desktop` | New "Related alerts" line on the gate card (links alerts that name the gate), which moves the rest of the card down 28px                                      |
+| `command-center-phone`, `forge-floor-{phone,tablet}`, `es-forge-floor-phone`  | Phone/tablet nav strip gains "Brief"; the phone topbar has tighter gaps, a tighter data-source badge and no decorative health icon, so the label never spills |
+| `palette-search`                                                              | unchanged                                                                                                                                                     |
+| 8 new Phase 5 shots                                                           | new states (see the table above), inspected before being accepted                                                                                             |
+
+The new shots were captured twice in the image (update, then verify) and once on
+the host: 39/39 identical each time.
 
 ## Updating baselines
 

@@ -6,8 +6,107 @@ _Operational continuity log. A later session should read this first._
 - **Session 1:** `3a3e217` → `1d2600c` (foundation, phases A–Q)
 - **Session 2:** `1d2600c` → `7ae4ed8` (hardening, generic adapter, accessibility)
 - **Session 3:** `7ae4ed8` → `0d77f3a` (UI/UX product hardening, Phase 3)
-- **Session 4:** `0d77f3a` → product hardening Phase 4; see `git log` for the head
+- **Session 4:** `0d77f3a` → `4d5279e` (product hardening Phase 4)
+- **Session 5:** `4d5279e` → Founder operations intelligence (Phase 5); see `git log` for the head
 - **Last updated:** 2026-09-30
+
+## Session 5: Founder operations intelligence (Phase 5)
+
+Continuity was verified at the start. Branch `claude/epic-cannon-zezh6m` was at HEAD `4d5279e`,
+matching the remote; `main` was at `3a3e217`; the tree was clean; and there were no AI co-author
+trailers. The baseline passed first: 331 unit tests and 83 browser tests. A Phase 4 production
+build was kept for the performance comparison.
+
+### Delivered
+
+| Objective                  | Result                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Change digest              | "What changed since I last looked": 13 categories. Each count is either exact or UNKNOWN with a reason; UNKNOWN history is never shown as "nothing changed". A missing record is "no longer reported". Every item links to its record. There is a palette command, and the item list is capped at 150 while counts stay exact                         |
+| Last-view checkpoint       | A bounded fingerprint of ids and enum states, stored locally and validated fail-closed. It is saved on page hide from complete, connected data only, and adopted after 5 minutes away. Manual "Mark all as seen" and "Forget last view". It holds no labels, no authority and no decisions                                                            |
+| Founder brief (`#/brief`)  | RUNNING, COMPLETED (+ since last view), BLOCKED, FAILED, NEEDS FOUNDER and NEW SINCE LAST VIEW, plus data/transport problems, next to the freshness source and qualifiers. Missing inputs show UNKNOWN, never 0. Nav item, `G then B`                                                                                                                 |
+| Founder attention queue    | Each entry has a source, reason, current state, freshness and navigation target. Entries come from explicit facts only (open gates for the human authority, undecidable gates, UNKNOWN gate status, human-action alerts, unavailable resources, not-current data), never from severity or room. The queue is INCOMPLETE when data is missing          |
+| Operations timeline        | Ordered by event time. Event time, arrival (path, received time, ARRIVED LATE) and the linked record's current **Now** state are kept apart. Filters for time range (incl. since last view) and ingest path, URL-persisted. Retained-history start and log-capacity notes. Nothing reconstructed                                                      |
+| Cross-surface context      | Mission and worker timelines link to the filtered timeline. Gates list the alerts that name them. Queue items link the gate's mission and blocked workers. Only relationships present in the data                                                                                                                                                     |
+| Locale-aware formatting    | `num`, `pct`, `dateTime` and `time` via cached `Intl` (24-hour clock everywhere); applied to progress bars, clocks, the activity stream, conversations, latency and the brief. Ids, enums, authority and timestamps are untouched                                                                                                                     |
+| Pseudo-locale (diagnostic) | `?pseudo=1`: accented, +40% padded, `[!! … !!]` text derived from English, with interpolated values exact. It is never stored and is a lazy chunk (1.5 kB). An automated sweep covers all surfaces, the palette (with results), the shortcuts dialog and the brief at 320/390/1440/2560 for untranslated words, cut-off or spilling text and overflow |
+| Resilience                 | `src/app/resilience.phase5.test.tsx` plus the domain tests cover malformed or oversized checkpoints and storage, throwing storage, duplicated, out-of-order, re-listed and late events, renamed and disappearing records, partial REST, backend down after "seen", no auto-record from incomplete data, and a locale switch during updates            |
+| Governance                 | `src/app/governance.phase5.test.tsx`: the 12 rules from the brief plus a static guard that no Phase 5 module calls a decision, acknowledgement, messaging or network API                                                                                                                                                                              |
+
+### Defects found and fixed this session (each with regression coverage)
+
+| Defect                                                                                                                                                                                                      | Fix                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ingest facts overwritten:** an event received over the SSE stream was relabelled `POLL` on the next REST re-sync (poll replaced the whole event list)                                                     | Ingest path and arrival time belong to the first arrival (`keepFirstIngest`); mutation-checked by the regression test                                             |
+| **Activity stream unreadable at 320px:** the event text column collapsed to 0px wide (refs column took the space), in every language                                                                        | Phone grid: links and arrival facts move under the event text                                                                                                     |
+| **Data-source label could be hidden:** the topbar `DEMO · SIMULATED` label was `nowrap` inside a shrinkable pill; at 320px (English) it spilled a few px, and a longer label spilled under the next control | Phone topbar: tighter gaps and badge, word wrapping inside the badge, with a mid-word break only as a last resort; the decorative health icon is hidden on phones |
+| **Palette commands cut off on phones:** long (Spanish/pseudo) command titles ended in an ellipsis                                                                                                           | Phone palette row layout: the title gets its own full-width row and wraps                                                                                         |
+| **Hard-coded English:** the health latency unit `ms`                                                                                                                                                        | Catalog message with a locale-formatted number                                                                                                                    |
+| **Overflow at 320px:** long status badges in mission details, mission/worker cards and gate headers; the shortcuts dialog wider than the screen                                                             | Badges in those card contexts wrap on phones; the dialog grid track is `minmax(0, 1fr)`                                                                           |
+| **Room labels truncated without the full text**                                                                                                                                                             | `title` with the full label (the button already had an accessible name)                                                                                           |
+
+Found while building, before any commit, and not counted above:
+
+- A future-dated checkpoint would have hidden every later event. It is now rejected.
+- Record ids such as `constructor` could collide with `Object.prototype`. Lookups now check own
+  properties only.
+
+### Bundle
+
+| Measure         | Phase 4                   | Phase 5                                                                                                           |
+| --------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Entry chunk     | 303.60 kB / 96.75 kB gzip | 315.20 kB / 100.70 kB gzip (English brief/timeline strings, last-view provider, Intl formatters)                  |
+| Brief surface   | n/a                       | lazy chunk, 17.8 kB / 5.3 kB gzip (digest, attention, brief)                                                      |
+| Pseudo-locale   | n/a                       | lazy chunk, 1.46 kB / 0.88 kB gzip; loaded only with `?pseudo=1` (it was 1 kB more in the entry before the split) |
+| Spanish catalog | 29.90 kB / 10.30 kB gzip  | 36.37 kB / 12.38 kB gzip                                                                                          |
+
+### Performance (Phase 4 vs Phase 5 builds, stress dataset, interleaved, median of 7)
+
+| Median (ms)                  | Phase 4 | Phase 5 |
+| ---------------------------- | ------- | ------- |
+| Render `/`                   | 691     | 698     |
+| Render `/floor`              | 529     | 548     |
+| Render `/missions`           | 379     | 391     |
+| Render `/activity`           | 462     | 485     |
+| Render `/brief`              | n/a     | 362     |
+| Filter missions (text)       | 73      | 70      |
+| Timeline filter (500 events) | 102     | 94      |
+| Palette open + search        | 363     | 317     |
+| Locale switch en → es        | 93      | 83      |
+| Sim at 4×: long-task total   | 0       | 0       |
+
+`/activity` first measured +78 ms. The new "Now" lookup was linear per event; after indexing it,
+the remaining +23 ms (5%) is the extra "Now" element per row. Everything else is within
+run-to-run noise.
+
+Raw computation on the stress dataset (400 missions, 120 workers, 500 events):
+
+- digest: 0.76 ms
+- attention queue: 0.53 ms
+- timeline filter, order and out-of-order detection: 0.08 ms
+- checkpoint build: 0.24 ms; stored checkpoint: 13 kB
+
+Unit budgets in `src/test/perf.test.tsx` guard these values.
+
+### Runtime browser exercise (real mock server, REST + SSE)
+
+Local `scripts/mock-rest-server.ts`, a bundle built with `VITE_FORGE_REST_STREAM=/stream`, and
+Chromium, in this order:
+
+1. **First visit:** `LIVE · STREAM`, digest baseline `none`, and "New since last view: UNKNOWN".
+2. **Mark all as seen**, then 16s of stream traffic: "Events since then: 2", with every other
+   category a known 0. The timeline (`via=stream`) listed the 2 events as `STREAM`, with the
+   received time and "Now: Mission Active".
+3. **Approvals HTTP 500:** detected after 42s (within the 60s re-sync while the stream is
+   healthy). The badge read `LIVE · STREAM · PARTIAL`. "Needs Founder" and "New since last view"
+   became UNKNOWN, the queue said INCOMPLETE, and "New approval gates" read
+   "UNKNOWN · cannot be loaded now".
+4. **Recovery:** numbers were back after 60s.
+5. **Reload:** the view saved on `pagehide` became the baseline ("Compared with your last view …
+   just now").
+6. **Other languages:** Spanish at 390 read `EN VIVO · FLUJO`, and the pseudo-locale at 320 and
+   1440 had no overflow.
+
+There were zero page errors. The only console error was the browser logging the injected 500.
 
 ## Session 4: product hardening (Phase 4)
 
@@ -201,23 +300,31 @@ tree, and `main` untouched.
   end in Chromium: LIVE·MOCK → HOLD delivered → PARTIAL DATA → DISCONNECTED/Reconnecting → LIVE.
 - **CI:** a second job runs the Playwright browser suite and uploads the report on failure.
 
-## Verification (last run, session 4)
+## Verification (last run, session 5)
 
-| Check                                                   | Result                                                                                     |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `npm run format:check`                                  | pass                                                                                       |
-| `npm run typecheck`                                     | pass (app, and node/e2e)                                                                   |
-| `npm run lint`                                          | pass (0 warnings)                                                                          |
-| `npm test` (Vitest)                                     | **331/331** across 33 files                                                                |
-| — adapter conformance / REST adapter, config, normalize | 16/16 · 17/17 · 11/11 · 15/15                                                              |
-| — transport conformance / SSE / stream / adversarial    | 10/10 · 10/10 · 9/9 · 9/9                                                                  |
-| — governance (phase 2 / 3 / 4)                          | 23/23 · 24/24 · 16/16                                                                      |
-| — i18n parity, formatting, glyph coverage, UI           | 9/9 · 4/4 · 4/4                                                                            |
-| — URL state / freshness / diagnostics / activity refs   | 9/9 · 6/6 · 5/5 · 3/3                                                                      |
-| — UI flows, failure states, a11y (jsdom), perf          | 11/11 · 15/15 · 15/15 · 12/12                                                              |
-| `npm run test:e2e`                                      | **83/83** in CI mode: a11y 15, keyboard 7, runtime 6, performance 6, phase 4 18, visual 31 |
-| Visual suite in the pinned CI image                     | 31/31, twice                                                                               |
-| `npm run build`                                         | pass                                                                                       |
+| Check                                                                    | Result                                                                                                   |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `npm run format:check`                                                   | pass                                                                                                     |
+| `npm run typecheck`                                                      | pass (app, and node/e2e)                                                                                 |
+| `npm run lint`                                                           | pass (0 warnings)                                                                                        |
+| `npm test` (Vitest)                                                      | **424/424** across 40 files                                                                              |
+| — adapter conformance / REST adapter, config, normalize                  | 16/16 · 17/17 · 11/11 · 15/15                                                                            |
+| — transport conformance / SSE / stream / adversarial                     | 10/10 · 10/10 · 9/9 · 9/9                                                                                |
+| — governance (phase 2 / 3 / 4 / 5)                                       | 23/23 · 24/24 · 16/16 · 13/13                                                                            |
+| — Phase 5: digest/checkpoint/queue/brief, resilience, brief UI, timeline | 34/34 · 15/15 · 10/10 · 11/11 (filter 3 + UI 8)                                                          |
+| — i18n parity, formatting, glyph coverage (incl. pseudo), pseudo, UI     | 9/9 · 4/4 · 5/5 · 4/4                                                                                    |
+| — URL state / freshness / diagnostics / activity refs                    | 9/9 · 6/6 · 5/5 · 3/3                                                                                    |
+| — UI flows, failure states, a11y (jsdom), perf (+ Phase 5 budgets)       | 11/11 · 15/15 · 15/15 · 17/17                                                                            |
+| `npm run test:e2e`                                                       | **110/110** in CI mode: a11y 19, keyboard 7, runtime 6, performance 6, phase 4 18, phase 5 15, visual 39 |
+| Visual suite in the pinned CI image                                      | 39/39, twice (update, then verify), and 39/39 on the host                                                |
+| `npm run build`                                                          | pass                                                                                                     |
+
+### Session 4 verification (historical)
+
+| Check               | Result                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `npm test` (Vitest) | **331/331** across 33 files                                                                |
+| `npm run test:e2e`  | **83/83** in CI mode: a11y 15, keyboard 7, runtime 6, performance 6, phase 4 18, visual 31 |
 
 ### Session 3 verification (historical)
 
@@ -266,6 +373,9 @@ tree, and `main` untouched.
    freshness model can represent either choice.
 5. **Assembly Nexus event stream:** whether one exists, and its contract. The SSE path is built
    against this project's mock contract only.
+6. **Last-view scope (Phase 5, optional):** the "last looked" checkpoint is per browser and
+   local-only by design. The Founder may later want it per identity across devices; that needs
+   an authenticated backend store and is deliberately not built.
 
 ## Known limitations
 
@@ -281,12 +391,30 @@ tree, and `main` untouched.
 - The SSE contract is this project's mock contract, not an Assembly Nexus API.
 - A partial first sync can show LIVE (the backend is verified) together with STALE ("no complete
   sync yet"). Both labels are accurate, but the Founder may want a stricter LIVE rule.
+- **Change digest limits:**
+  - It compares two snapshots (the last view and now). A record that changed and changed back
+    in between shows no change.
+  - Event counts are exact only while retained history (500 events, or whatever the backend
+    lists) reaches back to the last view. Otherwise they are UNKNOWN, with a labelled lower bound.
+- **Demo seed:** the demo re-seeds on every load, so demo digests across reloads compare
+  simulated data. They are labelled SIMULATED.
+- **Last-view checkpoint:** it is per browser (localStorage), not per identity, and it does not
+  sync between devices.
+- **Timeline "Now":** it shows the current state of the event's mission, or its worker if there
+  is no mission. Events that name only an approval or alert link to that record without a
+  "Now" chip.
+- **Pseudo-locale:**
+  - Date words (month names) come from `Intl` in English.
+  - The phone topbar's data-source label may break inside a pseudo word as a last resort (never
+    in English or Spanish).
+- **Brief detection delay:** while the stream is healthy, a REST resource failure reaches the
+  brief within the 60s re-sync window (measured: 42s).
 
 ## Next autonomous actions
 
 1. Watch the first GitHub CI run of the browser job in the pinned image, and act on any diffs.
-2. Locale-aware number and date formatting beyond relative times (e.g. `Intl.DateTimeFormat`
-   for absolute timestamps).
-3. A small "what changed since I last looked" view built from the bounded event log.
-4. Optional runtime translation QA: a pseudo-locale for catching truncation and hard-coded text.
+2. Digest across reloads for REST: optionally persist the newest event id seen, to prove
+   coverage when a backend lists only recent events.
+3. A per-mission "since last view" marker on Mission Control cards, reusing the checkpoint.
+4. More locales once requested. The pseudo-locale sweep is the acceptance gate for each.
 5. An adapter for the real Assembly Nexus contract, once the Founder decides it.

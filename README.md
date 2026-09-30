@@ -24,7 +24,8 @@ little Snow Wolf chaos. 🐺⚡
 | **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                                                                                                                                                                                                                                                                                      |
 | **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                                                                                                                                                                                                                                                                                           |
 | **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert                                                                                                                                                                                                                                                                    |
-| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Activity**        | Operations timeline of observed events, newest event time first. It keeps event time, arrival (path, received time, ARRIVED LATE) and the linked record's **Now** state apart. Filters: category, worker, mission, time range (incl. since last view) and ingest path                                                                                                                                                                                                                |
+| **Brief**           | Founder morning/return brief: what changed since the last view (local checkpoint, UNKNOWN when not comparable), the Founder attention queue (source, reason, state, freshness, link; navigation only) and data/transport problems. Missing data shows UNKNOWN, never 0                                                                                                                                                                                                               |
 | **Command palette** | `Ctrl/⌘ + K`: commands plus **global search** across missions, workers, rooms, alerts, approval gates, artifacts and events. Each result shows its type, name, status, location and context; choosing one navigates and focuses it. Also: jump to what needs the Founder or to a data problem, open transport diagnostics, clear filters, switch language. Palette commands only navigate or change presentation; they never decide, grant or dispatch. Press `?` for every shortcut |
 | **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                                                                                                                                                                                                                                                                                      |
 
@@ -138,6 +139,9 @@ The UI is available in **English** (default) and **Spanish**. The first visit fo
 browser's language. Choose explicitly under **Settings → Display → Language**, or with the palette
 command "Switch language to …". Switching is instant and keeps the current view and data.
 Identifiers, backend text and authority values (`Founder #0007`) are never translated.
+Numbers, percentages and absolute dates use the language's formats (`Intl`), with 24-hour clock
+times everywhere. For translation QA, open any page with `?pseudo=1` (diagnostic pseudo-locale:
+accented, padded text that exposes hard-coded English, truncation and overflow; never stored).
 
 ## Data freshness and transport
 
@@ -149,14 +153,14 @@ last verification and intervals. Anything the adapter does not report shows as U
 
 ## Keyboard
 
-| Keys                       | Action                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| `Ctrl/⌘ + K`               | Command palette (always on)                                                     |
-| `/`                        | Command palette                                                                 |
-| `?`                        | Keyboard reference (in-app)                                                     |
-| `G` then `C F M W A L V S` | Command Center, Floor, Missions, Workers, Approvals, Alerts, Activity, Settings |
-| `P` / `N`                  | Pause/resume, or step the demo simulation (demo only)                           |
-| `Esc`                      | Close dialog, or leave the worker focus view                                    |
+| Keys                         | Action                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `Ctrl/⌘ + K`                 | Command palette (always on)                                                            |
+| `/`                          | Command palette                                                                        |
+| `?`                          | Keyboard reference (in-app)                                                            |
+| `G` then `C B F M W A L V S` | Command Center, Brief, Floor, Missions, Workers, Approvals, Alerts, Activity, Settings |
+| `P` / `N`                    | Pause/resume, or step the demo simulation (demo only)                                  |
+| `Esc`                        | Close dialog, or leave the worker focus view                                           |
 
 Single-key shortcuts are ignored while typing, and you can switch them off in the keyboard
 reference (WCAG 2.1.4).
