@@ -561,3 +561,12 @@
     position: static;
   }
 }
+
+@media (min-width: 560px) and (max-width: 900px) {
+  .floor--stacked {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.token[data-state='UNKNOWN'] .token__plate {
+  border-style: dashed;
+}

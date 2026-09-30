@@ -637,6 +637,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     events,
     messages,
     health,
+    quality: { partial: false, issues: [] },
   };
 }
 

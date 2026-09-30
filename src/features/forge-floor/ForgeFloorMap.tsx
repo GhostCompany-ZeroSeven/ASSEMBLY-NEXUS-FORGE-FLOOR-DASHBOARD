@@ -51,6 +51,11 @@ export function ForgeFloorMap({
   if (stacked) {
     return (
       <div className="floor floor--stacked" data-critical={hasCritical || undefined}>
+        {snapshot.workers.length === 0 && (
+          <p className="empty" role="status">
+            No workers reported by the data source.
+          </p>
+        )}
         {floor.rooms.map((room) => {
           const { people, crew, alerting, active } = roomProps(room);
           return (
@@ -97,6 +102,11 @@ export function ForgeFloorMap({
       aria-label="Forge Floor plan"
     >
       <div className="floor__grid" aria-hidden="true" />
+      {snapshot.workers.length === 0 && (
+        <p className="floor__empty" role="status">
+          No workers reported by the data source.
+        </p>
+      )}
       {floor.rooms.map((room) => {
         const { people, crew, alerting, active } = roomProps(room);
         return (

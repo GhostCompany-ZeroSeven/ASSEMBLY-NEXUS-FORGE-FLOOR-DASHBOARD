@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import type { Tone } from '@/domain/status';
 import { formatClock } from '@/domain/time';
 import { Icon, type IconName } from './Icon';
@@ -122,20 +122,26 @@ export function SegmentClock({
   size?: 'sm' | 'md' | 'lg' | 'xl';
   caption?: ReactNode;
 }) {
+  const labelId = useId();
   const text = ms === null ? '--:--:--' : formatClock(ms);
   return (
-    <div className={`segclock segclock--${size}`} data-tone={tone}>
-      <div className="segclock__label">{label}</div>
-      <div
-        className="segclock__face"
-        aria-label={`${label} ${ms === null ? 'not available' : text}`}
-      >
+    <div
+      className={`segclock segclock--${size}`}
+      data-tone={tone}
+      role="group"
+      aria-labelledby={labelId}
+    >
+      <div className="segclock__label" id={labelId}>
+        {label}
+      </div>
+      <div className="segclock__face">
         <span className="segclock__ghost" aria-hidden="true">
           88:88:88
         </span>
-        <span className="segclock__digits" aria-hidden="true">
+        <span className="segclock__digits" aria-hidden={ms === null ? true : undefined}>
           {text}
         </span>
+        {ms === null && <span className="visually-hidden">not available</span>}
       </div>
       {caption && <div className="segclock__caption">{caption}</div>}
     </div>

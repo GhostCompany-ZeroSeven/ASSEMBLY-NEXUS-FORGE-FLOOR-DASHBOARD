@@ -83,6 +83,8 @@ export interface SimulationControls {
   setSpeed(multiplier: number): void;
   getSpeed(): number;
   reset(): void;
+  /** Notified when running state or speed changes. Returns an unsubscribe function. */
+  onChange(listener: () => void): () => void;
 }
 
 export function hasSimulationControls(

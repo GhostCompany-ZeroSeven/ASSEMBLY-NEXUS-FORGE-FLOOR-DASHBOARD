@@ -24,6 +24,28 @@ export interface DashboardSnapshot {
   events: DashboardEvent[];
   messages: WorkerMessage[];
   health: SystemHealth;
+  /** Freshness/completeness of this snapshot. Drives stale/partial/malformed-data states. */
+  quality: DataQuality;
+}
+
+/** A problem found while fetching or normalizing backend data. */
+export interface DataIssue {
+  id: string;
+  severity: 'warning' | 'error';
+  /** Where it came from, e.g. `workers`, `missions[3]`, `transport`. */
+  source: string;
+  message: string;
+  at: string;
+}
+
+export interface DataQuality {
+  /** Last time every required resource was fetched successfully. Absent = never / not applicable. */
+  lastSuccessfulSyncAt?: string;
+  /** Data older than this is shown as STALE. Absent = adapter does not sync (e.g. demo). */
+  staleAfterMs?: number;
+  /** True when some resources failed or some records were dropped as malformed. */
+  partial: boolean;
+  issues: DataIssue[];
 }
 
 export const MAX_EVENTS = 500;
@@ -39,5 +61,6 @@ export function emptySnapshot(provenance: DataProvenance, now: string): Dashboar
     events: [],
     messages: [],
     health: { status: 'UNKNOWN', checkedAt: now, components: [] },
+    quality: { partial: false, issues: [] },
   };
 }

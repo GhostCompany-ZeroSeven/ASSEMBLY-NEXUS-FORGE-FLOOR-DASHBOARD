@@ -323,7 +323,7 @@ a.stat:hover {
   color: var(--text-dim);
 }
 .chip--hot {
-  color: var(--tone-danger);
+  color: #fb7185;
   border-color: color-mix(in srgb, var(--tone-danger) 40%, transparent);
   text-transform: uppercase;
 }

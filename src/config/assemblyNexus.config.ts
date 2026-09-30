@@ -136,6 +136,7 @@ export const assemblyNexusConfig: DashboardConfig = {
       COMPLETE: 'home',
       FAILED: 'home',
       STOPPED: 'break',
+      UNKNOWN: 'home',
     },
     approvalRoomId: 'founder-gate',
   },

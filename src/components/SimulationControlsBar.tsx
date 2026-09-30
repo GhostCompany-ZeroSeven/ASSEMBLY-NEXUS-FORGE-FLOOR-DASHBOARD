@@ -1,30 +1,24 @@
-import { useReducer } from 'react';
-import { hasSimulationControls } from '@/adapters/types';
-import { useDashboard } from '@/store/hooks';
+import { useSimulation } from '@/hooks/useSimulation';
 import { Icon } from './Icon';
 
 const SPEEDS = [0.5, 1, 2, 4];
-
 /** Demo-only controls. Hidden for adapters that do not expose a simulation. */
 export function SimulationControlsBar() {
-  const { adapter } = useDashboard();
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
-  if (!hasSimulationControls(adapter)) return null;
-  const sim = adapter.simulation;
-  const running = sim.isRunning();
+  const state = useSimulation();
+  if (!state) return null;
+  const { sim, running, speed } = state;
 
   return (
     <div className="simbar" role="group" aria-label="Demo simulation controls">
-      <span className="simbar__label">Sim</span>
+      <span className="simbar__label" aria-hidden="true">
+        Sim
+      </span>
       <button
         type="button"
         className="icon-btn"
-        onClick={() => {
-          sim.setRunning(!running);
-          rerender();
-        }}
+        onClick={() => sim.setRunning(!running)}
         aria-label={running ? 'Pause simulation' : 'Resume simulation'}
-        title={running ? 'Pause simulation' : 'Resume simulation'}
+        title={running ? 'Pause simulation (P)' : 'Resume simulation (P)'}
       >
         <Icon name={running ? 'pause' : 'play'} size={14} />
       </button>
@@ -33,19 +27,13 @@ export function SimulationControlsBar() {
         className="icon-btn"
         onClick={() => sim.step()}
         aria-label="Advance one simulation step"
-        title="Step"
+        title="Step (N)"
       >
         <Icon name="step" size={14} />
       </button>
       <label className="simbar__speed">
         <span className="visually-hidden">Simulation speed</span>
-        <select
-          value={sim.getSpeed()}
-          onChange={(e) => {
-            sim.setSpeed(Number(e.target.value));
-            rerender();
-          }}
-        >
+        <select value={speed} onChange={(e) => sim.setSpeed(Number(e.target.value))}>
           {SPEEDS.map((s) => (
             <option key={s} value={s}>
               {s}×

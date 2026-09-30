@@ -64,3 +64,8 @@ export function useRoute(): Route {
   }, []);
   return route;
 }
+
+/** Navigate to a hash route (e.g. `href.floor()`). */
+export function navigate(hash: string): void {
+  window.location.hash = hash;
+}

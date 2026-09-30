@@ -1,11 +1,13 @@
 import { Icon } from '@/components/Icon';
-import { StatusBadge } from '@/components/ui';
+import { SimulatedTag, StatusBadge } from '@/components/ui';
 import { CERT_TONE, REVIEW_STATUS_META } from '@/domain/status';
 import { formatClock, missionTiming, toMs } from '@/domain/time';
 import type { Mission } from '@/domain/types';
+import { useSnapshot } from '@/store/hooks';
 
 /** MISSION COMPLETE / MISSION FAILED results panel. */
 export function MissionResultPanel({ mission }: { mission: Mission }) {
+  const simulated = useSnapshot().provenance.mode === 'demo';
   if (!mission.result || (mission.status !== 'COMPLETE' && mission.status !== 'FAILED'))
     return null;
   const success = mission.status === 'COMPLETE';
@@ -23,7 +25,10 @@ export function MissionResultPanel({ mission }: { mission: Mission }) {
         <Icon name={success ? 'check' : 'x'} size={34} />
       </div>
       <div className="result__main">
-        <div className="result__eyebrow">{mission.id}</div>
+        <div className="result__eyebrow">
+          {mission.id}
+          {simulated && <SimulatedTag>Simulated result</SimulatedTag>}
+        </div>
         <h2 className="result__title" id={`result-${mission.id}`}>
           {success ? 'MISSION COMPLETE' : 'MISSION FAILED'}
         </h2>

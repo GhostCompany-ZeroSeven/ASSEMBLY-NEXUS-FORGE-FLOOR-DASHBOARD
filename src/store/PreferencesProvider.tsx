@@ -8,12 +8,15 @@ export interface Preferences {
   themeId: string;
   motion: MotionPreference;
   density: Density;
+  /** Single-key shortcuts (g+letter, ?, /, P, N). Ctrl/⌘+K always works. WCAG 2.1.4. */
+  singleKeyShortcuts: boolean;
 }
 
 export interface PreferencesContextValue extends Preferences {
   setThemeId: (id: string) => void;
   setMotion: (m: MotionPreference) => void;
   setDensity: (d: Density) => void;
+  setSingleKeyShortcuts: (on: boolean) => void;
   /** Resolved: true when animations should be minimised. */
   reducedMotion: boolean;
 }
@@ -45,7 +48,12 @@ export function PreferencesProvider({
   children: ReactNode;
 }) {
   const [prefs, setPrefs] = useState<Preferences>(() =>
-    load({ themeId: defaultThemeId, motion: 'system', density: 'comfortable' }),
+    load({
+      themeId: defaultThemeId,
+      motion: 'system',
+      density: 'comfortable',
+      singleKeyShortcuts: true,
+    }),
   );
   const [systemReduced, setSystemReduced] = useState(systemPrefersReducedMotion);
 
@@ -81,6 +89,8 @@ export function PreferencesProvider({
       setThemeId: (themeId) => setPrefs((p) => ({ ...p, themeId })),
       setMotion: (motion) => setPrefs((p) => ({ ...p, motion })),
       setDensity: (density) => setPrefs((p) => ({ ...p, density })),
+      setSingleKeyShortcuts: (singleKeyShortcuts) =>
+        setPrefs((p) => ({ ...p, singleKeyShortcuts })),
     }),
     [prefs, reducedMotion],
   );

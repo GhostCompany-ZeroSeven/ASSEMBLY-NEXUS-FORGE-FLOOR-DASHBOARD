@@ -9,7 +9,8 @@ const STATE_GLYPH: Partial<Record<Worker['state'], string>> = {
   BLOCKED: '!',
   COMPLETE: '✓',
   FAILED: '✕',
-  PLANNING: '?',
+  PLANNING: '✎',
+  UNKNOWN: '?',
   STOPPED: '■',
 };
 

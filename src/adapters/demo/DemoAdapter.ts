@@ -1,4 +1,5 @@
 import type { DashboardEvent } from '@/domain/events';
+import { assertHumanDecisionAllowed } from '@/domain/governance';
 import { applyEvent } from '@/domain/reducer';
 import type { DashboardSnapshot } from '@/domain/snapshot';
 import type { ApprovalDecisionRecord, DataProvenance, WorkerMessage } from '@/domain/types';
@@ -62,6 +63,7 @@ export class DemoAdapter implements DashboardAdapter {
   private timer: unknown = null;
   private running = false;
   private speed = 1;
+  private simListeners = new Set<() => void>();
 
   constructor(options: DemoAdapterOptions = {}) {
     this.opts = {
@@ -78,7 +80,11 @@ export class DemoAdapter implements DashboardAdapter {
     const self = this;
     this.simulation = {
       isRunning: () => self.running,
-      setRunning: (run) => (run ? self.start() : self.stop()),
+      setRunning: (run) => {
+        if (run) self.start();
+        else self.stop();
+        self.notifySim();
+      },
       step: () => self.step(),
       setSpeed: (m) => {
         self.speed = Math.min(8, Math.max(0.25, m));
@@ -86,9 +92,14 @@ export class DemoAdapter implements DashboardAdapter {
           self.stop();
           self.start();
         }
+        self.notifySim();
       },
       getSpeed: () => self.speed,
       reset: () => self.reset(),
+      onChange: (listener) => {
+        self.simListeners.add(listener);
+        return () => self.simListeners.delete(listener);
+      },
     };
   }
 
@@ -117,15 +128,7 @@ export class DemoAdapter implements DashboardAdapter {
   }
 
   async submitApprovalDecision(input: ApprovalDecisionInput): Promise<ApprovalDecisionRecord> {
-    const snap = this.current();
-    const request = snap.approvals.find((a) => a.id === input.approvalId);
-    if (!request) throw new Error(`Unknown approval request ${input.approvalId}`);
-    if (request.status !== 'PENDING' && request.status !== 'HELD') {
-      throw new Error(`Approval ${input.approvalId} is already ${request.status}`);
-    }
-    if (input.decidedBy !== request.requiredAuthority) {
-      throw new Error(`Approval ${input.approvalId} requires ${request.requiredAuthority}`);
-    }
+    const request = assertHumanDecisionAllowed(this.current(), input);
     const at = this.nowIso();
     const record: ApprovalDecisionRecord = {
       decision: input.decision,
@@ -205,6 +208,10 @@ export class DemoAdapter implements DashboardAdapter {
     }
     this.snapshot = snap;
     for (const l of this.listeners) l({ type: 'snapshot', snapshot: snap, events });
+  }
+
+  private notifySim(): void {
+    for (const l of this.simListeners) l();
   }
 
   private start(): void {

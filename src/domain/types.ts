@@ -36,6 +36,11 @@ export interface DataProvenance {
   verifiedBackend: boolean;
   /** Short note displayed next to the provenance badge. */
   note?: string;
+  /**
+   * Optional environment label reported by the backend (e.g. `mock`, `staging`).
+   * Shown next to the provenance badge so test backends are not mistaken for production.
+   */
+  environment?: string;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -53,6 +58,8 @@ export const WORKER_STATES = [
   'COMPLETE',
   'FAILED',
   'STOPPED',
+  /** The backend reported a state this dashboard does not recognise. */
+  'UNKNOWN',
 ] as const;
 
 export type WorkerState = (typeof WORKER_STATES)[number];
@@ -127,7 +134,9 @@ export type MissionStatus =
   | 'BLOCKED'
   | 'COMPLETE'
   | 'FAILED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  /** Unrecognised backend status. Never treated as healthy or in flight. */
+  | 'UNKNOWN';
 
 export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'DONE' | 'BLOCKED' | 'FAILED' | 'SKIPPED';
 
@@ -221,7 +230,15 @@ export interface Mission {
 
 export type ApprovalDecision = 'APPROVE' | 'DENY' | 'HOLD';
 
-export type ApprovalStatus = 'PENDING' | 'HELD' | 'APPROVED' | 'DENIED' | 'EXPIRED' | 'WITHDRAWN';
+export type ApprovalStatus =
+  | 'PENDING'
+  | 'HELD'
+  | 'APPROVED'
+  | 'DENIED'
+  | 'EXPIRED'
+  | 'WITHDRAWN'
+  /** Unrecognised backend status. Cannot be decided from the dashboard. */
+  | 'UNKNOWN';
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 

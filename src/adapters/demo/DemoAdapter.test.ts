@@ -59,7 +59,7 @@ describe('DemoAdapter', () => {
         decision: 'APPROVE',
         decidedBy: 'w-cyrus',
       }),
-    ).rejects.toThrow(/requires Founder #0007/);
+    ).rejects.toThrow(/Workers cannot decide/);
   });
 
   it('rejects deciding an already-decided request', async () => {

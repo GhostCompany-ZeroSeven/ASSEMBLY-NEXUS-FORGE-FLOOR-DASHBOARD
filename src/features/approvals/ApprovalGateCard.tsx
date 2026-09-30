@@ -3,6 +3,7 @@ import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import { SimulatedTag, StatusBadge } from '@/components/ui';
+import { checkDecision, isOpenForDecision } from '@/domain/governance';
 import { findWorker } from '@/domain/selectors';
 import { APPROVAL_STATUS_META, RISK_TONE } from '@/domain/status';
 import { formatRelative } from '@/domain/time';
@@ -38,9 +39,11 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
 
   const requester = findWorker(snapshot, request.requestedBy);
   const meta = APPROVAL_STATUS_META[request.status];
-  const open = request.status === 'PENDING' || request.status === 'HELD';
+  const open = isOpenForDecision(request);
+  // Same rule the adapters enforce: only the named human authority, never a worker.
+  const authorityCheck = checkDecision(request, governance.humanAuthority, snapshot.workers);
   const noteRequired = pending !== null && governance.noteRequiredFor.includes(pending);
-  const canDecide = adapter.capabilities.approvals && open;
+  const canDecide = adapter.capabilities.approvals && open && authorityCheck.ok;
 
   const submit = async (decision: ApprovalDecision) => {
     if (governance.noteRequiredFor.includes(decision) && !note.trim()) {
@@ -231,7 +234,21 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
       )}
 
       {open && !adapter.capabilities.approvals && (
-        <p className="muted">This adapter cannot deliver decisions. Decide in the source system.</p>
+        <p className="gate__blocked" role="note">
+          <Icon name="lock" size={14} /> Unsupported: the connected adapter cannot deliver
+          decisions. Decide in the source system.
+        </p>
+      )}
+      {open && adapter.capabilities.approvals && !authorityCheck.ok && (
+        <p className="gate__blocked" role="note">
+          <Icon name="lock" size={14} /> Decision unavailable here: {authorityCheck.reason}
+        </p>
+      )}
+      {request.status === 'UNKNOWN' && (
+        <p className="gate__blocked" role="note">
+          <Icon name="lock" size={14} /> The data source reported an unrecognised status. This
+          request cannot be decided until its status is known.
+        </p>
       )}
 
       {error && (

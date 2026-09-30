@@ -19,7 +19,7 @@
   --line-strong: #2a3a50;
   --text: #e7edf5;
   --text-dim: #9fb0c4;
-  --text-faint: #66778d;
+  --text-faint: #8494aa; /* ≥4.7:1 on every surface (WCAG AA) */
 
   --accent: #f59e0b; /* ember */
   --accent-2: #22d3ee; /* instrument cyan */
@@ -69,7 +69,7 @@
   --line-strong: #253a52;
   --text: #eef6ff;
   --text-dim: #a8bdd4;
-  --text-faint: #6a8098;
+  --text-faint: #8a9ab0;
   --accent: #7dd3fc;
   --accent-2: #e2e8f0;
   --ember: #93c5fd;

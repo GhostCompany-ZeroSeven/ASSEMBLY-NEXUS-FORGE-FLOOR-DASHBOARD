@@ -1,6 +1,7 @@
 import type { WorkerStateMapping } from '@/domain/status';
 import type { WorkerState } from '@/domain/types';
 import type { CharacterDefinition } from '@/characters/types';
+import type { RestAdapterConfig } from '@/adapters/rest/config';
 
 /**
  * Open-source configuration surface. Everything product/brand specific lives
@@ -122,4 +123,7 @@ export interface FeatureFlags {
 }
 
 export type AdapterConfig =
-  { kind: 'demo'; tickMs: number; seed: number } | { kind: 'custom'; id: string };
+  | { kind: 'demo'; tickMs: number; seed: number }
+  /** Generic REST backend. Never put credentials here; see docs/ADAPTERS.md. */
+  | { kind: 'rest'; rest: RestAdapterConfig }
+  | { kind: 'custom'; id: string };

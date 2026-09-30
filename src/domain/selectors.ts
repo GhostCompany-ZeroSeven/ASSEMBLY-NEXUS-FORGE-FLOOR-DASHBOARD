@@ -92,3 +92,15 @@ export function sortMissions(missions: readonly Mission[]): Mission[] {
     isMissionInFlight(m) ? 0 : m.status === 'QUEUED' ? 1 : m.status === 'FAILED' ? 2 : 3;
   return [...missions].sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id));
 }
+
+/**
+ * True when the adapter syncs from a backend and the last full sync is older than
+ * its stale threshold, or when no full sync has ever succeeded.
+ * Adapters that do not sync (demo) never report stale.
+ */
+export function isStale(s: DashboardSnapshot, nowMs: number): boolean {
+  const { staleAfterMs, lastSuccessfulSyncAt } = s.quality;
+  if (staleAfterMs === undefined) return false;
+  if (!lastSuccessfulSyncAt) return true;
+  return nowMs - Date.parse(lastSuccessfulSyncAt) > staleAfterMs;
+}

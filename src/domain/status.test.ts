@@ -15,11 +15,14 @@ describe('mapWorkerState', () => {
     expect(mapWorkerState('canceled')).toBe('STOPPED');
   });
   it('falls back instead of throwing on unknown states', () => {
-    expect(mapWorkerState('teleporting')).toBe('WAITING');
+    expect(mapWorkerState('teleporting')).toBe('UNKNOWN');
     expect(mapWorkerState('teleporting', {}, 'IDLE')).toBe('IDLE');
   });
   it('supports custom mappings', () => {
     expect(mapWorkerState('forging', { forging: 'WORKING' })).toBe('WORKING');
+    // Prototype keys are not treated as mappings.
+    expect(mapWorkerState('constructor')).toBe('UNKNOWN');
+    expect(mapWorkerState('toString')).toBe('UNKNOWN');
   });
 });
 

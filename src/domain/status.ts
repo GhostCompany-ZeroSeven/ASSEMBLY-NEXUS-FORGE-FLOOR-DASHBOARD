@@ -50,6 +50,11 @@ export const WORKER_STATE_META: Record<WorkerState, StatusMeta> = {
   COMPLETE: { label: 'Complete', tone: 'success', description: 'Finished the assigned work.' },
   FAILED: { label: 'Failed', tone: 'danger', description: 'Work failed and needs attention.' },
   STOPPED: { label: 'Stopped', tone: 'neutral', description: 'Halted by an operator.' },
+  UNKNOWN: {
+    label: 'Unknown state',
+    tone: 'warning',
+    description: 'The data source reported a state this dashboard does not recognise.',
+  },
 };
 
 export const MISSION_STATUS_META: Record<MissionStatus, StatusMeta> = {
@@ -69,6 +74,11 @@ export const MISSION_STATUS_META: Record<MissionStatus, StatusMeta> = {
   COMPLETE: { label: 'Mission Complete', tone: 'success', description: 'Finished.' },
   FAILED: { label: 'Mission Failed', tone: 'danger', description: 'Ended in failure.' },
   CANCELLED: { label: 'Cancelled', tone: 'neutral', description: 'Stopped before completion.' },
+  UNKNOWN: {
+    label: 'Unknown status',
+    tone: 'warning',
+    description: 'The data source reported an unrecognised mission status.',
+  },
 };
 
 export const REVIEW_STATUS_META: Record<ReviewStatus, StatusMeta> = {
@@ -86,6 +96,11 @@ export const APPROVAL_STATUS_META: Record<ApprovalStatus, StatusMeta> = {
   DENIED: { label: 'Denied', tone: 'danger', description: '' },
   EXPIRED: { label: 'Expired', tone: 'muted', description: '' },
   WITHDRAWN: { label: 'Withdrawn', tone: 'muted', description: '' },
+  UNKNOWN: {
+    label: 'Unknown status',
+    tone: 'warning',
+    description: 'Unrecognised approval status. It cannot be decided from here.',
+  },
 };
 
 export const ALERT_SEVERITY_META: Record<AlertSeverity, StatusMeta & { rank: number }> = {
@@ -132,21 +147,38 @@ export const DEFAULT_WORKER_STATE_MAPPING: WorkerStateMapping = {
 
 /**
  * Normalize an arbitrary backend state string. Unknown values map to
- * `fallback` (default `WAITING`) rather than throwing, so a new backend state
- * never crashes the dashboard; adapters should log unmapped values.
+ * `fallback` (default `UNKNOWN`) rather than throwing, so a new backend state
+ * never crashes the dashboard. The default is deliberately not a healthy-looking
+ * state, and adapters should record an issue for unmapped values.
  */
 export function mapWorkerState(
   raw: string,
   mapping: WorkerStateMapping = DEFAULT_WORKER_STATE_MAPPING,
-  fallback: WorkerState = 'WAITING',
+  fallback: WorkerState = 'UNKNOWN',
 ): WorkerState {
   const upper = raw.trim().toUpperCase();
   if ((WORKER_STATES as readonly string[]).includes(upper)) return upper as WorkerState;
-  const key = raw
+  if (!Object.prototype.hasOwnProperty.call(mapping, normalizeKey(raw))) return fallback;
+  return mapping[normalizeKey(raw)] ?? fallback;
+}
+
+/** True when `raw` maps to a known state (canonical or via the mapping). */
+export function isKnownWorkerState(
+  raw: string,
+  mapping: WorkerStateMapping = DEFAULT_WORKER_STATE_MAPPING,
+): boolean {
+  const upper = raw.trim().toUpperCase();
+  return (
+    ((WORKER_STATES as readonly string[]).includes(upper) && upper !== 'UNKNOWN') ||
+    Object.prototype.hasOwnProperty.call(mapping, normalizeKey(raw))
+  );
+}
+
+function normalizeKey(raw: string): string {
+  return raw
     .trim()
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
-  return mapping[key] ?? fallback;
 }
 
 export const RISK_TONE: Record<RiskLevel, Tone> = {

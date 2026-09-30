@@ -13,6 +13,7 @@ import {
 import { eventsForWorker, findMission, findWorker } from '@/domain/selectors';
 import { WORKER_STATE_META } from '@/domain/status';
 import { formatRelative, toMs } from '@/domain/time';
+import { isTypingTarget } from '@/features/command/commands';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { ApprovalGateCard } from '@/features/approvals/ApprovalGateCard';
 import { MissionInstrument } from '@/features/missions/MissionInstrument';
@@ -32,10 +33,15 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Dialogs handle their own Escape first; never leave the view underneath them.
       if (
-        e.key === 'Escape' &&
-        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+        e.key !== 'Escape' ||
+        e.defaultPrevented ||
+        document.querySelector('[aria-modal="true"]')
       ) {
+        return;
+      }
+      if (!isTypingTarget(e.target)) {
         window.location.hash = href.workers();
       }
     };

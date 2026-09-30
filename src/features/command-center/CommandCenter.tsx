@@ -164,6 +164,11 @@ export function CommandCenter() {
               ))}
             </ul>
           )}
+          <p className="gate-note">
+            {gates.length > 0
+              ? `${gates.length} worker request${gates.length === 1 ? ' is' : 's are'} held until ${config.governance.humanAuthority} decides. Workers cannot approve their own requests.`
+              : `Only ${config.governance.humanAuthority} can open a gate. Workers can request, never approve.`}
+          </p>
         </Panel>
 
         {config.features.forgeFloor && (
@@ -249,22 +254,28 @@ export function CommandCenter() {
           </Panel>
 
           <Panel title="Crew" actions={<a href={href.workers()}>Roster →</a>}>
-            <ul className="crew-strip">
-              {snapshot.workers.map((w) => (
-                <li key={w.id}>
-                  <a
-                    href={href.worker(w.id)}
-                    title={`${w.name} — ${WORKER_STATE_META[w.state].label}`}
-                    data-tone={WORKER_STATE_META[w.state].tone}
-                  >
-                    <CharacterAvatar characterId={w.characterId} state={w.state} size={34} />
-                    <span className="visually-hidden">
-                      {w.name}: {WORKER_STATE_META[w.state].label}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {snapshot.workers.length === 0 ? (
+              <EmptyState title="No workers reported">
+                The data source lists zero workers.
+              </EmptyState>
+            ) : (
+              <ul className="crew-strip">
+                {snapshot.workers.map((w) => (
+                  <li key={w.id}>
+                    <a
+                      href={href.worker(w.id)}
+                      title={`${w.name} — ${WORKER_STATE_META[w.state].label}`}
+                      data-tone={WORKER_STATE_META[w.state].tone}
+                    >
+                      <CharacterAvatar characterId={w.characterId} state={w.state} size={34} />
+                      <span className="visually-hidden">
+                        {w.name}: {WORKER_STATE_META[w.state].label}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Panel>
         </div>
 

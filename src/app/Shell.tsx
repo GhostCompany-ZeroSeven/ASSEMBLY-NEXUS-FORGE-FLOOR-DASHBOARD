@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DataStatusBanners } from '@/components/DataStatusBanners';
 import { Icon, type IconName } from '@/components/Icon';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { SimulationControlsBar } from '@/components/SimulationControlsBar';
@@ -17,8 +18,13 @@ import { MissionsPage } from '@/features/missions/MissionsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { WorkerFocus } from '@/features/workers/WorkerFocus';
 import { WorkersPage } from '@/features/workers/WorkersPage';
-import { useConfig, useDashboard, useNow } from '@/store/hooks';
-import { href, useRoute, type Route } from './router';
+import { buildCommands } from '@/features/command/commands';
+import { CommandPalette } from '@/features/command/CommandPalette';
+import { ShortcutsDialog } from '@/features/command/ShortcutsDialog';
+import { useGlobalShortcuts } from '@/features/command/useGlobalShortcuts';
+import { useSimulation } from '@/hooks/useSimulation';
+import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
+import { href, navigate, useRoute, type Route } from './router';
 
 interface NavItem {
   route: Route['name'];
@@ -31,27 +37,75 @@ interface NavItem {
 
 export function Shell() {
   const config = useConfig();
-  const { snapshot, status, error } = useDashboard();
+  const { snapshot, status, error, retry } = useDashboard();
+  const prefs = usePreferences();
+  const simState = useSimulation();
+  const [dialog, setDialog] = useState<'palette' | 'shortcuts' | null>(null);
   const route = useRoute();
   const now = useNow(1000);
   const mainRef = useRef<HTMLElement>(null);
 
   // Move focus to main content on navigation for keyboard/screen-reader users.
+  // Not on first load, so Tab still reaches the skip link and header first.
+  const firstRoute = useRef(true);
   useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
     mainRef.current?.focus({ preventScroll: true });
     window.scrollTo?.({ top: 0 });
-  }, [route.name]);
+  }, [route]);
+
+  useGlobalShortcuts({
+    enabled: snapshot !== null,
+    singleKey: prefs.singleKeyShortcuts,
+    dialogOpen: dialog !== null,
+    openPalette: () => setDialog('palette'),
+    openShortcuts: () => setDialog('shortcuts'),
+    navigate,
+    toggleSim: simState ? () => simState.sim.setRunning(!simState.running) : undefined,
+    stepSim: simState ? () => simState.sim.step() : undefined,
+    isFeatureOn: (flag) => !flag || Boolean(config.features[flag as keyof typeof config.features]),
+  });
+
+  const commands = useMemo(
+    () =>
+      snapshot && dialog === 'palette'
+        ? buildCommands({
+            snapshot,
+            config,
+            navigate,
+            sim: simState ? { controls: simState.sim, running: simState.running } : null,
+            openShortcuts: () => setDialog('shortcuts'),
+            setTheme: prefs.setThemeId,
+          })
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dialog, snapshot, config, simState?.running, prefs.setThemeId],
+  );
 
   if (!snapshot) {
     return (
-      <div className="boot" role="status">
-        <div className="boot__mark">{config.branding.monogram}</div>
-        <div className="boot__text">
-          {status === 'error'
-            ? `Adapter failed to connect: ${error ?? 'unknown error'}`
-            : 'Connecting to data source…'}
-        </div>
-      </div>
+      <main className="boot">
+        <h1 className="boot__mark">{config.branding.monogram}</h1>
+        {status === 'error' ? (
+          <div role="alert" className="boot__text">
+            <p>
+              <strong>Adapter error.</strong> The data source could not be initialised:{' '}
+              {error ?? 'unknown error'}
+            </p>
+            <p className="muted">No data is shown because none has been verified.</p>
+            <button type="button" className="btn" onClick={retry}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <p className="boot__text" role="status">
+            Connecting to data source…
+          </p>
+        )}
+      </main>
     );
   }
 
@@ -118,84 +172,118 @@ export function Shell() {
 
   return (
     <div className="shell" data-red-alert={redAlert ? 'true' : undefined}>
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
-      <header className="topbar">
+      <div className="shell__frame" inert={dialog !== null}>
         <a
-          className="brand"
-          href={href.command()}
-          aria-label={`${config.branding.productName} ${config.branding.surfaceName} home`}
+          className="skip-link"
+          href="#main"
+          onClick={(e) => {
+            e.preventDefault();
+            mainRef.current?.focus();
+          }}
         >
-          <span className="brand__mark" aria-hidden="true">
-            {config.branding.monogram}
-          </span>
-          <span className="brand__text">
-            <span className="brand__product">{config.branding.productName}</span>
-            <span className="brand__surface">{config.branding.surfaceName}</span>
-          </span>
+          Skip to content
         </a>
+        <header className="topbar">
+          <a
+            className="brand"
+            href={href.command()}
+            aria-label={`${config.branding.productName} ${config.branding.surfaceName} home`}
+          >
+            <span className="brand__mark" aria-hidden="true">
+              {config.branding.monogram}
+            </span>
+            <span className="brand__text">
+              <span className="brand__product">{config.branding.productName}</span>
+              <span className="brand__surface">{config.branding.surfaceName}</span>
+            </span>
+          </a>
 
-        <ProvenanceBadge provenance={snapshot.provenance} connection={status} />
+          <ProvenanceBadge provenance={snapshot.provenance} connection={status} />
 
-        <div className="topbar__spacer" />
+          <div className="topbar__spacer" />
 
-        <SimulationControlsBar />
+          <SimulationControlsBar />
 
-        <a className="topbar__health" href={href.command() + '#health'} title="System health">
-          <Icon name="health" size={16} />
-          <StatusBadge tone={health.tone} size="sm">
-            {health.label}
-          </StatusBadge>
-        </a>
-        <div className="topbar__clock" aria-label="Local time">
-          <Icon name="clock" size={16} />
-          <span>{formatTimeOfDay(new Date(now).toISOString())}</span>
-        </div>
-        <div className="topbar__authority" title="Human authority for approval gates">
-          <Icon name="lock" size={14} />
-          {config.governance.humanAuthority}
-        </div>
-      </header>
+          <button
+            type="button"
+            className="topbar__palette"
+            onClick={() => setDialog('palette')}
+            aria-keyshortcuts="Control+K Meta+K"
+            title="Command palette (Ctrl/⌘+K)"
+          >
+            <Icon name="command" size={14} />
+            <span className="topbar__palette-label">Commands</span>
+            <kbd>Ctrl K</kbd>
+          </button>
 
-      {redAlert && <RedAlertBanner />}
-
-      <div className="shell__body">
-        <nav className="sidenav" aria-label="Primary">
-          <ul>
-            {nav.map((item) => (
-              <li key={item.route}>
-                <a
-                  href={item.href}
-                  className="sidenav__link"
-                  aria-current={activeNav === item.route ? 'page' : undefined}
-                >
-                  <Icon name={item.icon} />
-                  <span className="sidenav__label">{item.label}</span>
-                  {item.count !== undefined && item.count > 0 && (
-                    <span className="sidenav__count" data-tone={item.countTone}>
-                      {item.count}
-                    </span>
-                  )}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <div className="sidenav__footer">
-            {config.branding.hierarchy.length > 0 && (
-              <ol className="hierarchy" aria-label="Identity hierarchy">
-                {config.branding.hierarchy.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ol>
-            )}
+          <a
+            className="topbar__health"
+            href={href.command()}
+            aria-label={`System health: ${health.label}`}
+          >
+            <Icon name="health" size={16} />
+            <StatusBadge tone={health.tone} size="sm">
+              {health.label}
+            </StatusBadge>
+          </a>
+          <div className="topbar__clock" role="timer" aria-label="Local time">
+            <Icon name="clock" size={16} />
+            <time dateTime={new Date(now).toISOString()}>
+              {formatTimeOfDay(new Date(now).toISOString())}
+            </time>
           </div>
-        </nav>
+          <div className="topbar__authority" title="Human authority for approval gates">
+            <Icon name="lock" size={14} />
+            {config.governance.humanAuthority}
+          </div>
+        </header>
 
-        <main id="main" ref={mainRef} tabIndex={-1} className="main">
-          <RouteView route={route} />
-        </main>
+        {redAlert && <RedAlertBanner />}
+        <DataStatusBanners />
+
+        <div className="shell__body">
+          <nav className="sidenav" aria-label="Primary">
+            <ul>
+              {nav.map((item) => (
+                <li key={item.route}>
+                  <a
+                    href={item.href}
+                    className="sidenav__link"
+                    aria-current={activeNav === item.route ? 'page' : undefined}
+                  >
+                    <Icon name={item.icon} />
+                    <span className="sidenav__label">{item.label}</span>
+                    {item.count !== undefined && item.count > 0 && (
+                      <span className="sidenav__count" data-tone={item.countTone}>
+                        {item.count}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div className="sidenav__footer">
+              {config.branding.hierarchy.length > 0 && (
+                <ol className="hierarchy" aria-label="Identity hierarchy">
+                  {config.branding.hierarchy.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </nav>
+
+          <main id="main" ref={mainRef} tabIndex={-1} className="main">
+            <RouteView route={route} />
+          </main>
+        </div>
       </div>
+      {dialog === 'palette' && (
+        <CommandPalette commands={commands} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'shortcuts' && (
+        <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />
+      )}
     </div>
   );
 }

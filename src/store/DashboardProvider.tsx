@@ -18,6 +18,8 @@ export interface DashboardContextValue {
   acknowledgeAlert: (alertId: string, by: string) => Promise<void>;
   sendWorkerMessage:
     ((workerId: string, body: string, author: string) => Promise<WorkerMessage>) | null;
+  /** Re-run connect() after a failed connection. */
+  retry: () => void;
 }
 
 /**
@@ -35,14 +37,25 @@ export function DashboardProvider({
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [error, setError] = useState<string | null>(null);
 
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {
+    setStatus('connecting');
+    setError(null);
+    setAttempt((n) => n + 1);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
+    // If the adapter reports its own connection status, that report wins.
+    // connect() resolving does not by itself mean the backend is reachable.
+    let reported = false;
     const unsubscribe = adapter.subscribe((update) => {
       if (cancelled) return;
       if (update.type === 'snapshot') setSnapshot(update.snapshot);
       else {
+        reported = true;
         setStatus(update.status);
-        if (update.message) setError(update.message);
+        setError(update.status === 'connected' ? null : (update.message ?? null));
       }
     });
     adapter
@@ -50,7 +63,7 @@ export function DashboardProvider({
       .then((initial) => {
         if (cancelled) return;
         setSnapshot(initial);
-        setStatus('connected');
+        if (!reported) setStatus('connected');
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -62,7 +75,7 @@ export function DashboardProvider({
       unsubscribe();
       adapter.disconnect();
     };
-  }, [adapter]);
+  }, [adapter, attempt]);
 
   const decideApproval = useCallback<DashboardContextValue['decideApproval']>(
     (approvalId, decision, decidedBy, note) =>
@@ -91,8 +104,9 @@ export function DashboardProvider({
       decideApproval,
       acknowledgeAlert,
       sendWorkerMessage,
+      retry,
     }),
-    [adapter, snapshot, status, error, decideApproval, acknowledgeAlert, sendWorkerMessage],
+    [adapter, snapshot, status, error, decideApproval, acknowledgeAlert, sendWorkerMessage, retry],
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

@@ -114,7 +114,9 @@ describe('App', () => {
   it('shows NO ESTIMATE rather than inventing remaining time', async () => {
     await renderAt('#/missions/AN-0144');
     expect(screen.getByText('NO ESTIMATE PROVIDED')).toBeInTheDocument();
-    expect(screen.getByLabelText('Time remaining not available')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Time remaining' })).toHaveTextContent(
+      'not available',
+    );
   });
 
   it('marks outgoing worker messages as not delivered', async () => {

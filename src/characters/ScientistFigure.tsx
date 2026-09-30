@@ -131,6 +131,8 @@ function moodFor(state: WorkerState): Mood {
       return 'dazed';
     case 'STOPPED':
       return 'neutral';
+    case 'UNKNOWN':
+      return 'thinking';
   }
 }
 

@@ -1,5 +1,6 @@
 import type { AdapterConfig } from '@/config/types';
 import { DemoAdapter } from './demo/DemoAdapter';
+import { RestAdapter } from './rest/RestAdapter';
 import type { DashboardAdapter } from './types';
 
 /**
@@ -17,6 +18,8 @@ export function createAdapter(config: AdapterConfig): DashboardAdapter {
   switch (config.kind) {
     case 'demo':
       return new DemoAdapter({ tickMs: config.tickMs, seed: config.seed });
+    case 'rest':
+      return new RestAdapter(config.rest);
     case 'custom': {
       const factory = customFactories.get(config.id);
       if (!factory) {
