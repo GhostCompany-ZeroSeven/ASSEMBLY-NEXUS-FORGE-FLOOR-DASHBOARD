@@ -1,0 +1,90 @@
+/*
+ * Assembly Nexus design tokens.
+ * Themes override these custom properties via [data-theme] on <html>.
+ * Components reference tokens only — never raw colors — so themes and
+ * third-party brands can restyle everything from one place.
+ */
+:root,
+[data-theme='forge'] {
+  --font-ui: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+
+  --bg: #06090e;
+  --bg-grid: rgba(56, 189, 248, 0.045);
+  --surface: #0c121b;
+  --surface-2: #111a26;
+  --surface-3: #172333;
+  --line: #1c2837;
+  --line-strong: #2a3a50;
+  --text: #e7edf5;
+  --text-dim: #9fb0c4;
+  --text-faint: #66778d;
+
+  --accent: #f59e0b; /* ember */
+  --accent-2: #22d3ee; /* instrument cyan */
+  --ember: #fb923c;
+  --focus: #fbbf24;
+
+  --tone-neutral: #94a3b8;
+  --tone-muted: #64748b;
+  --tone-info: #38bdf8;
+  --tone-active: #22d3ee;
+  --tone-progress: #a78bfa;
+  --tone-success: #34d399;
+  --tone-warning: #fbbf24;
+  --tone-danger: #f43f5e;
+
+  --equip-metal: #475569;
+  --equip-dark: #1e293b;
+  --equip-glow: #22d3ee;
+  --gate-bar: #64748b;
+  --gate-lamp: #fbbf24;
+  --char-ink: #1b2230;
+  --char-bg: #0f172a;
+
+  --room-bg: linear-gradient(180deg, rgba(23, 35, 51, 0.92), rgba(12, 18, 27, 0.96));
+  --room-floor: repeating-linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.05) 0 1px,
+    transparent 1px 22px
+  );
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+  --space: 16px;
+  --topbar-h: 56px;
+  --sidenav-w: 220px;
+}
+
+[data-theme='snow-wolf'] {
+  --bg: #050a11;
+  --bg-grid: rgba(125, 211, 252, 0.05);
+  --surface: #0a121d;
+  --surface-2: #0f1a28;
+  --surface-3: #152335;
+  --line: #182638;
+  --line-strong: #253a52;
+  --text: #eef6ff;
+  --text-dim: #a8bdd4;
+  --text-faint: #6a8098;
+  --accent: #7dd3fc;
+  --accent-2: #e2e8f0;
+  --ember: #93c5fd;
+  --focus: #7dd3fc;
+  --tone-active: #7dd3fc;
+  --equip-glow: #7dd3fc;
+  --gate-lamp: #7dd3fc;
+}
+
+[data-density='compact'] {
+  --space: 12px;
+}
+
+/* Red Alert overrides the accent family inside the shell only. */
+.shell[data-red-alert='true'] {
+  --accent: #f43f5e;
+  --line-strong: #5b1a28;
+}

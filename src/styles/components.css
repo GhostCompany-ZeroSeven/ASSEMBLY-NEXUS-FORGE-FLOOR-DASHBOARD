@@ -1,0 +1,492 @@
+/* ---- Tone plumbing: any element with data-tone exposes --tone ----------
+ * Doubled attribute selector raises specificity above component defaults
+ * (e.g. `.badge { --tone: … }`) so data-tone always wins. */
+[data-tone='neutral'][data-tone] {
+  --tone: var(--tone-neutral);
+}
+[data-tone='muted'][data-tone] {
+  --tone: var(--tone-muted);
+}
+[data-tone='info'][data-tone] {
+  --tone: var(--tone-info);
+}
+[data-tone='active'][data-tone] {
+  --tone: var(--tone-active);
+}
+[data-tone='progress'][data-tone] {
+  --tone: var(--tone-progress);
+}
+[data-tone='success'][data-tone] {
+  --tone: var(--tone-success);
+}
+[data-tone='warning'][data-tone] {
+  --tone: var(--tone-warning);
+}
+[data-tone='danger'][data-tone] {
+  --tone: var(--tone-danger);
+}
+
+/* ---- Panel ------------------------------------------------------------- */
+.panel {
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  min-width: 0;
+  position: relative;
+}
+.panel[data-tone] {
+  border-top: 2px solid color-mix(in srgb, var(--tone) 70%, transparent);
+}
+.panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px var(--space) 0;
+}
+.panel__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.panel__title {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.panel__actions {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.panel__body {
+  padding: 12px var(--space) var(--space);
+}
+
+/* ---- Badge ------------------------------------------------------------- */
+.badge {
+  --tone: var(--tone-neutral);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  color: color-mix(in srgb, var(--tone) 80%, white);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.badge--sm {
+  font-size: 11px;
+  padding: 1px 7px;
+}
+.badge--lg {
+  font-size: 14px;
+  padding: 4px 12px;
+}
+.badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 6px var(--tone);
+}
+.badge__dot--pulse {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+/* ---- Progress ---------------------------------------------------------- */
+.progress {
+  --tone: var(--tone-active);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.progress__track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+  position: relative;
+}
+.progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 60%, transparent), var(--tone));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--tone) 60%, transparent);
+  transition: width 0.8s ease;
+}
+.progress__indeterminate {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    rgba(148, 163, 184, 0.14) 6px 12px
+  );
+}
+.progress__value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 34px;
+  text-align: right;
+}
+
+/* ---- Segment clock (command-center instrumentation) --------------------- */
+.segclock {
+  --tone: var(--tone-active);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.segclock__label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.segclock__face {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.1) 1px, transparent 1.5px) 0 0 / 6px
+      6px,
+    #03060a;
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--line-strong));
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.8),
+    0 0 0 3px #0a0f16,
+    0 0 0 4px var(--line);
+  line-height: 1;
+}
+.segclock__ghost {
+  position: absolute;
+  inset: 6px 12px;
+  color: color-mix(in srgb, var(--tone) 8%, transparent);
+}
+.segclock__digits {
+  position: relative;
+  color: var(--tone);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+.segclock--sm .segclock__face {
+  font-size: 14px;
+}
+.segclock--md .segclock__face {
+  font-size: 22px;
+}
+.segclock--lg .segclock__face {
+  font-size: 30px;
+}
+.segclock--xl .segclock__face {
+  font-size: clamp(30px, 4vw, 48px);
+  padding: 10px 16px;
+}
+.segclock--xl .segclock__ghost {
+  inset: 10px 16px;
+}
+.segclock__caption {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ---- Stat tile --------------------------------------------------------- */
+.stat {
+  --tone: var(--tone-neutral);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--tone);
+  border-radius: var(--radius);
+  color: var(--text);
+  min-width: 0;
+}
+a.stat:hover {
+  text-decoration: none;
+  background: var(--surface-2);
+}
+.stat__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.stat__top svg {
+  color: var(--tone);
+}
+.stat__value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: color-mix(in srgb, var(--tone) 55%, white);
+}
+.stat__of {
+  font-size: 16px;
+  color: var(--text-faint);
+}
+.stat__hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ---- Buttons ----------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-3);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--accent-2);
+  text-decoration: none;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn--ghost {
+  background: transparent;
+}
+.btn--danger {
+  background: #9f1239;
+  border-color: #fb7185;
+  color: #fff;
+}
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--accent-2);
+}
+
+/* ---- Misc -------------------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  margin: 2px 4px 2px 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.chip--hot {
+  color: var(--tone-danger);
+  border-color: color-mix(in srgb, var(--tone-danger) 40%, transparent);
+  text-transform: uppercase;
+}
+.chip--cap {
+  color: var(--tone-info);
+}
+.chip--auth {
+  color: var(--tone-warning);
+  border-color: color-mix(in srgb, var(--tone-warning) 50%, transparent);
+}
+.chip--noauth {
+  color: var(--text-faint);
+  border-style: dashed;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sim-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0b0f16;
+  background: repeating-linear-gradient(135deg, #fbbf24 0 6px, #f59e0b 6px 12px);
+}
+
+.empty {
+  padding: 18px;
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+}
+.empty__title {
+  font-weight: 600;
+}
+.empty__body {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.kv {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.kv__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 38%) 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+.kv dt {
+  color: var(--text-faint);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.plain-list li[data-current] {
+  color: var(--accent-2);
+}
+.subhead {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented__item {
+  padding: 6px 12px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--text-dim);
+  cursor: pointer;
+  text-transform: capitalize;
+}
+.segmented__item:last-child {
+  border-right: 0;
+}
+.segmented__item[aria-checked='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.select-field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.check {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.table th {
+  color: var(--text-faint);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  margin-bottom: 8px;
+  margin-right: 16px;
+}
