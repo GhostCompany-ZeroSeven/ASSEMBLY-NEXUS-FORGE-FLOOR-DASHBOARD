@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { DataStatusBanners } from '@/components/DataStatusBanners';
 import { Icon, type IconName } from '@/components/Icon';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
@@ -8,24 +8,21 @@ import { selectOverview, redAlertActive } from '@/domain/selectors';
 import { HEALTH_STATUS_META } from '@/domain/status';
 import { formatTimeOfDay } from '@/domain/time';
 import { RedAlertBanner } from '@/features/alerts/RedAlertBanner';
-import { AlertsPage } from '@/features/alerts/AlertsPage';
-import { ActivityPage } from '@/features/activity/ActivityPage';
-import { ApprovalsPage } from '@/features/approvals/ApprovalsPage';
-import { CommandCenter } from '@/features/command-center/CommandCenter';
-import { ForgeFloorPage } from '@/features/forge-floor/ForgeFloorPage';
-import { MissionDetail } from '@/features/missions/MissionDetail';
-import { MissionsPage } from '@/features/missions/MissionsPage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
-import { WorkerFocus } from '@/features/workers/WorkerFocus';
-import { WorkersPage } from '@/features/workers/WorkersPage';
 import { buildCommands, resultToCommand } from '@/features/command/commands';
 import { buildSearchIndex, searchIndex } from '@/features/search/search';
-import { CommandPalette } from '@/features/command/CommandPalette';
-import { ShortcutsDialog } from '@/features/command/ShortcutsDialog';
 import { useGlobalShortcuts } from '@/features/command/useGlobalShortcuts';
 import { useSimulation } from '@/hooks/useSimulation';
 import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
+import { createSurfaces, SURFACE_LABEL, usePrefetchSurfaces } from './surfaces';
+import { Suspense, SurfaceErrorBoundary, SurfaceLoading, SurfaceReady } from './SurfaceParts';
 import { href, navigate, parseHashQuery, routeKey, useRoute, type Route } from './router';
+
+const CommandPalette = lazy(() =>
+  import('@/features/command/CommandPalette').then((m) => ({ default: m.CommandPalette })),
+);
+const ShortcutsDialog = lazy(() =>
+  import('@/features/command/ShortcutsDialog').then((m) => ({ default: m.ShortcutsDialog })),
+);
 
 interface NavItem {
   route: Route['name'];
@@ -288,40 +285,29 @@ export function Shell() {
           </main>
         </div>
       </div>
-      {dialog === 'palette' && (
-        <CommandPalette commands={commands} search={search} onClose={() => setDialog(null)} />
-      )}
-      {dialog === 'shortcuts' && (
-        <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />
-      )}
+      <Suspense fallback={null}>
+        {dialog === 'palette' && (
+          <CommandPalette commands={commands} search={search} onClose={() => setDialog(null)} />
+        )}
+        {dialog === 'shortcuts' && (
+          <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />
+        )}
+      </Suspense>
     </div>
   );
 }
 
 function RouteView({ route }: { route: Route }) {
-  switch (route.name) {
-    case 'command':
-      return <CommandCenter />;
-    case 'floor':
-      return <ForgeFloorPage />;
-    case 'missions':
-      return <MissionsPage />;
-    case 'mission':
-      return <MissionDetail missionId={route.id} />;
-    case 'workers':
-      return <WorkersPage />;
-    case 'worker':
-      return <WorkerFocus workerId={route.id} />;
-    case 'approvals':
-      return <ApprovalsPage />;
-    case 'alerts':
-      return <AlertsPage />;
-    case 'activity':
-      return <ActivityPage />;
-    case 'settings':
-      return <SettingsPage />;
-    case 'not-found':
-      return (
+  // A new generation of lazy components after a chunk-load failure (see surfaces.tsx).
+  const [{ generation, surfaces }, setSurfaces] = useState(() => ({
+    generation: 0,
+    surfaces: createSurfaces(),
+  }));
+  usePrefetchSurfaces();
+
+  if (route.name === 'not-found') {
+    return (
+      <SurfaceReady name="not-found">
         <div className="page">
           <h1 className="page__title">Not found</h1>
           <p>
@@ -329,6 +315,30 @@ function RouteView({ route }: { route: Route }) {
             <a href={href.command()}>Return to Command Center</a>.
           </p>
         </div>
-      );
+      </SurfaceReady>
+    );
   }
+  const Surface = surfaces[route.name];
+  const label = SURFACE_LABEL[route.name];
+  const props =
+    route.name === 'mission'
+      ? { missionId: route.id }
+      : route.name === 'worker'
+        ? { workerId: route.id }
+        : {};
+  return (
+    <SurfaceErrorBoundary
+      key={generation}
+      label={label}
+      onRetry={() =>
+        setSurfaces((cur) => ({ generation: cur.generation + 1, surfaces: createSurfaces() }))
+      }
+    >
+      <Suspense fallback={<SurfaceLoading label={label} />}>
+        <SurfaceReady name={route.name}>
+          <Surface {...props} />
+        </SurfaceReady>
+      </Suspense>
+    </SurfaceErrorBoundary>
+  );
 }

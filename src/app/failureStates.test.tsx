@@ -1,3 +1,4 @@
+import { waitForSurface } from '@/test/render';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -11,7 +12,7 @@ import { App } from './App';
 async function renderApp(adapter: DashboardAdapter, hash = '#/', config = assemblyNexusConfig) {
   window.location.hash = hash;
   render(<App config={config} adapter={adapter} />);
-  await screen.findByRole('navigation', { name: 'Primary' });
+  await waitForSurface();
 }
 
 const allDown = () => {

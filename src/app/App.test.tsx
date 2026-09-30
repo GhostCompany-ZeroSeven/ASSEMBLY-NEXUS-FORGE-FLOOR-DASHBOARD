@@ -1,3 +1,4 @@
+import { waitForSurface } from '@/test/render';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -9,7 +10,7 @@ import { App } from './App';
 async function renderAt(hash: string, adapter = testAdapter()) {
   window.location.hash = hash;
   render(<App config={assemblyNexusConfig} adapter={adapter} />);
-  await screen.findByRole('navigation', { name: 'Primary' });
+  await waitForSurface();
   return adapter;
 }
 
@@ -145,7 +146,7 @@ describe('App', () => {
     ]) {
       window.location.hash = hash;
       const { unmount } = render(<App config={assemblyNexusConfig} adapter={testAdapter()} />);
-      await screen.findByRole('navigation', { name: 'Primary' });
+      await waitForSurface();
       unmount();
     }
   });

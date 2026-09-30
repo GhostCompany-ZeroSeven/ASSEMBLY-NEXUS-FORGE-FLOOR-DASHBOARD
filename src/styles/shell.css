@@ -746,3 +746,34 @@ kbd {
   border-color: var(--tone-warning);
   color: var(--tone-warning);
 }
+
+/* ---- Lazy surface loading --------------------------------------------- */
+.surface-loading {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-dim);
+}
+.surface-loading__bar {
+  width: 180px;
+  height: 3px;
+  border-radius: 2px;
+  background:
+    linear-gradient(90deg, transparent, var(--accent-2), transparent) 0 0 / 50% 100% no-repeat,
+    var(--surface-3);
+  animation: loading-bar 1.2s linear infinite;
+}
+@keyframes loading-bar {
+  from {
+    background-position:
+      -50% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      150% 0,
+      0 0;
+  }
+}

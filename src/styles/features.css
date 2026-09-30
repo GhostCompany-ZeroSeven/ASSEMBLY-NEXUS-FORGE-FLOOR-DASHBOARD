@@ -1124,11 +1124,17 @@ a.situation__cell:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 420px) {
+@media (max-width: 560px) {
   .situation {
-    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
   .situation__cell[data-primary] {
-    grid-column: auto;
+    grid-column: 1 / -1;
+  }
+  .situation__a {
+    font-size: 18px;
+  }
+  .situation__d {
+    font-size: 11px;
   }
 }

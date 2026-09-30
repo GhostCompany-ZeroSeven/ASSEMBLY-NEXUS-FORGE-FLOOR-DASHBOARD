@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { waitForSurface } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { App } from '@/app/App';
@@ -11,7 +12,7 @@ async function renderApp(hash = '#/') {
   const adapter = testAdapter();
   window.location.hash = hash;
   render(<App config={assemblyNexusConfig} adapter={adapter} />);
-  await screen.findByRole('navigation', { name: 'Primary' });
+  await waitForSurface();
   return adapter;
 }
 
@@ -43,7 +44,8 @@ describe('command palette', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Command palette' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     const input = screen.getByRole('combobox', { name: /Search commands/ });
-    expect(input).toHaveFocus();
+    // The palette chunk is lazy-loaded; focus moves once it has mounted.
+    await waitFor(() => expect(input).toHaveFocus());
     expect(document.querySelector('.shell__frame')).toHaveAttribute('inert');
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

@@ -54,7 +54,7 @@ export function SituationBoard() {
                 s.founder.approvals &&
                   `${s.founder.approvals} approval${s.founder.approvals === 1 ? '' : 's'} waiting${s.founder.oldestRequestAt ? ` (oldest ${formatRelative(s.founder.oldestRequestAt, now)})` : ''}`,
                 s.founder.humanAlerts &&
-                  `${s.founder.humanAlerts} alert${s.founder.humanAlerts === 1 ? '' : 's'} need action`,
+                  `${s.founder.humanAlerts} alert${s.founder.humanAlerts === 1 ? ' needs' : 's need'} action`,
               ]
                 .filter(Boolean)
                 .join(' · ')

@@ -431,7 +431,6 @@ a.stat:hover {
   border-right: 1px solid var(--line);
   color: var(--text-dim);
   cursor: pointer;
-  text-transform: capitalize;
 }
 .segmented__item:last-child {
   border-right: 0;

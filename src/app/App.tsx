@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-import { createAdapter } from '@/adapters/createAdapter';
 import type { DashboardAdapter } from '@/adapters/types';
 import type { DashboardConfig } from '@/config/types';
 import { ConfigProvider } from '@/store/ConfigProvider';
@@ -8,18 +6,14 @@ import { PreferencesProvider } from '@/store/PreferencesProvider';
 import { Shell } from './Shell';
 
 /**
- * Application root. Pass a different `config` (and optionally a pre-built
- * `adapter`) to run the dashboard against another brand or backend.
+ * Application root. Pass a different `config` and `adapter` to run the dashboard
+ * against another brand or backend (`loadAdapter(config.adapter)` builds the adapter).
  */
-export function App({ config, adapter }: { config: DashboardConfig; adapter?: DashboardAdapter }) {
-  const resolved = useMemo(
-    () => adapter ?? createAdapter(config.adapter),
-    [adapter, config.adapter],
-  );
+export function App({ config, adapter }: { config: DashboardConfig; adapter: DashboardAdapter }) {
   return (
     <ConfigProvider config={config}>
       <PreferencesProvider defaultThemeId={config.defaultThemeId}>
-        <DashboardProvider adapter={resolved}>
+        <DashboardProvider adapter={adapter}>
           <Shell />
         </DashboardProvider>
       </PreferencesProvider>

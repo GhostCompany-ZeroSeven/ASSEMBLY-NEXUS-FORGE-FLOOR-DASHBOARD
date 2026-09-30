@@ -1,3 +1,4 @@
+import { waitForSurface } from '@/test/render';
 import { render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { describe, expect, it } from 'vitest';
@@ -52,7 +53,7 @@ describe('axe structural audit (demo adapter)', () => {
     it(`${hash} has no violations`, async () => {
       window.location.hash = hash;
       render(<App config={assemblyNexusConfig} adapter={testAdapter()} />);
-      await screen.findByRole('navigation', { name: 'Primary' });
+      await waitForSurface();
       const v = await audit();
       expect(v, format(v)).toHaveLength(0);
     });
@@ -62,7 +63,7 @@ describe('axe structural audit (demo adapter)', () => {
     const adapter = testAdapter();
     window.location.hash = '#/alerts';
     render(<App config={assemblyNexusConfig} adapter={adapter} />);
-    await screen.findByRole('navigation', { name: 'Primary' });
+    await waitForSurface();
     const { act } = await import('@testing-library/react');
     act(() => {
       for (let i = 0; i < 8; i++) adapter.step();
@@ -84,7 +85,7 @@ describe('axe structural audit (demo adapter)', () => {
   it('command palette and shortcuts dialogs have no violations', async () => {
     window.location.hash = '#/';
     render(<App config={assemblyNexusConfig} adapter={testAdapter()} />);
-    await screen.findByRole('navigation', { name: 'Primary' });
+    await waitForSurface();
     await userEvent.keyboard('{Control>}k{/Control}');
     await screen.findByRole('dialog');
     await userEvent.type(screen.getByRole('combobox', { name: /Search commands/ }), 'a');
