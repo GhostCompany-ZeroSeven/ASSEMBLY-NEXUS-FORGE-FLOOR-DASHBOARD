@@ -1,3 +1,4 @@
+import type { MissionMarkers } from '@/domain/missionMarkers';
 import type { DashboardSnapshot } from '@/domain/snapshot';
 import { en, type Messages } from '@/i18n/en';
 import { isOpenForDecision } from '@/domain/governance';
@@ -47,7 +48,8 @@ export function missionAwaitsFounder(m: Mission, s: Pick<DashboardSnapshot, 'app
 
 export type MissionGroup =
   'all' | 'in-flight' | 'founder' | 'blocked' | 'queued' | 'complete' | 'failed' | 'unknown';
-export type MissionSort = 'status' | 'priority' | 'newest' | 'elapsed' | 'id';
+export type MissionSort = 'status' | 'priority' | 'newest' | 'elapsed' | 'id' | 'activity';
+export type MissionSince = 'all' | 'new' | 'changed';
 
 export interface MissionFilter {
   q: string;
@@ -55,6 +57,7 @@ export interface MissionFilter {
   priority: Mission['priority'] | 'all';
   workerId: string | 'all';
   sort: MissionSort;
+  since: MissionSince;
 }
 
 export const DEFAULT_MISSION_FILTER: MissionFilter = {
@@ -63,7 +66,14 @@ export const DEFAULT_MISSION_FILTER: MissionFilter = {
   priority: 'all',
   workerId: 'all',
   sort: 'status',
+  since: 'all',
 };
+
+/** Optional view context for mission filtering (markers, last activity). */
+export interface MissionListContext {
+  markers?: ReadonlyMap<string, MissionMarkers>;
+  lastActivity?: ReadonlyMap<string, string>;
+}
 
 const PRIORITY_RANK: Record<Mission['priority'], number> = {
   critical: 0,
@@ -102,10 +112,18 @@ export function filterMissions(
   f: MissionFilter,
   nowMs = Date.now(),
   m: Messages = en,
+  ctx: MissionListContext = {},
 ): Mission[] {
+  // "Since last view" needs markers; without them nothing can be proven to match.
+  const since = (mission: Mission) =>
+    f.since === 'all' ||
+    (f.since === 'new'
+      ? ctx.markers?.get(mission.id)?.new
+      : ctx.markers?.get(mission.id)?.changed) === true;
   const out = s.missions.filter(
     (mission) =>
       missionMatchesGroup(mission, f.group, s) &&
+      since(mission) &&
       (f.priority === 'all' || mission.priority === f.priority) &&
       (f.workerId === 'all' || mission.assignedWorkerIds.includes(f.workerId)) &&
       text(
@@ -140,6 +158,14 @@ export function filterMissions(
     newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
     elapsed: (a, b) => elapsed(b) - elapsed(a),
     id: () => 0,
+    // Latest event time (source clock). Missions with no retained event sort
+    // last: an unknown time is never treated as recent.
+    activity: (a, b) => {
+      const x = ctx.lastActivity?.get(a.id);
+      const y = ctx.lastActivity?.get(b.id);
+      if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
+      return y.localeCompare(x);
+    },
   };
   return out.sort((a, b) => cmp[f.sort](a, b) || a.id.localeCompare(b.id));
 }

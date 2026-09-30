@@ -115,6 +115,11 @@ export function CommandPalette({
             <span className="palette__title">{c.title}</span>
             {c.result ? (
               <span className="palette__hint">
+                {c.result.provenance && (
+                  <>
+                    <span className="palette__prov">{c.result.provenance}</span> ·{' '}
+                  </>
+                )}
                 <span className="palette__status">{c.result.status}</span> ·{' '}
                 {p.opens(c.result.surface)}
                 {c.result.context && <> · {c.result.context}</>}

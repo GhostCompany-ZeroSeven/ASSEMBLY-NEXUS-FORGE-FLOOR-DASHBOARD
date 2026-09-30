@@ -1,3 +1,4 @@
+import { eventRefs } from './refs';
 import {
   EVENT_CATEGORY,
   LOW_SIGNAL_EVENTS,
@@ -15,6 +16,9 @@ export interface ActivityFilter {
   since?: string;
   /** Only events received over this ingest path. */
   via?: EventVia;
+  /** Only events that EXPLICITLY name this approval gate / alert (see refs.ts). */
+  approvalId?: string;
+  alertId?: string;
 }
 
 export function filterEvents(
@@ -28,7 +32,9 @@ export function filterEvents(
       (!f.workerId || e.workerId === f.workerId) &&
       (!f.missionId || e.missionId === f.missionId) &&
       (!f.since || e.at >= f.since) &&
-      (!f.via || e.via === f.via),
+      (!f.via || e.via === f.via) &&
+      (!f.approvalId || eventRefs(e).some((r) => r.kind === 'approval' && r.id === f.approvalId)) &&
+      (!f.alertId || eventRefs(e).some((r) => r.kind === 'alert' && r.id === f.alertId)),
   );
 }
 

@@ -15,6 +15,7 @@ export type Route =
   | { name: 'alerts' }
   | { name: 'activity' }
   | { name: 'brief' }
+  | { name: 'quality' }
   | { name: 'settings' }
   | { name: 'not-found'; path: string };
 
@@ -38,6 +39,8 @@ export function parseRoute(hash: string): Route {
       return { name: 'activity' };
     case 'brief':
       return { name: 'brief' };
+    case 'quality':
+      return { name: 'quality' };
     case 'settings':
       return { name: 'settings' };
     default:
@@ -56,6 +59,7 @@ export const href = {
   alerts: () => '#/alerts',
   activity: () => '#/activity',
   brief: () => '#/brief',
+  quality: () => '#/quality',
   settings: () => '#/settings',
 };
 

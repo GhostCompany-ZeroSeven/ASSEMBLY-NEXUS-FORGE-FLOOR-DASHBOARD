@@ -7,7 +7,10 @@ import type { EventCategory, EventVia } from '@/domain/events';
 import { SelectFilter } from '@/features/filters/FilterBar';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { useI18n } from '@/i18n/useI18n';
-import { useLastView, useNow, useSnapshot } from '@/store/hooks';
+import { eventCoverage } from '@/domain/eventCoverage';
+import { resourceUnavailable } from '@/domain/selectors';
+import { useLastView, useMissionViews, useNow, useSnapshot } from '@/store/hooks';
+import { eventRefs } from './refs';
 import { ActivityStream } from './ActivityStream';
 
 const CATEGORIES: EventCategory[] = ['mission', 'worker', 'review', 'approval', 'alert', 'system'];
@@ -42,6 +45,8 @@ interface ActivityView {
   range: Range;
   via: (typeof VIAS)[number];
   details: boolean;
+  approvalId: string;
+  alertId: string;
 }
 const DEFAULT_VIEW: ActivityView = {
   cats: 'all',
@@ -51,6 +56,8 @@ const DEFAULT_VIEW: ActivityView = {
   range: 'all',
   via: 'all',
   details: false,
+  approvalId: 'all',
+  alertId: 'all',
 };
 const SCHEMA: Schema<ActivityView> = {
   cats: { key: 'cats', codec: categoriesCodec },
@@ -60,6 +67,8 @@ const SCHEMA: Schema<ActivityView> = {
   range: { key: 'range', codec: oneOf(RANGES) },
   via: { key: 'via', codec: oneOf(VIAS) },
   details: { key: 'details', codec: flag },
+  approvalId: { key: 'approval', codec: idOrAll },
+  alertId: { key: 'alert', codec: idOrAll },
 };
 
 export function ActivityPage() {
@@ -86,6 +95,28 @@ export function ActivityPage() {
   const missions = useMemo(
     () => [...new Set(snapshot.events.map((e) => e.missionId).filter(Boolean))].sort() as string[],
     [snapshot.events],
+  );
+  const [approvalIds, alertIds] = useMemo(() => {
+    const a = new Set<string>();
+    const b = new Set<string>();
+    for (const e of snapshot.events)
+      for (const r of eventRefs(e))
+        (r.kind === 'approval' ? a : r.kind === 'alert' ? b : null)?.add(r.id);
+    return [[...a].sort(), [...b].sort()];
+  }, [snapshot.events]);
+  // Filtered to one mission you have viewed: tag events not observed at that view.
+  const missionViews = useMissionViews();
+  const missionView = view.missionId === 'all' ? null : missionViews.get(view.missionId);
+  const missionNew = useMemo(
+    () =>
+      missionView && missionView.adapterId === snapshot.provenance.adapterId
+        ? eventCoverage(
+            snapshot.events.filter((e) => e.missionId === view.missionId),
+            missionView.events,
+            !resourceUnavailable(snapshot, 'events'),
+          ).newIds
+        : undefined,
+    [missionView, snapshot, view.missionId],
   );
   const filtered = (Object.keys(DEFAULT_VIEW) as (keyof ActivityView)[]).some(
     (k) => view[k] !== DEFAULT_VIEW[k],
@@ -156,6 +187,24 @@ export function ActivityPage() {
           ]}
         />
         <SelectFilter
+          label={t.approval}
+          value={view.approvalId}
+          onChange={(approvalId) => set({ approvalId })}
+          options={[
+            { value: 'all', label: t.anyApproval },
+            ...approvalIds.map((id) => ({ value: id, label: id })),
+          ]}
+        />
+        <SelectFilter
+          label={t.alert}
+          value={view.alertId}
+          onChange={(alertId) => set({ alertId })}
+          options={[
+            { value: 'all', label: t.anyAlert },
+            ...alertIds.map((id) => ({ value: id, label: id })),
+          ]}
+        />
+        <SelectFilter
           label={t.range}
           value={view.range}
           onChange={(range) => set({ range: range as Range })}
@@ -198,9 +247,13 @@ export function ActivityPage() {
             missionId: view.missionId === 'all' ? undefined : view.missionId,
             since,
             via: view.via === 'all' ? undefined : (view.via as EventVia),
+            approvalId: view.approvalId === 'all' ? undefined : view.approvalId,
+            alertId: view.alertId === 'all' ? undefined : view.alertId,
           }}
           limit={LIMIT}
           showNow
+          newIds={missionNew}
+          boundary
           details={view.details}
         />
         <p className="small muted">{t.bounded(LIMIT, MAX_EVENTS)}</p>

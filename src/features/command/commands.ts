@@ -20,7 +20,14 @@ export interface Command {
   /** Human readable shortcut, e.g. "G then F". */
   shortcut?: string;
   /** Present on search results: what the item is, its status and where it opens. */
-  result?: { type: string; status: string; surface: string; context?: string };
+  result?: {
+    type: string;
+    status: string;
+    surface: string;
+    context?: string;
+    /** Data provenance when not LIVE and current (SEARCH MATCH ≠ CURRENTNESS). */
+    provenance?: string;
+  };
   run: () => void;
 }
 
@@ -104,6 +111,60 @@ export function buildCommands(ctx: CommandContext): Command[] {
       group: 'Attention',
       keywords: 'founder attention queue waiting needs brief',
       run: () => navigate(withQuery(href.brief(), { focus: 'attention' })),
+    },
+  );
+  // Mission intelligence and data quality (navigation and filters only).
+  const route = parseRoute(ctx.hash ?? '');
+  if (route.name === 'mission')
+    cmds.push({
+      id: 'attention:mission-changes',
+      title: p.missionChanges,
+      group: 'Attention',
+      keywords: 'what changed this mission since last viewed',
+      run: () => navigate(withQuery(href.mission(route.id), { focus: 'changes' })),
+    });
+  cmds.push(
+    {
+      id: 'missions:founder',
+      title: p.missionsFounder,
+      group: 'Attention',
+      keywords: 'missions founder awaiting approval gate',
+      run: () => navigate(withQuery(href.missions(), { group: 'founder' })),
+    },
+    {
+      id: 'missions:changed',
+      title: p.missionsChanged,
+      group: 'Attention',
+      keywords: 'missions changed since viewed markers',
+      run: () => navigate(withQuery(href.missions(), { since: 'changed' })),
+    },
+    {
+      id: 'missions:blocked',
+      title: p.missionsBlocked,
+      group: 'Navigate',
+      keywords: 'missions blocked stuck',
+      run: () => navigate(withQuery(href.missions(), { group: 'blocked' })),
+    },
+    {
+      id: 'missions:failed',
+      title: p.missionsFailed,
+      group: 'Navigate',
+      keywords: 'missions failed',
+      run: () => navigate(withQuery(href.missions(), { group: 'failed' })),
+    },
+    {
+      id: 'activity:recent',
+      title: p.recentEvents,
+      group: 'Navigate',
+      keywords: 'events recent activity timeline hour',
+      run: () => navigate(withQuery(href.activity(), { range: '1h' })),
+    },
+    {
+      id: 'diag:quality',
+      title: p.dataQuality,
+      group: 'Diagnostics',
+      keywords: 'data quality unknown stale partial last known why source history coverage',
+      run: () => navigate(href.quality()),
     },
   );
   // Founder attention: open gates first (navigation only; deciding stays on the gate card).
@@ -250,6 +311,7 @@ export function resultToCommand(
   r: SearchResult,
   navigate: (hash: string) => void,
   m: Messages = en,
+  provenance?: string,
 ): Command {
   return {
     id: `result:${r.type}:${r.id}`,
@@ -260,6 +322,7 @@ export function resultToCommand(
       status: r.status,
       surface: r.surface,
       context: r.context,
+      provenance,
     },
     run: () => navigate(r.href),
   };

@@ -22,6 +22,7 @@ export const SURFACE_LOADERS = {
   activity: () =>
     import('@/features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })),
   brief: () => import('@/features/brief/BriefPage').then((m) => ({ default: m.BriefPage })),
+  quality: () => import('@/features/quality/QualityPage').then((m) => ({ default: m.QualityPage })),
   settings: () =>
     import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 } as const;
@@ -39,6 +40,7 @@ export const SURFACE_LABEL: Record<SurfaceName, string> = {
   alerts: 'Alerts',
   activity: 'Activity',
   brief: 'Founder brief',
+  quality: 'Data quality',
   settings: 'Settings',
 };
 

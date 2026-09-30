@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
-import { KeyValue, Panel, StatusBadge } from '@/components/ui';
+import { href } from '@/app/router';
+import { KeyValue, MoreLink, Panel, StatusBadge } from '@/components/ui';
 import type { TransportDiagnostics } from '@/adapters/types';
 import { selectFreshness } from '@/domain/freshness';
 import { WORKER_STATES } from '@/domain/types';
@@ -313,7 +314,13 @@ function TransportPanel({ diagnostics: d }: { diagnostics: TransportDiagnostics 
   }
 
   return (
-    <Panel title={t.transport} id="transport" focusId="transport" className="span-2">
+    <Panel
+      title={t.transport}
+      id="transport"
+      focusId="transport"
+      className="span-2"
+      actions={<MoreLink href={href.quality()}>{m.quality.open}</MoreLink>}
+    >
       <p className="small muted">{t.transportNote}</p>
       <KeyValue items={rows} />
       {streamConfigured && <p className="small muted">{t.resyncNote}</p>}

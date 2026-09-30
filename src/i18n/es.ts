@@ -49,6 +49,7 @@ export const es: Messages = {
     alerts: 'Alertas',
     activity: 'Actividad',
     brief: 'Resumen',
+    quality: 'Calidad de datos',
     settings: 'Ajustes',
     skip: 'Saltar al contenido',
     home: (product, surface) => `Inicio de ${product} ${surface}`,
@@ -87,6 +88,7 @@ export const es: Messages = {
       alerts: 'Alertas',
       activity: 'Actividad',
       brief: 'Resumen para el Founder',
+      quality: 'Calidad de datos',
       settings: 'Ajustes',
     },
   },
@@ -442,6 +444,13 @@ export const es: Messages = {
       elapsed: 'Mayor duración',
       newest: 'Más recientes',
       id: 'Id de misión',
+      activity: 'Actividad reciente (hora del evento)',
+    },
+    since: 'Desde la última visita',
+    sinceOption: {
+      all: 'Cualquiera',
+      new: 'Nuevas desde mi última visita',
+      changed: 'Cambiadas desde que la vi',
     },
     elapsedTitle: 'Transcurrido',
     left: (clock) => `quedan ${clock} (est.)`,
@@ -733,6 +742,17 @@ export const es: Messages = {
     noLastView:
       'No hay ninguna visita anterior registrada en este navegador, así que «Desde mi última visita» no se puede aplicar. Se muestra cualquier momento.',
     openTimeline: 'Abrir en la cronología',
+    unavailable:
+      'No se pudieron cargar los eventos: esta lista puede estar incompleta o desactualizada.',
+    noneUnknown: 'Eventos: DESCONOCIDO (no se pudieron cargar)',
+    newSinceView: 'NUEVO DESDE TU VISITA',
+    newSinceViewTitle: 'No se había observado en tu última visita a esta misión',
+    historyBoundary: (at) =>
+      `El historial conservado empieza el ${at} (hora del evento). No se muestra ni se reconstruye nada anterior.`,
+    approval: 'Puerta de aprobación',
+    anyApproval: 'Cualquier puerta',
+    alert: 'Alerta',
+    anyAlert: 'Cualquier alerta',
     bounded: (shown, max) =>
       `Se muestran los ${shown} eventos más recientes. El panel conserva como máximo ${max} en memoria.`,
   },
@@ -912,6 +932,8 @@ export const es: Messages = {
       differentSource: (then) =>
         `Tu última visita procedía de otra fuente de datos (${then}). Los cambios no se pueden comparar, así que son DESCONOCIDOS.`,
       rejected: 'Había un registro de última visita ilegible o no válido y se ha ignorado.',
+      outdated:
+        'Se descartó un registro de última visita de otra versión del panel, así que lo que ha cambiado es DESCONOCIDO.',
       storageUnavailable:
         'Este navegador no ha permitido guardar el registro de última visita; no se conservará al recargar.',
       markSeen: 'Marcar todo como visto',
@@ -932,7 +954,7 @@ export const es: Messages = {
         artifactsNew: 'Artefactos nuevos',
         statusBecameUnknown: 'Estado pasó a DESCONOCIDO',
         noLongerReported: 'Ya no se informan',
-        events: 'Eventos desde entonces',
+        events: 'Eventos nuevos observados',
       },
       reason: {
         'no-baseline': 'no hay visita anterior',
@@ -942,7 +964,7 @@ export const es: Messages = {
         'history-truncated': 'el historial conservado no llega tan atrás',
         'baseline-truncated': 'la última visita era demasiado grande para registrarla entera',
       },
-      eventsLowerBound: (n) => `al menos ${n} conservados`,
+      eventsLowerBound: (n) => `al menos ${n} observados`,
       nothing: 'No ha cambiado nada en ninguna categoría desde tu última visita.',
       items: 'Cambios',
       entity: {
@@ -954,6 +976,10 @@ export const es: Messages = {
       },
       moreItems: (n) => `Hay ${n} cambios más contados arriba pero no listados.`,
       goneNote: 'Ya no aparece en los datos: no significa completado ni eliminado.',
+      missionsChanged: (n, shown) =>
+        n === 1
+          ? '1 misión que viste ha cambiado desde tu visita'
+          : `${shown} misiones que viste han cambiado desde tus visitas`,
     },
     attention: {
       title: 'Cola de atención del Founder',
@@ -990,6 +1016,208 @@ export const es: Messages = {
       issues: (n) => `${n} problemas de calidad de datos informados`,
       diagnostics: 'Abrir el diagnóstico de transporte',
     },
+  },
+
+  missionView: {
+    title: 'Desde tu última visita a esta misión',
+    scope:
+      'Comparado con tu última visita a ESTA misión, solo en este navegador. Marcarla como vista no cambia nada en el backend, ni reconoce ni aprueba nada.',
+    since: (when, rel) => `Tu última visita a esta misión: ${when} (${rel}).`,
+    none: 'No has visto esta misión antes en este navegador, así que lo que ha cambiado en ella es DESCONOCIDO. No es lo mismo que «no ha cambiado nada».',
+    differentSource: (then) =>
+      `Tu última visita a esta misión procedía de otra fuente de datos (${then}). Los cambios no se pueden comparar, así que son DESCONOCIDOS.`,
+    rejected: 'Había una visita guardada de esta misión ilegible o no válida y se ha ignorado.',
+    storageUnavailable:
+      'Este navegador no ha permitido guardar las visitas a misiones; no se conservarán al recargar.',
+    outdated: 'Se descartaron visitas a misiones guardadas por otra versión del panel.',
+    markSeen: 'Marcar la misión como vista',
+    forget: 'Olvidar esta visita a la misión',
+    nothing:
+      'No ha cambiado nada en esta misión desde tu última visita, y su historial de eventos está completo para ese periodo.',
+    cannotSay:
+      'No hay ningún cambio probado, pero algunas áreas no se pudieron comparar (abajo). Esto no significa que no haya cambiado nada.',
+    changes: 'Cambios probados',
+    unknownAreas: 'No se pudo comparar',
+    area: {
+      status: 'Estado',
+      workers: 'Estados de los trabajadores',
+      approvals: 'Puertas de aprobación',
+      alerts: 'Alertas',
+      artifacts: 'Artefactos',
+      events: 'Eventos',
+    },
+    unknownReason: {
+      'unavailable-then': 'no se cargó en tu última visita',
+      'unavailable-now': 'no se puede cargar ahora',
+      'mission-not-reported': 'la misión no figuraba entonces o ahora',
+      'history-not-covered': 'el historial conservado no llega hasta tu última visita',
+    },
+    change: {
+      missionNoLongerReported:
+        'La misión ya no se informa (no significa eliminada ni completada: los datos ya no la incluyen)',
+      missionReappeared: 'La misión vuelve a informarse (no significa que el trabajo se reanudara)',
+      status: 'El estado cambió',
+      resultAppeared: 'Se informó un resultado (un resultado no es una certificación)',
+      assigned: 'Trabajador asignado',
+      unassigned: 'Trabajador ya no asignado',
+      workerState: 'El estado del trabajador cambió',
+      workerNoLongerReported: 'El trabajador ya no se informa',
+      workerReappeared: 'El trabajador vuelve a informarse',
+      approvalLinked: 'Puerta de aprobación vinculada',
+      approvalStatus: 'El estado de la puerta de aprobación cambió',
+      approvalUnlinked: 'La puerta de aprobación ya no está vinculada',
+      approvalNoLongerReported: 'La puerta de aprobación ya no se informa',
+      alertOpened: 'Una alerta nueva menciona esta misión',
+      alertPhase: 'El estado de la alerta cambió',
+      alertNoLongerReported: 'La alerta ya no se informa',
+      artifactNew: 'Artefacto nuevo',
+      dataBecameUnavailable: 'Los datos dejaron de estar disponibles',
+      dataRecovered: 'Los datos se volvieron a cargar',
+      freshnessChanged: 'La actualidad de los datos cambió',
+    },
+    notReported: 'no informado',
+    attentionTitle: 'Atención del Founder para esta misión',
+    attentionEmpty: 'Nada en los datos de esta misión está esperando al Founder.',
+    currentState: 'Estado actual',
+    participants: 'Participantes',
+    context: 'Contexto de aprobaciones y alertas',
+  },
+
+  coverage: {
+    exact: (n, shown) =>
+      n === 1 ? '1 evento nuevo observado' : `${shown} eventos nuevos observados`,
+    lowerBound: (shown) =>
+      `Al menos ${shown} eventos nuevos (puede que los anteriores no se hayan conservado)`,
+    unknown: 'Eventos nuevos: DESCONOCIDO',
+    notApplicable: 'Eventos nuevos: no hay una visita comparable',
+    state: {
+      exact: 'EXACTO',
+      'lower-bound': 'AL MENOS',
+      unknown: 'DESCONOCIDO',
+      'not-applicable': 'SIN VISITA COMPARABLE',
+    },
+  },
+
+  marker: {
+    label: 'Marcadores',
+    new: 'NUEVA',
+    changed: 'CAMBIADA',
+    founder: 'REQUIERE AL FOUNDER',
+    newTitle: 'No estaba en los datos en tu última visita general',
+    changedTitle: 'Cambió desde tu última visita a esta misión',
+    founderTitle: 'Una puerta de aprobación de esta misión está abierta para la autoridad humana',
+  },
+
+  explain: {
+    why: '¿Por qué está aquí?',
+    code: 'Código de motivo',
+    trigger: 'Activado por',
+    known: 'Conocido',
+    unknown: 'Desconocido',
+    sourceTime: 'Hora en la fuente',
+    receivedAt: 'Datos recibidos por última vez',
+    freshness: 'Actualidad',
+    action: 'Dónde actuar',
+    actionSurface: {
+      'gate-card':
+        'La tarjeta de la puerta de aprobación, que comprueba la autoridad antes de cualquier decisión',
+      'alert-card': 'La tarjeta de la alerta',
+      none: 'En ningún sitio: es información sobre los datos',
+    },
+    fact: {
+      status: 'Estado',
+      requiredAuthority: 'Autoridad requerida',
+      requestedBy: 'Solicitado por',
+      risk: 'Riesgo',
+      reversible: 'Reversible',
+      humanActionRequired: 'Requiere acción humana',
+      acknowledged: 'Reconocida',
+      severity: 'Gravedad (solo contexto, nunca un motivo por sí sola)',
+      resource: 'Recurso',
+      freshness: 'Actualidad',
+    },
+    missing: 'no informado',
+    none: 'ninguno',
+    unknownFact: {
+      'blocked-workers':
+        'Qué trabajadores están bloqueados por ella (no se pudieron cargar los trabajadores)',
+      'mission-record':
+        'El registro de la misión de la puerta (no se pudieron cargar las misiones)',
+      'related-alerts': 'Alertas relacionadas (no se pudieron cargar las alertas)',
+      'queue-completeness': 'Si hay otros elementos pendientes (la cola está incompleta)',
+      'current-state': 'Si sigue vigente (los datos no son actuales)',
+    },
+    order:
+      'Orden: puertas abiertas para el Founder, puertas no decidibles, estado de puerta no reconocido, alertas con acción humana; después, las más antiguas primero. No hay puntuación ni predicción.',
+  },
+
+  evidence: {
+    title: (n) => `Artefactos y evidencias (${n})`,
+    note: 'Los artefactos son referencias informadas por la fuente de datos. El panel no los ha verificado, y un artefacto no es una certificación.',
+    reportedBy: 'informado por',
+    reportedBySource: 'informado por la fuente de datos',
+    external: 'se abre fuera del panel',
+    noLink: 'sin enlace informado',
+  },
+
+  quality: {
+    eyebrow: 'Calidad de datos',
+    title: 'Por qué el panel dice lo que dice',
+    lede: 'Cada dimensión se muestra por separado. No hay una puntuación única de salud: un solo número ocultaría qué parte es incierta.',
+    source: 'Fuente',
+    adapter: 'Adaptador',
+    environment: 'Entorno',
+    transport: 'Transporte',
+    connection: 'Conexión',
+    verified: 'Backend verificado',
+    resources: 'Recursos',
+    loaded: 'cargado',
+    unavailable: 'no se pudo cargar: las respuestas que dependen de él son DESCONOCIDAS',
+    issueCount: (n) => `${n} problemas`,
+    freshness: 'Actualidad',
+    lastSync: 'Última sincronización completa',
+    never: 'nunca',
+    notApplicable: 'no aplica (los datos simulados no se sincronizan)',
+    staleAfter: 'Desactualizado tras',
+    staleNow: 'Desactualizado ahora',
+    generatedAt: 'Instantánea producida',
+    history: 'Historial de eventos',
+    retained: (n, cap) => `${n} de un máximo de ${cap} eventos conservados`,
+    oldest: 'Evento conservado más antiguo (hora de la fuente)',
+    newest: 'Evento conservado más reciente (hora de la fuente)',
+    atCapacity: 'En su límite: los eventos más antiguos se descartan al llegar otros nuevos',
+    noEvents: 'No hay eventos conservados',
+    coverageSinceView: 'Cobertura de eventos desde tu última visita',
+    lastEvent: 'Evento más reciente (por hora de la fuente)',
+    lastReceived: 'Evento recibido más recientemente',
+    eventDetail: (at, received, via) => `hora del evento ${at} · recibido ${received} · vía ${via}`,
+    ingest: 'Eventos por vía de llegada',
+    unrecorded: 'no registrado',
+    issuesTitle: 'Problemas de datos',
+    noIssues: 'No se informa de problemas de datos.',
+    moreIssues: (n) => `${n} problemas más no listados`,
+    issueClass: {
+      'resource-unavailable': 'Recurso no disponible',
+      'record-dropped': 'Registro descartado por no válido',
+      'record-repaired': 'Valor mostrado como DESCONOCIDO o con un valor seguro',
+      transport: 'Transporte',
+      other: 'Otro',
+    },
+    storage: 'Memoria local de visitas (solo este navegador)',
+    storageState: {
+      none: 'nada guardado',
+      ok: 'guardado',
+      outdated: 'descartado (otra versión)',
+      rejected: 'no válido, ignorado',
+      unavailable: 'almacenamiento del navegador no disponible',
+    },
+    globalView: 'Última visita general',
+    missionViews: 'Visitas a misiones',
+    forgetMissionViews: 'Olvidar todas las visitas a misiones',
+    message: 'Mensaje del adaptador',
+    open: 'Explicar la calidad de los datos',
+    yes: 'sí',
+    no: 'no',
   },
 
   settings: {
@@ -1128,10 +1356,23 @@ export const es: Messages = {
     unavailable: (r) => `Mostrar problema de datos: ${r}`,
     clearFilters: 'Quitar los filtros de esta página',
     whatChanged: '¿Qué ha cambiado desde la última vez que miré?',
+    missionChanges: '¿Qué ha cambiado en esta misión?',
+    missionsFounder: 'Mostrar misiones que esperan al Founder',
+    missionsBlocked: 'Mostrar misiones bloqueadas',
+    missionsFailed: 'Mostrar misiones fallidas',
+    missionsChanged: 'Mostrar misiones que cambiaron desde que las vi',
+    dataQuality: 'Explicar la calidad de los datos',
+    recentEvents: 'Mostrar los eventos de la última hora',
     attentionQueue: 'Abrir la cola de atención del Founder',
   },
 
   search: {
+    provenance: {
+      SIMULATED: 'SIMULADO',
+      REPLAY: 'REPETICIÓN',
+      DISCONNECTED: 'ÚLTIMO CONOCIDO',
+      STALE: 'DESACTUALIZADO',
+    },
     type: {
       mission: 'Misión',
       worker: 'Trabajador',

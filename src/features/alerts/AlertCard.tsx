@@ -64,7 +64,10 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
           {alert.title}
         </h3>
         <span className="alert-card__time">
-          <span className="mono">{alert.id}</span> · {rel(alert.raisedAt, now)}
+          <span className="mono">{alert.id}</span> · {rel(alert.raisedAt, now)} ·{' '}
+          <a className="target" href={withQuery(href.activity(), { alert: alert.id })}>
+            {m.activity.openTimeline}
+          </a>
         </span>
       </header>
       {!compact && (

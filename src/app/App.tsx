@@ -3,6 +3,7 @@ import type { DashboardConfig } from '@/config/types';
 import { ConfigProvider } from '@/store/ConfigProvider';
 import { DashboardProvider } from '@/store/DashboardProvider';
 import { LastViewProvider } from '@/store/LastViewProvider';
+import { MissionViewsProvider } from '@/store/MissionViewsProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { PreferencesProvider } from '@/store/PreferencesProvider';
 import { Shell } from './Shell';
@@ -18,7 +19,9 @@ export function App({ config, adapter }: { config: DashboardConfig; adapter: Das
         <I18nProvider>
           <DashboardProvider adapter={adapter}>
             <LastViewProvider>
-              <Shell />
+              <MissionViewsProvider>
+                <Shell />
+              </MissionViewsProvider>
             </LastViewProvider>
           </DashboardProvider>
         </I18nProvider>

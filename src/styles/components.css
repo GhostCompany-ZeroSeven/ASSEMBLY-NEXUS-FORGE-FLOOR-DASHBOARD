@@ -86,8 +86,14 @@
 }
 /* In narrow cards (320px phones, longer languages) a long status wraps inside
    its badge rather than spilling out of the card. Badges that fit are unchanged. */
+/* Key/value columns can be narrow at any width (e.g. the mission record at 1440px). */
+.kv dd .badge {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 560px) {
-  .kv dd .badge,
   .mission-card__top .badge,
   .worker-card__state .badge,
   .gate__head .badge {

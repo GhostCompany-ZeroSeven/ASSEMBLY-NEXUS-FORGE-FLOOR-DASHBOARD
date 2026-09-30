@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { href, withQuery } from '@/app/router';
+import { FreshnessLine } from '@/components/FreshnessLine';
 import { Icon } from '@/components/Icon';
-import { EmptyState, MoreLink, Panel, StatusBadge } from '@/components/ui';
+import { EmptyState, MoreLink, Panel } from '@/components/ui';
 import { selectAttentionQueue, type AttentionItem } from '@/domain/attention';
 import { selectBrief, type BriefCategory, type DataProblem } from '@/domain/brief';
 import { computeDigest, DIGEST_CATEGORIES, type Digest, type DigestItem } from '@/domain/digest';
@@ -10,6 +11,8 @@ import type { Tone } from '@/domain/status';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import type { Messages } from '@/i18n/en';
 import { useI18n } from '@/i18n/useI18n';
+import { useMissionMarkers } from '@/features/missions/useMissionMarkers';
+import { AttentionList } from './AttentionList';
 import { useConfig, useDashboard, useLastView, useNow, useSnapshot } from '@/store/hooks';
 
 const FIGURES: BriefCategory[] = [
@@ -60,7 +63,7 @@ export function BriefPage() {
           <h1 className="page__title">{t.title}</h1>
           <p className="page__lede">{t.lead}</p>
         </div>
-        <FreshnessLine freshness={freshness} m={m} />
+        <FreshnessLine freshness={freshness} />
       </header>
 
       <section className="brief__figures" aria-labelledby="brief-glance">
@@ -125,34 +128,6 @@ function Num({ n }: { n: number }) {
   return <>{num(n)}</>;
 }
 
-function FreshnessLine({ freshness, m }: { freshness: Freshness; m: Messages }) {
-  const modeKey = {
-    SIMULATED: 'demo',
-    LIVE: 'live',
-    DISCONNECTED: 'disconnected',
-    REPLAY: 'replay',
-  }[freshness.source] as keyof Messages['provenance']['mode'];
-  const tone: Tone =
-    freshness.source === 'LIVE'
-      ? 'success'
-      : freshness.source === 'DISCONNECTED'
-        ? 'danger'
-        : 'warning';
-  return (
-    <div className="brief__freshness" data-freshness={freshness.source}>
-      <span className="brief__freshness-label">{m.brief.dataSource}</span>
-      <StatusBadge tone={tone} size="sm">
-        {m.provenance.mode[modeKey]}
-      </StatusBadge>
-      {freshness.qualifiers.map((q) => (
-        <StatusBadge key={q} tone="warning" size="sm">
-          {m.provenance.qualifier[q]}
-        </StatusBadge>
-      ))}
-    </div>
-  );
-}
-
 /* ------------------------------ Attention queue ------------------------------ */
 
 function AttentionPanel({
@@ -168,17 +143,9 @@ function AttentionPanel({
   missingNames: string;
   now: number;
 }) {
-  const { m, rel, dateTime } = useI18n();
+  const { m } = useI18n();
   const t = m.brief.attention;
   const records = items.filter((i) => i.source !== 'data');
-  const freshLabel = [
-    m.provenance.mode[
-      (
-        { SIMULATED: 'demo', LIVE: 'live', DISCONNECTED: 'disconnected', REPLAY: 'replay' } as const
-      )[freshness.source]
-    ],
-    ...freshness.qualifiers.map((q) => m.provenance.qualifier[q]),
-  ].join(' · ');
   return (
     <Panel
       id="brief-attention"
@@ -198,65 +165,7 @@ function AttentionPanel({
       {items.length === 0 ? (
         <EmptyState title={t.empty} />
       ) : (
-        <ol className="attention-list">
-          {items.map((it) => (
-            <li key={it.key} className="attention-item" data-reason={it.reason}>
-              <div className="attention-item__reason">{t.reason[it.reason]}</div>
-              {it.source === 'data' ? (
-                <MoreLink href={it.href}>
-                  {it.reason === 'data-unavailable'
-                    ? (m.brief.resource[it.id] ?? it.id)
-                    : m.brief.problems.diagnostics}
-                </MoreLink>
-              ) : (
-                <>
-                  <a className="attention-item__title" href={it.href}>
-                    {it.label}
-                  </a>
-                  <dl className="attention-item__facts">
-                    <div>
-                      <dt>{t.source[it.source]}</dt>
-                      <dd className="mono">{it.id}</dd>
-                    </div>
-                    <div>
-                      <dt>{t.state}</dt>
-                      <dd>
-                        {it.source === 'approval'
-                          ? m.status.approval[it.state as keyof Messages['status']['approval']]
-                          : m.brief.alertPhase[it.state]}
-                      </dd>
-                    </div>
-                    {it.since && (
-                      <div>
-                        <dt>{t.since}</dt>
-                        <dd>
-                          <time dateTime={it.since} title={dateTime(it.since)}>
-                            {rel(it.since, now)}
-                          </time>
-                        </dd>
-                      </div>
-                    )}
-                    <div>
-                      <dt>{t.freshness}</dt>
-                      <dd>{freshLabel}</dd>
-                    </div>
-                  </dl>
-                  {it.related.length > 0 && (
-                    <div className="attention-item__related">
-                      <span className="muted">{t.related}:</span>{' '}
-                      {it.related.map((r, i) => (
-                        <span key={`${r.kind}:${r.id}`}>
-                          {i > 0 && ', '}
-                          <a href={r.href}>{r.label}</a>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </li>
-          ))}
-        </ol>
+        <AttentionList items={items} freshness={freshness} now={now} />
       )}
     </Panel>
   );
@@ -284,6 +193,9 @@ function stateLabel(m: Messages, item: DigestItem, value: string | undefined): s
 function DigestPanel({ digest, now }: { digest: Digest; now: number }) {
   const { m, rel, dateTime, num } = useI18n();
   const lastView = useLastView();
+  const { markers } = useMissionMarkers();
+  let changedMissions = 0;
+  for (const x of markers.values()) if (x.changed) changedMissions += 1;
   const t = m.brief.digest;
   const mode = (x: keyof Messages['provenance']['mode']) => m.provenance.mode[x];
   const allKnownZero =
@@ -322,11 +234,19 @@ function DigestPanel({ digest, now }: { digest: Digest; now: number }) {
           </p>
         )}
         {lastView.storage === 'rejected' && <p className="brief__warning">{t.rejected}</p>}
+        {lastView.storage === 'outdated' && <p className="brief__warning">{t.outdated}</p>}
         {lastView.storage === 'unavailable' && (
           <p className="brief__warning">{t.storageUnavailable}</p>
         )}
       </div>
 
+      {changedMissions > 0 && (
+        <p>
+          <MoreLink href={withQuery(href.missions(), { since: 'changed' })}>
+            {t.missionsChanged(changedMissions, num(changedMissions))}
+          </MoreLink>
+        </p>
+      )}
       <h3 className="brief__subhead">{t.counts}</h3>
       <dl className="digest-counts">
         {DIGEST_CATEGORIES.map((c) => {
@@ -426,9 +346,12 @@ function ProblemsPanel({
       title={t.title}
       tone={problems.length ? 'warning' : undefined}
       actions={
-        <MoreLink href={withQuery(href.settings(), { focus: 'transport' })}>
-          {t.diagnostics}
-        </MoreLink>
+        <>
+          <MoreLink href={href.quality()}>{m.quality.open}</MoreLink>
+          <MoreLink href={withQuery(href.settings(), { focus: 'transport' })}>
+            {t.diagnostics}
+          </MoreLink>
+        </>
       }
     >
       {problems.length === 0 ? (

@@ -16,6 +16,7 @@ import { cap } from '@/i18n/format';
 import { useI18n } from '@/i18n/useI18n';
 import { useSnapshot } from '@/store/hooks';
 import { MissionCard } from './MissionCard';
+import { useMissionMarkers } from './useMissionMarkers';
 
 const GROUPS: MissionGroup[] = [
   'all',
@@ -33,7 +34,8 @@ export function MissionsPage() {
   const t = m.missions;
   // Filters, sorting and search text live in the URL (?group=&priority=&worker=&sort=&q=).
   const [f, setF] = useUrlState(DEFAULT_MISSION_FILTER, MISSION_SCHEMA);
-  const missions = filterMissions(snapshot, f, undefined, m);
+  const intel = useMissionMarkers();
+  const missions = filterMissions(snapshot, f, undefined, m, intel);
   const page = useIncremental(missions, 60);
   const set: typeof setF = (patch, mode) => {
     setF(patch, mode);
@@ -90,13 +92,24 @@ export function MissionsPage() {
               ]}
             />
             <SelectFilter
+              label={t.since}
+              value={f.since}
+              onChange={(since) => set({ since })}
+              options={(['all', 'new', 'changed'] as const).map((v) => ({
+                value: v,
+                label: t.sinceOption[v],
+              }))}
+            />
+            <SelectFilter
               label={m.filters.sortBy}
               value={f.sort}
               onChange={(sort) => set({ sort })}
-              options={(['status', 'priority', 'elapsed', 'newest', 'id'] as const).map((s) => ({
-                value: s,
-                label: t.sort[s],
-              }))}
+              options={(['status', 'priority', 'activity', 'elapsed', 'newest', 'id'] as const).map(
+                (s) => ({
+                  value: s,
+                  label: t.sort[s],
+                }),
+              )}
             />
           </>
         }
@@ -113,7 +126,7 @@ export function MissionsPage() {
           <>
             <div className="mission-list">
               {page.visible.map((x) => (
-                <MissionCard key={x.id} mission={x} />
+                <MissionCard key={x.id} mission={x} markers={intel.markers.get(x.id)} />
               ))}
             </div>
             <ShowMore hidden={page.hidden} onClick={page.showMore} />

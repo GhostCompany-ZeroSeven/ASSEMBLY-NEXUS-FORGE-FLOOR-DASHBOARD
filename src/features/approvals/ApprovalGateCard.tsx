@@ -96,6 +96,9 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
               {request.missionId}
             </a>
           )}
+          <a className="target small" href={withQuery(href.activity(), { approval: request.id })}>
+            {m.activity.openTimeline}
+          </a>
         </div>
         <StatusBadge tone={meta.tone} pulse={request.status === 'PENDING'}>
           {m.status.approval[request.status]}

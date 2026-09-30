@@ -4,6 +4,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { SimulationControlsBar } from '@/components/SimulationControlsBar';
 import { StatusBadge } from '@/components/ui';
+import { selectFreshness } from '@/domain/freshness';
 import { selectOverview, redAlertActive } from '@/domain/selectors';
 import { HEALTH_STATUS_META } from '@/domain/status';
 import { useI18n } from '@/i18n/useI18n';
@@ -91,12 +92,24 @@ export function Shell() {
     [dialog, snapshot, config, simState?.running, prefs.setThemeId, m, i18n.locale],
   );
 
+  // Every search result carries the data's provenance when it is not LIVE and
+  // current (SEARCH MATCH ≠ CURRENTNESS). A string, so the index is not rebuilt per tick.
+  const f = snapshot ? selectFreshness(snapshot, status, now) : null;
+  const searchProvenance = !f
+    ? undefined
+    : f.source === 'SIMULATED' || f.source === 'REPLAY' || f.source === 'DISCONNECTED'
+      ? m.search.provenance[f.source]
+      : f.qualifiers.includes('STALE')
+        ? m.search.provenance.STALE
+        : undefined;
+
   // One index per palette opening (rebuilt only when the data or language changes).
   const search = useMemo(() => {
     if (!snapshot || dialog !== 'palette') return undefined;
     const index = buildSearchIndex(snapshot, config.floor, m);
-    return (q: string) => searchIndex(index, q).map((r) => resultToCommand(r, navigate, m));
-  }, [dialog, snapshot, config.floor, m]);
+    return (q: string) =>
+      searchIndex(index, q).map((r) => resultToCommand(r, navigate, m, searchProvenance));
+  }, [dialog, snapshot, config.floor, m, searchProvenance]);
 
   if (!snapshot) {
     return (

@@ -189,6 +189,11 @@
 .red-alert__text strong {
   letter-spacing: 0.2em;
 }
+/* Safety-critical: the RED ALERT text wraps rather than being cut off. */
+.red-alert__text,
+.red-alert__text strong {
+  overflow-wrap: anywhere;
+}
 .red-alert__action {
   font-size: 11px;
   text-transform: uppercase;
@@ -835,4 +840,10 @@ kbd {
       150% 0,
       0 0;
   }
+}
+
+.palette__prov {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--tone-warning);
 }

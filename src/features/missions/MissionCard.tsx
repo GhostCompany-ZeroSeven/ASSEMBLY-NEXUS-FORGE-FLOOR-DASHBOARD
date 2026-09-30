@@ -1,13 +1,22 @@
 import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
+import { Icon } from '@/components/Icon';
 import { ProgressBar, StatusBadge } from '@/components/ui';
+import type { MissionMarkers } from '@/domain/missionMarkers';
 import { MISSION_STATUS_META } from '@/domain/status';
 import { formatClock, missionTiming } from '@/domain/time';
 import type { Mission } from '@/domain/types';
 import { useI18n } from '@/i18n/useI18n';
 import { useNow, useSnapshot } from '@/store/hooks';
 
-export function MissionCard({ mission }: { mission: Mission }) {
+export function MissionCard({
+  mission,
+  markers,
+}: {
+  mission: Mission;
+  /** Orientation markers (see domain/missionMarkers.ts). Never authority. */
+  markers?: MissionMarkers;
+}) {
   const snapshot = useSnapshot();
   const now = useNow(1000);
   const { m } = useI18n();
@@ -36,6 +45,29 @@ export function MissionCard({ mission }: { mission: Mission }) {
           ) : null}
         </div>
         <div className="mission-card__title">{mission.title}</div>
+        {markers && (markers.founder || markers.new || markers.changed) && (
+          <ul className="markers" aria-label={m.marker.label}>
+            {markers.founder && (
+              <li className="marker" data-marker="founder" title={m.marker.founderTitle}>
+                <Icon name="gate" size={12} />
+                {m.marker.founder}
+                <span className="visually-hidden">: {m.marker.founderTitle}</span>
+              </li>
+            )}
+            {markers.new && (
+              <li className="marker" data-marker="new" title={m.marker.newTitle}>
+                {m.marker.new}
+                <span className="visually-hidden">: {m.marker.newTitle}</span>
+              </li>
+            )}
+            {markers.changed && (
+              <li className="marker" data-marker="changed" title={m.marker.changedTitle}>
+                {m.marker.changed}
+                <span className="visually-hidden">: {m.marker.changedTitle}</span>
+              </li>
+            )}
+          </ul>
+        )}
         <ProgressBar
           value={mission.progress}
           tone={meta.tone}

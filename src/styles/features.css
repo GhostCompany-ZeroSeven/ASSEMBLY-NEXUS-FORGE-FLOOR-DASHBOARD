@@ -1443,3 +1443,137 @@ a.situation__cell:hover {
   margin: -4px 0 8px;
   overflow-wrap: anywhere;
 }
+
+/* ======================================================================== */
+/* Phase 6: mission command intelligence                                     */
+/* ======================================================================== */
+.mission-head__state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.mission-changes-slot > .panel {
+  height: 100%;
+}
+.mission-changes__events {
+  margin: 8px 0;
+}
+.mission-changes__unknown {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+/* Coverage: the state word is always spelled out, never colour alone. */
+.coverage {
+  overflow-wrap: anywhere;
+}
+.coverage__state {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.coverage[data-coverage='lower-bound'] .coverage__state,
+.coverage[data-coverage='unknown'] .coverage__state {
+  border-style: dashed;
+  color: var(--tone-warning);
+}
+/* Mission Control markers: text first, one small grammar. */
+.markers {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 2px 0 6px;
+  padding: 0;
+  min-width: 0;
+}
+.marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.marker[data-marker='founder'] {
+  border-color: var(--tone-warning);
+  color: var(--tone-warning);
+}
+.marker[data-marker='changed'] {
+  border-color: var(--tone-info);
+  border-style: dashed;
+}
+/* Attention explanation (progressive disclosure, keyboard-operable <details>). */
+.explain {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.explain > summary {
+  cursor: pointer;
+  color: var(--accent-2);
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.explain__list {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0;
+}
+.explain__list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 10em) minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+.explain__list dt {
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.explain__list dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.explain__facts {
+  margin: 0;
+  padding-left: 16px;
+}
+@media (max-width: 560px) {
+  .explain__list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+/* Timeline: new-since-your-view tag and retained-history boundary. */
+.stream__new {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  color: var(--tone-info);
+}
+.stream__boundary {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-top: 1px dashed var(--line-strong);
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}

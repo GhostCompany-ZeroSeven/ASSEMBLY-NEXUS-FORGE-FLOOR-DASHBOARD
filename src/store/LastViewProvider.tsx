@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { ConnectionStatus } from '@/adapters/types';
 import { createCheckpoint, type Checkpoint } from '@/domain/checkpoint';
-import { resourceUnavailable } from '@/domain/selectors';
-import type { DashboardSnapshot } from '@/domain/snapshot';
+import { canAutoRecord } from './autoRecord';
 import { LastViewContext } from './contexts';
 import { useDashboard } from './hooks';
 import { clearCheckpoint, loadCheckpoint, saveCheckpoint, type LastViewStorage } from './lastView';
@@ -19,17 +17,6 @@ export interface LastViewContextValue {
 
 /** Hidden at least this long counts as "away": on return, the saved view becomes the baseline. */
 export const AWAY_AFTER_MS = 5 * 60_000;
-
-/** An automatic checkpoint is recorded only from complete, connected data. */
-function canAutoRecord(
-  s: DashboardSnapshot | null,
-  status: ConnectionStatus,
-): s is DashboardSnapshot {
-  if (!s || status !== 'connected') return false;
-  return !['missions', 'workers', 'approvals', 'alerts', 'events'].some((r) =>
-    resourceUnavailable(s, r),
-  );
-}
 
 /**
  * Owns the "last looked" checkpoint for this browser.

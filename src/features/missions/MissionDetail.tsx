@@ -2,6 +2,11 @@ import { href, withQuery } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import { EmptyState, KeyValue, MoreLink, Panel, ProgressBar, StatusBadge } from '@/components/ui';
+import { useMemo } from 'react';
+import { FreshnessLine } from '@/components/FreshnessLine';
+import { selectAttentionQueue } from '@/domain/attention';
+import { selectFreshness } from '@/domain/freshness';
+import { computeMissionDigest } from '@/domain/missionView';
 import { findMission } from '@/domain/selectors';
 import {
   CERT_TONE,
@@ -13,7 +18,11 @@ import {
 import type { TaskStatus } from '@/domain/types';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { ApprovalGateCard } from '@/features/approvals/ApprovalGateCard';
-import { useNow, useSnapshot } from '@/store/hooks';
+import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
+import { AttentionList } from '@/features/brief/AttentionList';
+import { useMissionBaseline } from '@/hooks/useMissionBaseline';
+import { MissionChangesPanel } from './MissionChangesPanel';
+import { MissionEvidencePanel } from './MissionEvidencePanel';
 import { MissionInstrument } from './MissionInstrument';
 import { MissionResultPanel } from './MissionResultPanel';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
@@ -30,14 +39,55 @@ const TASK_TONE: Record<TaskStatus, Tone> = {
   SKIPPED: 'neutral',
 };
 
+/** Keyed by mission id so each mission gets its own "last viewed" baseline. */
 export function MissionDetail({ missionId }: { missionId: string }) {
+  return <MissionCommand key={missionId} missionId={missionId} />;
+}
+
+/**
+ * Founder-oriented mission surface. Information hierarchy: identity and source,
+ * current state, Founder attention, changes since this mission was last viewed,
+ * gates (the only place a decision can be made, behind checkDecision), recent
+ * timeline, participants and evidence, then supporting detail.
+ */
+function MissionCommand({ missionId }: { missionId: string }) {
   const snapshot = useSnapshot();
+  const { status } = useDashboard();
+  const { governance } = useConfig();
   const now = useNow(5000);
   const { m, rel } = useI18n();
   const t = m.mission;
   const mission = findMission(snapshot, missionId);
-  useFocusTarget(mission !== undefined);
+  useFocusTarget(true);
   const roomOf = useWorkerRoom();
+  const view = useMissionBaseline(missionId);
+  const freshness = selectFreshness(snapshot, status, now);
+  const freshKey = [freshness.source, ...freshness.qualifiers].join('+');
+  const digest = useMemo(
+    () => computeMissionDigest(snapshot, missionId, view.baseline, freshness),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [snapshot, missionId, view.baseline, freshKey],
+  );
+  const queue = selectAttentionQueue(snapshot, governance.humanAuthority, freshness);
+  const related = queue.items.filter((i) =>
+    i.related.some((r) => r.kind === 'mission' && r.id === missionId),
+  );
+  const attentionItems =
+    related.length > 0 || !queue.complete
+      ? [...queue.items.filter((i) => i.source === 'data'), ...related]
+      : related;
+
+  const changesPanel = (
+    <MissionChangesPanel
+      missionId={missionId}
+      digest={digest}
+      storage={view.storage}
+      rejected={view.rejected}
+      onMarkSeen={view.markSeen}
+      onForget={view.forget}
+      now={now}
+    />
+  );
 
   if (!mission) {
     return (
@@ -46,6 +96,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           <Icon name="back" size={14} /> {t.back}
         </a>
         <EmptyState title={t.notFound(missionId)} />
+        {changesPanel}
       </div>
     );
   }
@@ -71,6 +122,10 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           <div className="page__eyebrow mono">{mission.id}</div>
           <h1 className="page__title">{mission.title}</h1>
           <p className="page__lede">{mission.objective}</p>
+        </div>
+        <div className="mission-head__state">
+          <StatusBadge tone={meta.tone}>{m.status.mission[mission.status]}</StatusBadge>
+          <FreshnessLine freshness={freshness} />
         </div>
       </header>
 
@@ -108,6 +163,68 @@ export function MissionDetail({ missionId }: { missionId: string }) {
             ]}
           />
         </Panel>
+
+        <Panel
+          id="mission-attention"
+          focusId="attention"
+          title={m.missionView.attentionTitle}
+          tone={related.length ? 'warning' : undefined}
+        >
+          {!queue.complete && (
+            <p className="brief__warning" role="note">
+              {m.brief.attention.incomplete(
+                (['approvals', 'alerts'] as const)
+                  .filter((r) => queue.items.some((i) => i.source === 'data' && i.id === r))
+                  .map((r) => m.brief.resource[r])
+                  .join(m.brief.and),
+              )}
+            </p>
+          )}
+          {attentionItems.length === 0 ? (
+            <EmptyState title={m.missionView.attentionEmpty} />
+          ) : (
+            <AttentionList items={attentionItems} freshness={freshness} now={now} />
+          )}
+        </Panel>
+
+        <div className="span-2 mission-changes-slot">{changesPanel}</div>
+
+        {approvals.length > 0 && (
+          <Panel title={t.gates} className="span-3">
+            <div className="gate-list">
+              {approvals.map((a) => (
+                <ApprovalGateCard key={a.id} request={a} />
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        <Panel
+          title={t.timeline}
+          className="span-3"
+          actions={
+            <MoreLink href={withQuery(href.activity(), { mission: mission.id })}>
+              {m.activity.openTimeline}
+            </MoreLink>
+          }
+        >
+          <ActivityStream
+            filter={{ missionId: mission.id, includeLowSignal: true }}
+            showLinks={false}
+            newIds={digest.baseline === 'ok' ? digest.events.newIds : undefined}
+            boundary
+          />
+        </Panel>
+
+        {alerts.length > 0 && (
+          <Panel title={t.alerts(alerts.length)} className="span-3">
+            <div className="stack">
+              {alerts.map((al) => (
+                <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
+              ))}
+            </div>
+          </Panel>
+        )}
 
         <Panel title={t.crew}>
           {workers.length === 0 ? (
@@ -191,42 +308,11 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           )}
         </Panel>
 
-        <Panel title={t.artifacts(mission.artifacts.length)} className="span-2">
-          {mission.artifacts.length === 0 ? (
-            <EmptyState title={t.noArtifacts} />
-          ) : (
-            <ul className="artifact-list">
-              {mission.artifacts.map((a) => (
-                <li key={a.id} className="artifact" data-focus-id={a.id}>
-                  <Icon name={a.uri ? 'link' : 'artifact'} size={16} />
-                  <div>
-                    <div className="artifact__title">
-                      {a.uri ? (
-                        <a href={a.uri} target="_blank" rel="noreferrer noopener">
-                          {a.title}
-                        </a>
-                      ) : (
-                        a.title
-                      )}
-                    </div>
-                    {a.summary && <div className="small muted">{a.summary}</div>}
-                    {a.producedBy && (
-                      <div className="small muted">
-                        {m.common.by('')}
-                        <a href={href.worker(a.producedBy)}>
-                          {snapshot.workers.find((w) => w.id === a.producedBy)?.name ??
-                            a.producedBy}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                  <span className="chip">{m.status.artifact[a.kind]}</span>
-                  <span className="small muted">{rel(a.createdAt, now)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+        <MissionEvidencePanel
+          mission={mission}
+          newIds={new Set(digest.changes.filter((c) => c.kind === 'artifactNew').map((c) => c.id!))}
+          now={now}
+        />
 
         <Panel title={t.review}>
           <KeyValue
@@ -248,41 +334,6 @@ export function MissionDetail({ missionId }: { missionId: string }) {
               ))}
             </ul>
           )}
-        </Panel>
-
-        {approvals.length > 0 && (
-          <Panel title={t.gates} className="span-3">
-            <div className="gate-list">
-              {approvals.map((a) => (
-                <ApprovalGateCard key={a.id} request={a} />
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        {alerts.length > 0 && (
-          <Panel title={t.alerts(alerts.length)} className="span-3">
-            <div className="stack">
-              {alerts.map((al) => (
-                <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
-              ))}
-            </div>
-          </Panel>
-        )}
-
-        <Panel
-          title={t.timeline}
-          className="span-3"
-          actions={
-            <MoreLink href={withQuery(href.activity(), { mission: mission.id })}>
-              {m.activity.openTimeline}
-            </MoreLink>
-          }
-        >
-          <ActivityStream
-            filter={{ missionId: mission.id, includeLowSignal: true }}
-            showLinks={false}
-          />
         </Panel>
       </div>
     </div>
