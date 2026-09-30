@@ -6,7 +6,8 @@ import type { FetchLike } from '@/adapters/rest/http';
  * Failure modes can be switched per resource.
  */
 export type ResourceName = 'health' | 'workers' | 'missions' | 'approvals' | 'alerts' | 'events';
-export type Failure = 'down' | 'timeout' | 'http500' | 'not-json' | { payload: unknown };
+export type Failure =
+  'down' | 'timeout' | 'http500' | 'http403' | 'not-json' | { payload: unknown };
 
 export interface FakeBackend {
   fetch: FetchLike;
@@ -71,6 +72,7 @@ export function createFakeBackend(): FakeBackend {
         if (!f) return null;
         if (f === 'down') return Promise.reject(new TypeError('Failed to fetch'));
         if (f === 'http500') return Promise.resolve(new Response('boom', { status: 500 }));
+        if (f === 'http403') return Promise.resolve(new Response('forbidden', { status: 403 }));
         if (f === 'not-json')
           return Promise.resolve(new Response('<html>oops</html>', { status: 200 }));
         if (f === 'timeout') {
