@@ -9,8 +9,74 @@ _Operational continuity log. A later session should read this first._
 - **Session 4:** `0d77f3a` → `4d5279e` (product hardening Phase 4)
 - **Session 5:** `4d5279e` → `c3286ba` (Founder operations intelligence, Phase 5)
 - **Session 6:** `c3286ba` → `eaae7e3` (Founder command intelligence, Phase 6)
-- **Session 7:** `eaae7e3` → adversarial mock runtime (Phase 7); see `git log` for the head
+- **Session 7:** `eaae7e3` → `a9c6c39` (adversarial mock runtime, Phase 7)
+- **Session 8:** `a9c6c39` → adapter contract conformance (Phase 8). **Local commits only; not pushed** (push not authorized)
 - **Last updated:** 2026-09-30
+
+## Session 8: adapter contract conformance (Phase 8)
+
+Continuity was verified at the start:
+
+- branch at `a9c6c39`, the same as the remote
+- `main` at `3a3e217`
+- clean tree, no AI trailers
+- all Phase 7 files present
+- GitHub CI run #7 on `a9c6c39` observed passing
+
+Push, PR, merge and deploy were not authorized, so this session's commits are local only.
+
+### Delivered
+
+| Objective            | Result                                                                                                                                                                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contract model       | 14 rules (`src/domain/contract/rules.ts`). Each has a stable id, a kind (source property or adapter handling), what the dashboard needs, and whether EXACT coverage depends on it                                                  |
+| Profiles             | MOCK (provenance `MOCK_PROFILE`), an Assembly Nexus placeholder (all UNKNOWN / UNSPECIFIED), UNDECLARED (the REST default) and SIMULATED (demo). None is Founder approved. The build declares the profile; backend data never does |
+| Runner               | `runConformance(profile, probe)` returns PASS / FAIL / UNKNOWN / NOT_APPLICABLE / BLOCKED per rule. Each result states its agreement with the profile and its provenance. UNKNOWN is never PASS                                    |
+| Mock probe           | The real `RestAdapter` (REST + SSE transport) against the real Phase 7 mock core, bridged in memory. `npm run test:conformance` writes a report to `test-results/conformance/`                                                     |
+| Coverage interaction | EXACT coverage now needs a profile that guarantees id uniqueness, id stability and contiguous windows. Undeclared REST backends are never EXACT (`contract-unassured`)                                                             |
+| Inspector            | "Adapter contract" panel in `#/quality`, per rule: what the profile states vs what the current data shows, the environment the backend reports, and Founder approval shown as "not approved". No score, no controls                |
+| Governance           | `src/app/governance.phase8.test.tsx` (15). The Phase 7 guard now also forbids application modules from importing test support                                                                                                      |
+
+### Defects
+
+| ID    | Defect                                                                                                                                                                                                                                                             | Fix                                                                                                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P8-D1 | Phase 7 "duplicate" test data was not identical. Relative source times were resolved on each injection call, so copies differed by milliseconds. The browser DUPLICATES test was really exercising conflicts (the dashboard behaved correctly for the data it got) | Event time and payload pinned per (id, offset) in `e2e/runtimeMock.ts` and the runner. The Phase 7 test now also asserts that no conflict is reported for true duplicates |
+| P8-D2 | A REST backend with no stated contract could get EXACT event coverage: contract uncertainty inflated confidence                                                                                                                                                    | `historyAssured`: EXACT only under a profile guaranteeing the history-truth rules                                                                                         |
+| P8-D3 | Self-introduced, caught by the browser suite: the panel labelled counts "observed this session", but issue counts describe the latest sync                                                                                                                         | Relabelled "Seen in the current data", with a test that the count drops when a duplicate leaves the listing                                                               |
+| P8-D4 | Self-introduced, caught by the Phase 7 guard: a code comment named the mock's path in an application module                                                                                                                                                        | Reworded. The guard is unchanged for application code                                                                                                                     |
+
+### Performance (Phase 7 vs Phase 8 builds, stress dataset, interleaved, median of 9)
+
+| Median (ms)           | Phase 7 | Phase 8 |
+| --------------------- | ------- | ------- |
+| Render `/missions`    | 511     | 520     |
+| Render mission detail | 350     | 351     |
+| Render `/activity`    | 369     | 384     |
+| Render `/brief`       | 366     | 365     |
+| Render `/quality`     | 814     | 817     |
+| Palette open + search | 76      | 75      |
+
+Contract costs:
+
+- history assurance: < 0.001 ms
+- passive observation of 14 rules over 500 events: 0.13 ms
+- full mock conformance run: about 0.3 s, and only when run explicitly
+
+Initial JS is 111.9 kB gzip, 3.2 kB more than Phase 7. The English catalog, which is part of the
+entry chunk by design, gained the rule texts. The inspector chunk grew with the panel. An earlier
+n=3 run was too noisy to use (± hundreds of ms on unrelated routes) and was replaced by this
+n=9 run.
+
+Mutation checks (each break was restored):
+
+- UNKNOWN turned into PASS
+- conflict treated as a duplicate
+- a non-contiguous listing treated as contiguous
+- the mock profile presented as Assembly Nexus (two variants: the profile, and the panel)
+- coverage assurance forced on
+
+Each was caught by at least one test.
 
 ## Session 7: adversarial mock runtime (Phase 7)
 
@@ -545,7 +611,7 @@ tree, and `main` untouched.
    local-only by design. The Founder may later want it per identity across devices; that needs
    an authenticated backend store and is deliberately not built. Phase 6 mission views are
    local-only for the same reason.
-7. **Mock labelling (Phase 7):** a connected mock backend is shown as LIVE with a MOCK environment
+7. **Mock labelling (Phase 7; still open after Phase 8):** a connected mock backend is shown as LIVE with a MOCK environment
    tag. The environment is reported by the backend. Should a backend reporting a test environment be
    shown as SIMULATED instead of LIVE? This would change the LIVE rule, so it is left to the Founder.
 

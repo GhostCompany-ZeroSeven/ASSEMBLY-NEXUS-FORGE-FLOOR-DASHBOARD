@@ -77,6 +77,7 @@ secrets in them.
 | `npm run test:visual`          | Visual regression screenshots (see [docs/VISUAL_REGRESSION.md](docs/VISUAL_REGRESSION.md))                                                                     |
 | `npm run test:visual:update`   | Rewrite visual baselines after an intended change (review the PNGs before committing)                                                                          |
 | `npm run test:visual:ci-image` | Visual regression inside the pinned CI image (Docker); `:update` rewrites baselines there                                                                      |
+| `npm run test:conformance`     | Contract-conformance runner vs the mock (report in `test-results/conformance/`; see [docs/CONTRACT_CONFORMANCE.md](docs/CONTRACT_CONFORMANCE.md))              |
 | `npm run mock:rest`            | Local mock REST backend for the GenericRESTAdapter                                                                                                             |
 | `npm run mock:runtime`         | App (`--mode e2e-runtime` bundle) + same-origin REST/SSE mock for the Phase 7 runtime suite (`npm run build:e2e-runtime` first)                                |
 | `npm run verify`               | typecheck → lint → test → build (CI also runs format check and e2e)                                                                                            |

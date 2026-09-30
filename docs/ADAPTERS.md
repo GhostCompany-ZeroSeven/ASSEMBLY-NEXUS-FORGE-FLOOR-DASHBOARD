@@ -221,7 +221,11 @@ docs/ARCHITECTURE.md, "Adversarial mock runtime and event truth"):
   gap, and coverage is then never exact.
 
 These rules assume ids are unique and a listing is a contiguous most-recent
-window. That is this project's mock contract. **Confirm both against the real
+window. That is this project's mock contract. Phase 8 makes these assumptions explicit rules
+with profiles and a runner ([CONTRACT_CONFORMANCE.md](CONTRACT_CONFORMANCE.md)). A build
+declares its backend's profile with `contractProfile` (or `VITE_FORGE_CONTRACT_PROFILE`); today
+only `mock` exists. Without a declaration, no source guarantee is assumed and event coverage is
+never EXACT. **Confirm both against the real
 Assembly Nexus contract before relying on them.**
 
 ### Normalization rules (fail safe, never fail healthy)

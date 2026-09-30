@@ -170,6 +170,14 @@ Findings fixed in Phase 5:
   labels (`VITE_FORGE_REST_LABEL` in `.env.e2e-*`) as config data. The
   detector itself is unchanged.
 
+### Phase 8
+
+- The adapter-contract panel (`contract.*`) is fully in the catalogs: 14 rule names and
+  descriptions, profile kinds and notes. Rule ids and profile ids are marked `translate="no"`.
+  "Founder" stays untranslated.
+- `e2e/phase8.spec.ts` sweeps the panel, with conflict and duplicate observations on screen, in
+  English, Spanish and pseudo at 320/390/1440/2560, with axe at 1440. It found no issues.
+
 ## Adding a language
 
 1. Add the code to `SUPPORTED_LOCALES` and its own name to `LOCALE_NAMES` (`locales.ts`).

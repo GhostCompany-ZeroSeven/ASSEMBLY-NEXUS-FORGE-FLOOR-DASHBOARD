@@ -463,6 +463,16 @@ Classification never reads message text, so backend text cannot promote itself
 to another class. Search results are labelled PARTIAL DATA when some resources
 failed.
 
+## Adapter contract conformance (Phase 8)
+
+The Phase 7 assumptions are now explicit rules with profiles, an executable runner and an
+inspector panel. See [CONTRACT_CONFORMANCE.md](CONTRACT_CONFORMANCE.md).
+
+Architecturally, the change is this: EXACT event coverage now also requires the
+**build-declared** contract profile to guarantee id uniqueness, id stability and contiguous
+listing windows (`historyAssured`, reason `contract-unassured`). A REST backend with no declared
+profile is never EXACT. The test builds declare the mock profile.
+
 ## Loading and code splitting
 
 - `main.tsx` loads the viewer's language catalog (English is bundled, Spanish is a
@@ -512,3 +522,6 @@ failed.
 | Event truth (late/dup/conflict/gap) | Vitest + fake EventSource         | `src/adapters/rest/eventTruth.test.ts`                  |
 | Phase-7 governance + static guards  | Vitest                            | `src/app/governance.phase7.test.ts`                     |
 | Adversarial mock runtime            | Playwright + real HTTP/SSE mock   | `e2e/phase7.spec.ts`, `scripts/mock-runtime-server.ts`  |
+| Contract conformance runner         | Vitest + in-process mock probe    | `src/domain/contract/conformance.test.ts`               |
+| Phase-8 governance                  | Vitest                            | `src/app/governance.phase8.test.tsx`                    |
+| Contract inspector (browser)        | Playwright + runtime mock         | `e2e/phase8.spec.ts`                                    |
