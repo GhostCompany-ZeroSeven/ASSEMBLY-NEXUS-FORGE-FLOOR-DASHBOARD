@@ -95,13 +95,27 @@ describe('SSE transport', () => {
     expect(FakeEventSource.instances).toHaveLength(3);
   });
 
-  it('a successful open resets the failure count', async () => {
+  it('only delivered data (not a bare open) resets the failure count', async () => {
     const s = setup({ maxRetries: 2 });
     s.start();
     FakeEventSource.latest().error();
     await s.timers.advance(1000);
     FakeEventSource.latest().open();
+    expect(s.t.attempts()).toBe(1);
+    FakeEventSource.latest().emit('heartbeat', '{}');
     expect(s.t.attempts()).toBe(0);
+  });
+
+  it('a stream that opens but never delivers still gives up (no endless retry)', async () => {
+    const s = setup({ maxRetries: 2, heartbeatTimeoutMs: 5000 });
+    s.start();
+    for (let i = 0; i < 3; i++) {
+      FakeEventSource.latest().open(); // connects…
+      await s.timers.advance(5000); // …but stays silent → stale
+      await s.timers.advance(30_000); // wait out the backoff
+    }
+    expect(s.t.state()).toBe('failed');
+    expect(FakeEventSource.instances).toHaveLength(3);
   });
 
   it('resumes with the last event id', async () => {

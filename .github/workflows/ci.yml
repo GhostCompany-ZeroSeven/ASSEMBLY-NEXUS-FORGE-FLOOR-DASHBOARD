@@ -22,9 +22,13 @@ jobs:
       - run: npm run verify
 
   browser:
-    name: Browser accessibility, keyboard and runtime checks
+    name: Browser a11y, keyboard, runtime, performance and visual regression
     runs-on: ubuntu-latest
     needs: verify
+    # Pinned Playwright image (same version as package.json) so screenshot
+    # rendering is reproducible. Fonts are bundled by the app itself.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,13 +36,22 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Builds the demo bundle and the `--mode e2e-rest` bundle, then runs every
+      # spec in e2e/ including e2e/visual.spec.ts against e2e/__screenshots__.
       - run: npm run test:e2e
         env:
           CI: 'true'
+          HOME: /root
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
           path: playwright-report
+          retention-days: 7
+      # Actual/expected/diff PNGs for any visual regression (see docs/VISUAL_REGRESSION.md).
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diffs
+          path: test-results
           retention-days: 7

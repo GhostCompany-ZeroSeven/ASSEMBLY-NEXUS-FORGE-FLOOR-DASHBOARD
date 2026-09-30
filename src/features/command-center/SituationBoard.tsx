@@ -4,7 +4,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { HEALTH_STATUS_META, type Tone } from '@/domain/status';
 import { formatRelative } from '@/domain/time';
 import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
-import { selectSituation } from './situation';
+import { selectSituation, type SituationResource } from './situation';
 
 const DATA_ANSWER: Record<string, { answer: string; tone: Tone; detail: string }> = {
   demo: { answer: 'Simulated', tone: 'warning', detail: 'Local demo data. No backend connected.' },
@@ -24,6 +24,12 @@ export function SituationBoard() {
   const now = useNow(5000);
   const s = selectSituation(snapshot, status, now);
   const founderCount = s.founder.approvals + s.founder.humanAlerts;
+  const missing = (...rs: SituationResource[]) => rs.filter((r) => s.unavailable[r]);
+  const unknown = (rs: SituationResource[]) =>
+    `${rs.join(' and ')} could not be loaded, so this cannot be answered. See the data warnings.`;
+  const founderMissing = missing('approvals', 'alerts');
+  const workMissing = missing('missions', 'workers');
+  const missionsMissing = missing('missions');
   const data = DATA_ANSWER[s.data.display]!;
   const health = HEALTH_STATUS_META[s.backend.health];
   const backendTone: Tone =
@@ -44,21 +50,28 @@ export function SituationBoard() {
       <Cell
         q={`Needs ${governance.humanAuthority}?`}
         icon="gate"
-        tone={founderCount > 0 ? 'warning' : 'success'}
+        tone={founderCount > 0 || founderMissing.length ? 'warning' : 'success'}
         answer={
-          founderCount > 0 ? `${founderCount} item${founderCount === 1 ? '' : 's'}` : 'Nothing'
+          founderCount > 0
+            ? `${founderCount} item${founderCount === 1 ? '' : 's'}${founderMissing.length ? ' or more' : ''}`
+            : founderMissing.length
+              ? 'Unknown'
+              : 'Nothing'
         }
         detail={
-          founderCount > 0
-            ? [
-                s.founder.approvals &&
-                  `${s.founder.approvals} approval${s.founder.approvals === 1 ? '' : 's'} waiting${s.founder.oldestRequestAt ? ` (oldest ${formatRelative(s.founder.oldestRequestAt, now)})` : ''}`,
-                s.founder.humanAlerts &&
-                  `${s.founder.humanAlerts} alert${s.founder.humanAlerts === 1 ? ' needs' : 's need'} action`,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : 'No decisions or actions are waiting on you.'
+          founderCount === 0 && founderMissing.length
+            ? unknown(founderMissing)
+            : founderCount > 0
+              ? [
+                  s.founder.approvals &&
+                    `${s.founder.approvals} approval${s.founder.approvals === 1 ? '' : 's'} waiting${s.founder.oldestRequestAt ? ` (oldest ${formatRelative(s.founder.oldestRequestAt, now)})` : ''}`,
+                  s.founder.humanAlerts &&
+                    `${s.founder.humanAlerts} alert${s.founder.humanAlerts === 1 ? ' needs' : 's need'} action`,
+                  founderMissing.length && `${founderMissing.join(' and ')} unavailable`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : 'No decisions or actions are waiting on you.'
         }
         href={
           s.founder.approvals ? href.approvals() : s.founder.humanAlerts ? href.alerts() : undefined
@@ -92,52 +105,88 @@ export function SituationBoard() {
       <Cell
         q="What is running?"
         icon="mission"
-        tone="active"
-        answer={`${s.running.missions} mission${s.running.missions === 1 ? '' : 's'}`}
-        detail={`${s.running.workersBusy} of ${s.running.workersTotal} workers busy`}
+        tone={workMissing.length ? 'warning' : 'active'}
+        answer={
+          missionsMissing.length
+            ? 'Unknown'
+            : `${s.running.missions} mission${s.running.missions === 1 ? '' : 's'}`
+        }
+        detail={
+          workMissing.length
+            ? unknown(workMissing)
+            : `${s.running.workersBusy} of ${s.running.workersTotal} workers busy`
+        }
         href={href.missions()}
       />
       <Cell
         q="What is blocked?"
         icon="alert"
-        tone={s.blocked.workers + s.blocked.missions > 0 ? 'danger' : 'muted'}
-        answer={
+        tone={
           s.blocked.workers + s.blocked.missions > 0
-            ? `${s.blocked.workers} worker${s.blocked.workers === 1 ? '' : 's'}`
-            : 'Nothing'
+            ? 'danger'
+            : workMissing.length
+              ? 'warning'
+              : 'muted'
+        }
+        answer={
+          workMissing.length && s.blocked.workers + s.blocked.missions === 0
+            ? 'Unknown'
+            : s.blocked.workers + s.blocked.missions > 0
+              ? `${s.blocked.workers} worker${s.blocked.workers === 1 ? '' : 's'}`
+              : 'Nothing'
         }
         detail={
-          s.blocked.workers + s.blocked.missions > 0
-            ? `${s.blocked.missions} mission${s.blocked.missions === 1 ? '' : 's'} blocked. Founder-gated waits are counted above.`
-            : 'No blockers besides Founder gates.'
+          workMissing.length
+            ? unknown(workMissing)
+            : s.blocked.workers + s.blocked.missions > 0
+              ? `${s.blocked.missions} mission${s.blocked.missions === 1 ? '' : 's'} blocked. Founder-gated waits are counted above.`
+              : 'No blockers besides Founder gates.'
         }
         href={withQuery(href.floor(), { show: 'blocked' })}
       />
       <Cell
         q="What failed?"
         icon="x"
-        tone={s.failed.missions + s.failed.workers > 0 ? 'danger' : 'muted'}
+        tone={
+          s.failed.missions + s.failed.workers > 0
+            ? 'danger'
+            : missionsMissing.length
+              ? 'warning'
+              : 'muted'
+        }
         answer={
-          s.failed.missions > 0
-            ? `${s.failed.missions} mission${s.failed.missions === 1 ? '' : 's'}`
-            : 'Nothing'
+          missionsMissing.length && s.failed.missions === 0
+            ? 'Unknown'
+            : s.failed.missions > 0
+              ? `${s.failed.missions} mission${s.failed.missions === 1 ? '' : 's'}`
+              : 'Nothing'
         }
         detail={
-          s.failed.latest
-            ? `Latest: ${s.failed.latest.id} ${s.failed.latest.title}${s.failed.latest.completedAt ? ` · ${formatRelative(s.failed.latest.completedAt, now)}` : ''}`
-            : 'No failed missions.'
+          missionsMissing.length
+            ? unknown(missionsMissing)
+            : s.failed.latest
+              ? `Latest: ${s.failed.latest.id} ${s.failed.latest.title}${s.failed.latest.completedAt ? ` · ${formatRelative(s.failed.latest.completedAt, now)}` : ''}`
+              : 'No failed missions.'
         }
         href={s.failed.latest ? href.mission(s.failed.latest.id) : undefined}
       />
       <Cell
         q="Just completed?"
         icon="check"
-        tone={s.completed.latest ? 'success' : 'muted'}
-        answer={s.completed.latest ? s.completed.latest.id : 'Nothing yet'}
-        detail={
+        tone={s.completed.latest ? 'success' : missionsMissing.length ? 'warning' : 'muted'}
+        answer={
           s.completed.latest
-            ? `${s.completed.latest.title}${s.completed.latest.completedAt ? ` · ${formatRelative(s.completed.latest.completedAt, now)}` : ''} · ${s.completed.count} complete in total`
-            : 'No missions have completed.'
+            ? s.completed.latest.id
+            : missionsMissing.length
+              ? 'Unknown'
+              : 'Nothing yet'
+        }
+        detail={
+          missionsMissing.length
+            ? unknown(missionsMissing)
+            : s.completed.latest
+              ? `${s.completed.latest.title}${s.completed.latest.completedAt ? ` · ${formatRelative(s.completed.latest.completedAt, now)}` : ''} · ${s.completed.count} complete in total`
+              : 'No missions have completed.'
         }
         href={s.completed.latest ? href.mission(s.completed.latest.id) : undefined}
       />

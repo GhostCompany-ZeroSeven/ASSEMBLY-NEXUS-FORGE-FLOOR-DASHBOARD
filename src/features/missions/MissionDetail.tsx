@@ -133,7 +133,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           )}
           {workers.length > 0 && (
             <p className="small">
-              <a href={withQuery(href.floor(), { mission: mission.id })}>
+              <a className="target" href={withQuery(href.floor(), { mission: mission.id })}>
                 Show this crew on the Forge Floor
               </a>
             </p>

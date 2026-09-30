@@ -120,6 +120,61 @@ Each GET returns either the list or `{ "<resource>": [...] }`. Records use the d
 | `POST /approvals/:id/decision` | body `{ decision, note, decidedBy }` → `{ record: { decision, decidedBy, decidedAt, note? } }` |
 | `POST /alerts/:id/acknowledge` | body `{ by }` → any 2xx                                                                        |
 
+### Optional SSE stream (mock contract, not an Assembly Nexus API)
+
+Push updates are **optional**. REST polling stays supported and stays the source of full state
+and LIVE verification. The contract below is this dashboard's own. It is implemented by the local
+mock (`npm run mock:rest`, `/stream`) and the test doubles. **No Assembly Nexus SSE endpoint is
+known or assumed.**
+
+```ts
+rest: {
+  // …
+  stream: {
+    path: '/stream',            // relative to baseUrl; secret-looking query params are refused
+    heartbeatTimeoutMs: 20000,  // no message/heartbeat for this long → stale → reconnect (2s..120s)
+    maxRetries: 5,              // consecutive failures before falling back to polling (0..20)
+    resyncIntervalMs: 60000,    // full REST re-sync while the stream is healthy (≥ pollIntervalMs)
+  },
+}
+```
+
+For local development, `VITE_FORGE_REST_STREAM=/stream` enables it.
+
+Wire format:
+
+| SSE event   | `data:`                                               | Effect                                      |
+| ----------- | ----------------------------------------------------- | ------------------------------------------- |
+| `forge`     | one `DashboardEvent` as JSON (`src/domain/events.ts`) | Re-normalized, then applied by `applyEvent` |
+| `heartbeat` | anything                                              | Resets the heartbeat timer only             |
+| `message`   | same as `forge` (default event name)                  | Same as `forge`                             |
+| `id:`       | event id                                              | Sent back as `?lastEventId=` on reconnect   |
+
+Behaviour (`src/adapters/transport/sse.ts`, `src/adapters/rest/stream.ts`):
+
+- **States:** `connecting → open`, `stale`, `retrying`, `failed`, `closed`. The adapter exposes
+  them through `getStreamState()`, and stream problems are listed as data issues. The provenance
+  badge shows `STREAM`, `POLL` or `POLL (FALLBACK)`, and a fallback also shows a banner.
+- **Bounded reconnect:** exponential backoff from 1s, capped at 30s. After `maxRetries`
+  consecutive failures the stream stops and the adapter falls back to polling. That is shown
+  as a data issue and never silently.
+- **LIVE only when verified:** a stream that is open does not make the dashboard LIVE on its
+  own. The REST health check must also succeed. While the stream is healthy, its heartbeats are
+  what show continued connectivity, and the REST health payload is re-checked only every
+  `resyncIntervalMs`. A health endpoint that fails while the same server's stream stays up is
+  therefore noticed within that interval, not within `pollIntervalMs`. Lower
+  `resyncIntervalMs` if that window matters.
+- **Retry counting:** the failure count resets only when a message or heartbeat arrives, not when
+  the connection merely opens. A stream that connects but never delivers still reaches
+  `maxRetries` and falls back.
+- **Untrusted input:** each message is size-limited (256 KiB) and parsed. Unknown kinds,
+  malformed payloads and invalid JSON are dropped and reported. Approval decisions are checked
+  against governance, and an `approval.requested` that arrives already decided is rejected.
+- **No credentials:** `EventSource` is always created with `withCredentials: false`.
+- **Clean disconnect:** `disconnect()` closes the source and clears every timer.
+
+The transport conformance suite (`src/adapters/transport/conformance.test.ts`) pins these rules.
+
 ### Normalization rules (fail safe, never fail healthy)
 
 - A record missing identity fields is **dropped** and reported.
@@ -137,18 +192,19 @@ Each GET returns either the list or `{ "<resource>": [...] }`. Records use the d
 
 ## Failure states
 
-| Situation                  | What the dashboard does                                                                                       |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Backend unavailable        | DISCONNECTED badge, "Data source unavailable" alert, Retry button, and no verified data shown                 |
-| Request timeout            | Recorded as `Request timed out` under the failing resource                                                    |
-| Malformed payload          | PARTIAL DATA banner with an expandable issue list. "Worker data unavailable" is never shown as "zero workers" |
-| Partial data               | Last-good data kept per resource, and the snapshot marked partial                                             |
-| Stale data                 | STALE DATA banner once `lastSuccessfulSyncAt` is older than `staleAfterMs`                                    |
-| Reconnecting               | "Reconnecting" banner. LIVE is dropped and health goes to UNKNOWN (no stale NOMINAL)                          |
-| Adapter error at connect   | Full-screen adapter error with Retry, and no empty dashboard pretending to be fine                            |
-| Empty queue / zero workers | Explicit empty states                                                                                         |
-| Unknown status             | "Unknown state" / "Unknown status" badge, dashed token plate on the floor                                     |
-| Unsupported capability     | Decision buttons hidden with an explanation. Acknowledge and messaging hidden                                 |
+| Situation                  | What the dashboard does                                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Backend unavailable        | DISCONNECTED badge, "Data source unavailable" alert, Retry button, and no verified data shown                   |
+| Request timeout            | Recorded as `Request timed out` under the failing resource                                                      |
+| Malformed payload          | PARTIAL DATA banner with an expandable issue list. "Worker data unavailable" is never shown as "zero workers"   |
+| Partial data               | Last-good data kept per resource, and the snapshot marked partial                                               |
+| Stale data                 | STALE DATA banner once `lastSuccessfulSyncAt` is older than `staleAfterMs`                                      |
+| Reconnecting               | "Reconnecting" banner. LIVE is dropped and health goes to UNKNOWN (no stale NOMINAL)                            |
+| Adapter error at connect   | Full-screen adapter error with Retry, and no empty dashboard pretending to be fine                              |
+| Empty queue / zero workers | Explicit empty states                                                                                           |
+| Resource fetch failed      | "… data unavailable" and situation answers of "Unknown". Never "Nothing", "All quiet" or "No decisions waiting" |
+| Unknown status             | "Unknown state" / "Unknown status" badge, dashed token plate on the floor                                       |
+| Unsupported capability     | Decision buttons hidden with an explanation. Acknowledge and messaging hidden                                   |
 
 ## Conformance suite
 
@@ -193,5 +249,6 @@ registerAdapter('my-backend', () => new MyAdapter(/* … */));
    how `decidedBy` is bound to that identity server-side.
 3. **Credentials:** a secrets store for the proxy. Never the browser bundle.
 4. **Hosting:** where the dashboard and proxy are deployed. Deployment is a Founder-gated action.
-5. **Transport:** polling is enough to start. Choose SSE or WebSocket if lower latency is needed
-   (see research mission AN-0145 in the demo).
+5. **Transport:** polling is enough to start. An optional SSE stream is implemented against a
+   mock contract (above). Whether Assembly Nexus exposes a stream, and in what format, is still
+   to be decided.

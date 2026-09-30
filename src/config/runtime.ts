@@ -14,9 +14,20 @@ export function withEnvOverrides(
   env: Record<string, string | undefined>,
   search = '',
 ): DashboardConfig {
-  // `?demo=stress` loads the large deterministic demo dataset (demo adapter only).
-  if (config.adapter.kind === 'demo' && new URLSearchParams(search).get('demo') === 'stress') {
-    config = { ...config, adapter: { ...config.adapter, scale: 'stress' } };
+  // Demo-only URL flags (never affect a real backend adapter):
+  //   ?demo=stress  large deterministic dataset for performance testing
+  //   ?demo=paused  start with the simulation paused (deterministic screenshots)
+  const flags = new URLSearchParams(search).getAll('demo').flatMap((v) => v.split(','));
+  const demo = config.adapter;
+  if (demo.kind === 'demo' && (flags.includes('stress') || flags.includes('paused'))) {
+    config = {
+      ...config,
+      adapter: {
+        ...demo,
+        ...(flags.includes('stress') ? { scale: 'stress' as const } : {}),
+        ...(flags.includes('paused') ? { autoRun: false } : {}),
+      },
+    };
   }
   if (env.VITE_FORGE_ADAPTER !== 'rest') return config;
   const baseUrl = env.VITE_FORGE_REST_BASE_URL;

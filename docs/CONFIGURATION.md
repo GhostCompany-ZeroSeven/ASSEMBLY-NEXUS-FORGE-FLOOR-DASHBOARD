@@ -52,6 +52,47 @@ To swap placeholders for finished art, put the files in `public/` and change the
 Their feet should sit at the bottom edge so they stand correctly on the floor. Unknown
 `characterId`s fall back to a deterministic generated scientist.
 
+### Poses and per-room art
+
+Image characters can provide art per **pose** and per **room**:
+
+```ts
+{
+  kind: 'image', src: '/art/ada.png', alt: 'Ada',
+  poses: {                                   // idle · working · moving · blocked ·
+    working: '/art/ada-working.png',         // waiting-founder · complete · failed · default
+    'waiting-founder': '/art/ada-waiting.png',
+  },
+  rooms: {
+    'build-forge': { working: '/art/ada-forge.png' },   // pose-specific art in one room
+    'snow-wolf-den': '/art/ada-den.png',                // or one image for that room
+  },
+}
+```
+
+The pose comes from the worker's state and situation (`src/characters/pose.ts`). In priority
+order it is: walking between rooms → `moving`; blocked on an open gate → `waiting-founder`;
+otherwise the pose for the state. For images the lookup order is: room + pose, room default,
+pose, legacy `stateSrc`, `poses.default`, then `src`. Missing art never breaks rendering. The
+procedural placeholders express the same poses. Snow Wolf characters use `procedural-wolf`.
+
+**A character is presentation only.** Pose, room, art and the Snow Wolf look never confer
+identity or authority. Decisions are checked against the governance rules and the configured
+human authority, never against how a worker looks or where it stands. The floor always shows
+the state as text and a glyph next to the art, so information never depends on the pose alone
+(or on colour or motion).
+
+## Demo-only URL flags
+
+These apply only when the demo adapter is active. A real backend adapter ignores them.
+
+| Flag           | Effect                                                                          |
+| -------------- | ------------------------------------------------------------------------------- |
+| `?demo=paused` | Start with the simulation paused (used for deterministic screenshots)           |
+| `?demo=stress` | Large deterministic dataset (hundreds of workers and missions) for perf testing |
+
+They combine, for example `?demo=stress,paused`.
+
 ## Viewer preferences
 
 Theme, motion (system / reduced / full), density and the single-key-shortcut switch are stored per browser in `localStorage`

@@ -88,6 +88,11 @@ createServer(async (req, res) => {
     const mode = url.searchParams.get('mode') ?? 'off';
     if (mode === 'off') failures.delete(resource);
     else failures.set(resource, mode);
+    // Like a crashed stream server: drop open connections too, not only new ones.
+    if (resource === 'stream' && mode === 'down') {
+      for (const s of streams) s.destroy();
+      streams.clear();
+    }
     return send(res, 200, { failures: Object.fromEntries(failures) }, origin);
   }
 

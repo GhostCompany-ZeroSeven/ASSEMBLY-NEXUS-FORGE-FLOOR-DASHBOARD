@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ShowMore } from '@/components/ShowMore';
 import { Panel } from '@/components/ui';
+import { resourceUnavailable } from '@/domain/selectors';
 import { WORKER_STATE_META } from '@/domain/status';
 import { WORKER_STATES } from '@/domain/types';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
@@ -104,6 +105,16 @@ export function WorkersPage() {
                 { value: 'granted', label: 'Has human-granted authority' },
               ]}
             />
+            <SelectFilter
+              label="Sort"
+              value={f.sort}
+              onChange={(sort) => set({ sort })}
+              options={[
+                { value: 'attention', label: 'Needs attention first' },
+                { value: 'name', label: 'Name' },
+                { value: 'longest-in-state', label: 'Longest in current state' },
+              ]}
+            />
           </>
         }
       />
@@ -112,6 +123,7 @@ export function WorkersPage() {
         <Panel>
           <FilteredEmpty
             total={snapshot.workers.length}
+            unavailable={resourceUnavailable(snapshot, 'workers')}
             noun="workers"
             onReset={() => set(DEFAULT_WORKER_FILTER)}
           />

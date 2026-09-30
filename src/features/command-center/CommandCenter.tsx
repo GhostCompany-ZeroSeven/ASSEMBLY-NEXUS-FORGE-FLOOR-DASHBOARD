@@ -47,6 +47,8 @@ export function CommandCenter() {
     .slice(0, 3);
   const [selected, setSelected] = useState<string | null>(null);
   const health = HEALTH_STATUS_META[snapshot.health.status];
+  // A failed fetch is not "nothing": empty panels say the data is unavailable instead.
+  const missionsMissing = resourceUnavailable(snapshot, 'missions');
   useFocusTarget();
 
   return (
@@ -82,7 +84,9 @@ export function CommandCenter() {
           {featured ? (
             <MissionInstrument mission={featured} size="xl" />
           ) : (
-            <EmptyState title="All quiet" />
+            <EmptyState title={missionsMissing ? 'Mission data unavailable' : 'All quiet'}>
+              {missionsMissing && 'Missions could not be loaded; see the data warnings above.'}
+            </EmptyState>
           )}
         </Panel>
 
@@ -93,7 +97,13 @@ export function CommandCenter() {
           actions={<a href={href.approvals()}>All gates →</a>}
         >
           {gates.length === 0 ? (
-            <EmptyState title="No decisions waiting" />
+            resourceUnavailable(snapshot, 'approvals') ? (
+              <EmptyState title="Approval data unavailable">
+                Pending requests could not be loaded; see the data warnings above.
+              </EmptyState>
+            ) : (
+              <EmptyState title="No decisions waiting" />
+            )
           ) : (
             <ul className="gate-mini">
               {gates.map((g) => (
@@ -138,7 +148,13 @@ export function CommandCenter() {
 
         <Panel title="Alerts" actions={<a href={href.alerts()}>All alerts →</a>}>
           {alerts.length === 0 ? (
-            <EmptyState title="No open alerts" />
+            resourceUnavailable(snapshot, 'alerts') ? (
+              <EmptyState title="Alert data unavailable">
+                Alerts could not be loaded; see the data warnings above.
+              </EmptyState>
+            ) : (
+              <EmptyState title="No open alerts" />
+            )
           ) : (
             <div className="stack">
               {alerts.map((a) => (
@@ -160,7 +176,9 @@ export function CommandCenter() {
           }
         >
           {inFlight.length === 0 ? (
-            <EmptyState title="Nothing in flight" />
+            <EmptyState
+              title={missionsMissing ? 'Mission data unavailable' : 'Nothing in flight'}
+            />
           ) : (
             <div className="mission-list">
               {inFlight.map((m) => (

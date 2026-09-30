@@ -123,7 +123,14 @@ export interface FeatureFlags {
 }
 
 export type AdapterConfig =
-  | { kind: 'demo'; tickMs: number; seed: number; scale?: 'standard' | 'stress' }
+  | {
+      kind: 'demo';
+      tickMs: number;
+      seed: number;
+      scale?: 'standard' | 'stress';
+      /** Start the simulation automatically (default true). */
+      autoRun?: boolean;
+    }
   /** Generic REST backend. Never put credentials here; see docs/ADAPTERS.md. */
   | { kind: 'rest'; rest: RestAdapterConfig }
   | { kind: 'custom'; id: string };

@@ -3,6 +3,7 @@ import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { resolvePose } from '@/characters/pose';
 import { WORKER_STATE_META } from '@/domain/status';
 import type { Worker } from '@/domain/types';
+import { Icon } from '@/components/Icon';
 import { STATE_GLYPH } from './stateGlyph';
 
 const WALK_MS = 1600;
@@ -66,7 +67,7 @@ export function WorkerToken({
         .join(', ')}
     >
       <span className="token__bubble" aria-hidden="true">
-        {STATE_GLYPH[worker.state]}
+        <Icon name={STATE_GLYPH[worker.state]} size={11} />
       </span>
       {(worker.state === 'WORKING' || worker.state === 'CERTIFYING') && !moving && (
         <span className="token__sparks" aria-hidden="true">

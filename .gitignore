@@ -1,10 +1,13 @@
 node_modules
 dist
+dist-e2e-rest
 coverage
 *.local
 .env
 .env.*
 !.env.example
+# Test-only build mode (no secrets): points the REST adapter at a Playwright mock.
+!.env.e2e-rest
 .DS_Store
 *.tsbuildinfo
 playwright-report

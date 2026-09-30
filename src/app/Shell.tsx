@@ -1,4 +1,4 @@
-import { lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataStatusBanners } from '@/components/DataStatusBanners';
 import { Icon, type IconName } from '@/components/Icon';
 import { ProvenanceBadge } from '@/components/ProvenanceBadge';
@@ -17,12 +17,11 @@ import { createSurfaces, SURFACE_LABEL, usePrefetchSurfaces } from './surfaces';
 import { Suspense, SurfaceErrorBoundary, SurfaceLoading, SurfaceReady } from './SurfaceParts';
 import { href, navigate, parseHashQuery, routeKey, useRoute, type Route } from './router';
 
-const CommandPalette = lazy(() =>
-  import('@/features/command/CommandPalette').then((m) => ({ default: m.CommandPalette })),
-);
-const ShortcutsDialog = lazy(() =>
-  import('@/features/command/ShortcutsDialog').then((m) => ({ default: m.ShortcutsDialog })),
-);
+// Dialogs are small and load eagerly on purpose. If lazy, the frame turns `inert`
+// before the dialog mounts, focus falls to <body>, keystrokes typed right after
+// Ctrl+K are lost, and focus cannot be restored on close.
+import { CommandPalette } from '@/features/command/CommandPalette';
+import { ShortcutsDialog } from '@/features/command/ShortcutsDialog';
 
 interface NavItem {
   route: Route['name'];
@@ -285,14 +284,12 @@ export function Shell() {
           </main>
         </div>
       </div>
-      <Suspense fallback={null}>
-        {dialog === 'palette' && (
-          <CommandPalette commands={commands} search={search} onClose={() => setDialog(null)} />
-        )}
-        {dialog === 'shortcuts' && (
-          <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />
-        )}
-      </Suspense>
+      {dialog === 'palette' && (
+        <CommandPalette commands={commands} search={search} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'shortcuts' && (
+        <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />
+      )}
     </div>
   );
 }

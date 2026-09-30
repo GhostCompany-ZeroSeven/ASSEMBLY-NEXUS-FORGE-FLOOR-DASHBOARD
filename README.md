@@ -16,17 +16,17 @@ little Snow Wolf chaos. 🐺⚡
 
 ## Surfaces
 
-| Surface             | What it shows                                                                                                                                                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Command Center**  | Stat tiles, featured-mission instrumentation, Founder Gate queue, floor preview, alerts, health, crew, activity                                                                                                   |
-| **Forge Floor**     | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes                                                    |
-| **Missions**        | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                             |
-| **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                   |
-| **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                        |
-| **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert |
-| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                         |
-| **Command palette** | `Ctrl/⌘ + K`: jump to any surface, worker or mission; pause/step the demo; switch theme. Press `?` for every shortcut                                                                                             |
-| **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                   |
+| Surface             | What it shows                                                                                                                                                                                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Command Center**  | Situation board (what needs the Founder, live or simulated, backend health, running, blocked, failed, just completed), featured mission, Founder Gate queue, floor preview, alerts, health, crew, activity. A question it cannot answer from the data says **Unknown**     |
+| **Forge Floor**     | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes. Highlight filters, mission association, room panel; state shown as text and a glyph, never by colour alone |
+| **Missions**        | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                                                                                      |
+| **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                                                                            |
+| **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                                                                                 |
+| **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert                                                          |
+| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                                                                                  |
+| **Command palette** | `Ctrl/⌘ + K`: commands plus **global search** across missions, workers, rooms, alerts, approval gates, artifacts and events. Each result shows its type, name, status, location and context; choosing one navigates and focuses it. Press `?` for every shortcut           |
+| **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                                                                            |
 
 ## Quick start
 
@@ -55,19 +55,21 @@ secrets in them.
 
 ## Scripts
 
-| Command                | Purpose                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`          | Vite dev server                                                                                               |
-| `npm run build`        | Typecheck + production build to `dist/`                                                                       |
-| `npm run preview`      | Serve the production build                                                                                    |
-| `npm run typecheck`    | TypeScript project check                                                                                      |
-| `npm run lint`         | ESLint (typescript-eslint, react-hooks)                                                                       |
-| `npm run format:check` | Prettier check (`npm run format` to write)                                                                    |
-| `npm test`             | Vitest unit, component, conformance, governance and axe tests (jsdom)                                         |
-| `npm run test:e2e`     | Build, then Playwright: axe incl. contrast, keyboard, reduced motion, runtime errors, overflow at 4 viewports |
-| `npm run test:a11y`    | Only the accessibility audits (jsdom + browser)                                                               |
-| `npm run mock:rest`    | Local mock REST backend for the GenericRESTAdapter                                                            |
-| `npm run verify`       | typecheck → lint → test → build (CI also runs format check and e2e)                                           |
+| Command                      | Purpose                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                | Vite dev server                                                                                               |
+| `npm run build`              | Typecheck + production build to `dist/`                                                                       |
+| `npm run preview`            | Serve the production build                                                                                    |
+| `npm run typecheck`          | TypeScript project check                                                                                      |
+| `npm run lint`               | ESLint (typescript-eslint, react-hooks)                                                                       |
+| `npm run format:check`       | Prettier check (`npm run format` to write)                                                                    |
+| `npm test`                   | Vitest unit, component, conformance, governance and axe tests (jsdom)                                         |
+| `npm run test:e2e`           | Build, then Playwright: axe incl. contrast, keyboard, reduced motion, runtime errors, overflow at 4 viewports |
+| `npm run test:a11y`          | Only the accessibility audits (jsdom + browser)                                                               |
+| `npm run test:visual`        | Visual regression screenshots (see [docs/VISUAL_REGRESSION.md](docs/VISUAL_REGRESSION.md))                    |
+| `npm run test:visual:update` | Rewrite visual baselines after an intended change (review the PNGs before committing)                         |
+| `npm run mock:rest`          | Local mock REST backend for the GenericRESTAdapter                                                            |
+| `npm run verify`             | typecheck → lint → test → build (CI also runs format check and e2e)                                           |
 
 ## Stack
 
@@ -112,6 +114,16 @@ Backend unavailable, timeout, malformed payload, partial data, stale data, recon
 error, empty queues, zero workers, unknown status, and unsupported capability each have an
 explicit, tested presentation. Malformed data is dropped or shown as **UNKNOWN** and listed under
 **PARTIAL DATA**. It is never shown as healthy. See [docs/ADAPTERS.md](docs/ADAPTERS.md#failure-states).
+
+## Filters and search
+
+Missions, Workers, Approval Gates, Alerts and the Floor have filter bars: text search, quick
+segments with counts, sorting, and further options behind **More filters**. **Reset** clears
+everything. Empty results say which case applies:
+
+- "No missions match these filters": the data exists but is filtered out, with a Reset button.
+- "No missions from the data source": the backend reported zero.
+- "Missions data unavailable": the fetch failed, so the true number is unknown.
 
 ## Keyboard
 

@@ -79,7 +79,7 @@ export function ForgeFloorPage() {
             {WORKER_STATES.map((s) => (
               <li key={s}>
                 <span className="legend__glyph" aria-hidden="true">
-                  {STATE_GLYPH[s]}
+                  <Icon name={STATE_GLYPH[s]} size={12} />
                 </span>
                 <StatusBadge tone={WORKER_STATE_META[s].tone} size="sm">
                   {WORKER_STATE_META[s].label}

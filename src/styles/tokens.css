@@ -6,9 +6,12 @@
  */
 :root,
 [data-theme='forge'] {
-  --font-ui: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-ui:
+    'Inter Variable', 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial,
+    sans-serif;
   --font-mono:
-    'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+    'JetBrains Mono Variable', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code',
+    Menlo, Consolas, monospace;
 
   --bg: #06090e;
   --bg-grid: rgba(56, 189, 248, 0.045);

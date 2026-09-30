@@ -147,7 +147,11 @@ export interface WorkerFilter {
   crewId: string | 'all';
   roomId: string | 'all';
   authority: 'all' | 'granted' | 'none';
+  sort: WorkerSort;
 }
+
+/** `attention`: waiting for Founder, blocked, failed, unknown, active, then idle. */
+export type WorkerSort = 'attention' | 'name' | 'longest-in-state';
 
 export const DEFAULT_WORKER_FILTER: WorkerFilter = {
   q: '',
@@ -156,6 +160,7 @@ export const DEFAULT_WORKER_FILTER: WorkerFilter = {
   crewId: 'all',
   roomId: 'all',
   authority: 'all',
+  sort: 'attention',
 };
 
 const ACTIVE = new Set<WorkerState>(['PLANNING', 'WORKING', 'REVIEWING', 'CERTIFYING']);
@@ -188,7 +193,7 @@ export function filterWorkers(
   f: WorkerFilter,
   roomOf: (w: Worker) => string | undefined = () => undefined,
 ): Worker[] {
-  return s.workers.filter(
+  const out = s.workers.filter(
     (w) =>
       workerMatchesFlag(w, f.flag, s) &&
       (f.state === 'all' || w.state === f.state) &&
@@ -206,6 +211,25 @@ export function filterWorkers(
         WORKER_STATE_META[w.state].label,
       ),
   );
+  const rank = (w: Worker) =>
+    isWaitingForFounder(w, s)
+      ? 0
+      : workerMatchesFlag(w, 'blocked', s)
+        ? 1
+        : workerMatchesFlag(w, 'failed', s)
+          ? 2
+          : w.state === 'UNKNOWN'
+            ? 3
+            : ACTIVE.has(w.state)
+              ? 4
+              : 5;
+  const cmp: Record<WorkerSort, (a: Worker, b: Worker) => number> = {
+    // Stable by name within a rank, so the order never jitters between syncs.
+    attention: (a, b) => rank(a) - rank(b),
+    name: () => 0,
+    'longest-in-state': (a, b) => a.stateSince.localeCompare(b.stateSince),
+  };
+  return out.sort((a, b) => cmp[f.sort](a, b) || a.name.localeCompare(b.name));
 }
 
 /* -------------------------------- Approvals -------------------------------- */
@@ -270,24 +294,44 @@ export interface AlertFilter {
   q: string;
   severity: AlertSeverity | 'ALL';
   humanOnly: boolean;
+  sort: 'severity' | 'newest' | 'oldest';
 }
-export const DEFAULT_ALERT_FILTER: AlertFilter = { q: '', severity: 'ALL', humanOnly: false };
+export const DEFAULT_ALERT_FILTER: AlertFilter = {
+  q: '',
+  severity: 'ALL',
+  humanOnly: false,
+  sort: 'severity',
+};
+const SEVERITY_RANK: Record<AlertSeverity, number> = {
+  CRITICAL: 0,
+  WARNING: 1,
+  NOTICE: 2,
+  INFO: 3,
+};
 
 export function filterAlerts(alerts: readonly Alert[], f: AlertFilter): Alert[] {
-  return alerts.filter(
-    (a) =>
-      (f.severity === 'ALL' || a.severity === f.severity) &&
-      (!f.humanOnly || a.humanActionRequired) &&
-      text(
-        f.q,
-        a.id,
-        a.title,
-        a.whatHappened,
-        a.attention,
-        ALERT_SEVERITY_META[a.severity].label,
-        ...a.affected.map((x) => x.label),
-      ),
-  );
+  const newest = (a: Alert, b: Alert) => b.raisedAt.localeCompare(a.raisedAt);
+  const cmp = {
+    severity: (a: Alert, b: Alert) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity],
+    newest,
+    oldest: (a: Alert, b: Alert) => -newest(a, b),
+  }[f.sort];
+  return alerts
+    .filter(
+      (a) =>
+        (f.severity === 'ALL' || a.severity === f.severity) &&
+        (!f.humanOnly || a.humanActionRequired) &&
+        text(
+          f.q,
+          a.id,
+          a.title,
+          a.whatHappened,
+          a.attention,
+          ALERT_SEVERITY_META[a.severity].label,
+          ...a.affected.map((x) => x.label),
+        ),
+    )
+    .sort((a, b) => cmp(a, b) || newest(a, b) || a.id.localeCompare(b.id));
 }
 
 /** Count of fields that differ from defaults (for "Reset (n)"). */

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EmptyState, Panel } from '@/components/ui';
+import { resourceUnavailable } from '@/domain/selectors';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
 import {
   activeFilterCount,
@@ -97,6 +98,7 @@ export function ApprovalsPage() {
         <Panel>
           <FilteredEmpty
             total={snapshot.approvals.length}
+            unavailable={resourceUnavailable(snapshot, 'approvals')}
             noun="approval gates"
             onReset={reset}
             sourceEmptyText="No approval requests have been made."

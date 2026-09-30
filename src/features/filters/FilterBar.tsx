@@ -104,12 +104,28 @@ export function FilteredEmpty({
   noun,
   onReset,
   sourceEmptyText,
+  unavailable = false,
 }: {
   total: number;
   noun: string;
   onReset: () => void;
   sourceEmptyText?: string;
+  /** The latest fetch of this resource failed: an empty list is NOT "zero". */
+  unavailable?: boolean;
 }) {
+  if (total === 0 && unavailable) {
+    return (
+      <div className="empty" data-empty="unavailable" role="status">
+        <div className="empty__title">
+          {noun.charAt(0).toUpperCase() + noun.slice(1)} data unavailable
+        </div>
+        <div className="empty__body">
+          The data source could not be read, so there may be {noun} that are not shown. See the data
+          warnings above.
+        </div>
+      </div>
+    );
+  }
   if (total === 0) {
     return (
       <div className="empty" data-empty="source">

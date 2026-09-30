@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { EmptyState, Panel } from '@/components/ui';
-import { openAlerts } from '@/domain/selectors';
+import { openAlerts, resourceUnavailable } from '@/domain/selectors';
 import { ALERT_SEVERITIES } from '@/domain/types';
-import { FilterBar, FilteredEmpty } from '@/features/filters/FilterBar';
+import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
 import {
   activeFilterCount,
   DEFAULT_ALERT_FILTER,
@@ -55,14 +55,26 @@ export function AlertsPage() {
         shown={open.length + resolved.length}
         total={snapshot.alerts.length}
         more={
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={f.humanOnly}
-              onChange={(e) => set({ humanOnly: e.target.checked })}
+          <>
+            <SelectFilter
+              label="Sort"
+              value={f.sort}
+              onChange={(sort) => set({ sort })}
+              options={[
+                { value: 'severity', label: 'Most severe first' },
+                { value: 'newest', label: 'Newest first' },
+                { value: 'oldest', label: 'Oldest first' },
+              ]}
             />
-            Only alerts that require human action
-          </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={f.humanOnly}
+                onChange={(e) => set({ humanOnly: e.target.checked })}
+              />
+              Only alerts that require human action
+            </label>
+          </>
         }
       />
 
@@ -70,6 +82,7 @@ export function AlertsPage() {
         <Panel>
           <FilteredEmpty
             total={snapshot.alerts.length}
+            unavailable={resourceUnavailable(snapshot, 'alerts')}
             noun="alerts"
             onReset={reset}
             sourceEmptyText="No alerts have been raised."

@@ -11,12 +11,12 @@
 └───────────────▲─────────────────────────────────────────────────────────────────────────────┘
                 │ DashboardAdapter contract (src/adapters/types.ts)
 ┌───────────────┴──────────────┬───────────────────────────────┬─────────────────────────────┐
-│ DemoAdapter (implemented)    │ RestAdapter (implemented)     │ AssemblyNexus / SSE (future)│
-│ seed + scripted beats        │ translate AN payloads         │ via transport layer         │
+│ DemoAdapter (implemented)    │ RestAdapter (implemented)     │ AssemblyNexus (future)      │
+│ seed + scripted beats        │ REST + optional SSE stream    │ contract = Founder decision │
 └───────────────┬──────────────┴───────────────┬───────────────┴─────────────────────────────┘
                 │ applyEvent (src/domain/reducer.ts)  │ EventTransport (src/adapters/transport)
                 ▼                                     ▼
-          pure domain model (src/domain)        polling (implemented) · SSE · WebSocket
+          pure domain model (src/domain)        polling · SSE (mock contract) · WebSocket (not built)
 ```
 
 ## Layers
@@ -80,17 +80,53 @@
 
 `DashboardAdapter.subscribe` is transport-agnostic. For incremental backends, keep a snapshot
 in the adapter, call `applyEvent` for each normalized event, and publish the result. Use
-`createPollingTransport` for REST polling. SSE and WebSocket transports should implement the same
-`EventTransport` interface. They are intentionally not built until a real backend needs them.
+`createPollingTransport` for REST polling.
+
+`createSseTransport` (`src/adapters/transport/sse.ts`) implements the same `EventTransport`
+interface. It has explicit states, a heartbeat timeout, capped exponential backoff, a retry limit
+followed by a stop, `lastEventId` resume, a message size limit and no credentials. The
+RestAdapter uses it only when `rest.stream` is configured. Stream messages are re-normalized
+(`src/adapters/rest/stream.ts`) and applied with `applyEvent`. While the stream is healthy, REST
+re-syncs are slowed. If the stream fails, polling takes over and the badge says
+`POLL (FALLBACK)`. The stream contract is this project's own mock contract. It is not an
+Assembly Nexus API. A WebSocket transport is not built.
+
+## Loading and code splitting
+
+- `main.tsx` loads only the configured adapter, through a dynamic import in
+  `src/adapters/loadAdapter.ts`. A REST build never downloads the demo simulation, and a demo
+  build never downloads the REST adapter.
+- Each surface is a `React.lazy` chunk (`src/app/surfaces.ts`). Once the first surface
+  renders, the others are prefetched while the browser is idle.
+- The palette and keyboard reference are deliberately **not** lazy. A lazy dialog lost the
+  keystrokes typed right after Ctrl+K, and focus could not be restored when it closed.
+- Loading shows an accessible status (`SurfaceLoading`). A failed chunk load shows
+  `SurfaceErrorBoundary` with a Retry that creates a fresh lazy import, instead of a blank page.
+- A surface marks itself `data-surface="ready"` once rendered. Tests and visual snapshots wait
+  on that.
+
+## Performance guards
+
+- One shared interval per refresh rate for every clock (`useNow` → `src/store/hooks.ts`),
+  not one per component.
+- Bounded state: the event log (500), worker messages (300) and finished demo missions (60).
+- Long lists render incrementally (`useIncremental` + "Show more").
+- `?demo=stress` loads a deterministic 120-worker, 400-mission, 5,000-event dataset.
+  `src/test/perf.test.tsx` and `e2e/performance.spec.ts` hold the budgets: interval count,
+  render time and long tasks.
 
 ## Verification layers
 
-| Layer                         | Tool                              | Location                                                |
-| ----------------------------- | --------------------------------- | ------------------------------------------------------- |
-| Domain/reducer/time           | Vitest                            | `src/domain/*.test.ts`                                  |
-| Governance regressions        | Vitest                            | `src/domain/governance.test.ts`                         |
-| Adapter behaviour             | Vitest + in-memory backend        | `src/adapters/**/*.test.ts`, `src/test/fakeBackend.ts`  |
-| Adapter conformance           | Shared suite                      | `src/test/conformance.ts`                               |
-| UI flows/failure states       | Testing Library (jsdom)           | `src/app/*.test.tsx`, `src/features/command/*.test.tsx` |
-| Structural a11y               | axe-core (jsdom)                  | `src/test/a11y.test.tsx`                                |
-| Browser a11y/keyboard/runtime | Playwright + @axe-core/playwright | `e2e/*.spec.ts`                                         |
+| Layer                             | Tool                              | Location                                                |
+| --------------------------------- | --------------------------------- | ------------------------------------------------------- |
+| Domain/reducer/time               | Vitest                            | `src/domain/*.test.ts`                                  |
+| Governance regressions            | Vitest                            | `src/domain/governance.test.ts`                         |
+| Adapter behaviour                 | Vitest + in-memory backend        | `src/adapters/**/*.test.ts`, `src/test/fakeBackend.ts`  |
+| Adapter conformance               | Shared suite                      | `src/test/conformance.ts`                               |
+| UI flows/failure states           | Testing Library (jsdom)           | `src/app/*.test.tsx`, `src/features/command/*.test.tsx` |
+| Structural a11y                   | axe-core (jsdom)                  | `src/test/a11y.test.tsx`                                |
+| Browser a11y/keyboard/runtime     | Playwright + @axe-core/playwright | `e2e/*.spec.ts`                                         |
+| Transport conformance             | Vitest + fake EventSource         | `src/adapters/transport/conformance.test.ts`            |
+| Phase-3 governance + static guard | Vitest                            | `src/domain/governance.phase3.test.ts`                  |
+| Visual regression                 | Playwright screenshots            | `e2e/visual.spec.ts`, `e2e/__screenshots__`             |
+| Performance budgets               | Vitest + Playwright               | `src/test/perf.test.tsx`, `e2e/performance.spec.ts`     |

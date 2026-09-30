@@ -119,6 +119,7 @@ export function createSseTransport(opts: SseTransportOptions): SseTransport {
 
   const deliver = (type: string, ev: { data: string; lastEventId?: string }) => {
     if (!running || !handlers) return;
+    failures = 0;
     armHeartbeat();
     if (ev.lastEventId) lastEventId = ev.lastEventId;
     if (typeof ev.data !== 'string' || ev.data.length > maxBytes) {
@@ -141,7 +142,9 @@ export function createSseTransport(opts: SseTransportOptions): SseTransport {
       return;
     }
     es.onopen = () => {
-      failures = 0;
+      // Opening is not proof of health: the failure count resets only when a
+      // message or heartbeat actually arrives (see `deliver`). Otherwise a stream
+      // that connects but never delivers would retry forever without falling back.
       setState('open');
       armHeartbeat();
     };

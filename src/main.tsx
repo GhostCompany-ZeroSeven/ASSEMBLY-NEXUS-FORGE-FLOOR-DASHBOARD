@@ -4,6 +4,9 @@ import { loadAdapter } from './adapters/loadAdapter';
 import { App } from './app/App';
 import { assemblyNexusConfig } from './config/assemblyNexus.config';
 import { withEnvOverrides } from './config/runtime';
+// Bundled (self-hosted, OFL-1.1) fonts: identical rendering everywhere, no font CDN.
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
 import './styles/index.css';
 
 const root = document.getElementById('root');

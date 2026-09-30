@@ -82,6 +82,47 @@ describe('failure and disconnection states', () => {
     expect(screen.queryByText('No workers reported')).not.toBeInTheDocument();
   });
 
+  it('a failed missions fetch makes the situation board say Unknown, never "Nothing"', async () => {
+    const backend = createFakeBackend();
+    backend.failures.missions = 'http500';
+    const { adapter } = restTestAdapter(backend);
+    await renderApp(adapter);
+    await screen.findByText('PARTIAL DATA');
+    const board = screen.getByRole('region', { name: 'Situation summary' });
+    for (const q of [/What is running/, /What failed/, /Just completed/]) {
+      const cell = within(board).getByText(q).closest('.situation__cell') as HTMLElement;
+      expect(within(cell).getByText('Unknown')).toBeInTheDocument();
+      expect(within(cell).getByText(/missions could not be loaded/)).toBeInTheDocument();
+    }
+    expect(within(board).queryByText('No failed missions.')).not.toBeInTheDocument();
+  });
+
+  it('backend down: no panel claims "nothing waiting" or "no alerts"', async () => {
+    const { adapter } = restTestAdapter(allDown());
+    await renderApp(adapter);
+    await screen.findByText('Data source unavailable');
+    for (const reassurance of [
+      'No decisions waiting',
+      'No open alerts',
+      'All quiet',
+      'Nothing in flight',
+    ])
+      expect(screen.queryByText(reassurance)).not.toBeInTheDocument();
+    expect(screen.getByText('Approval data unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Alert data unavailable')).toBeInTheDocument();
+    const board = screen.getByRole('region', { name: 'Situation summary' });
+    expect(within(board).queryByText('Nothing')).not.toBeInTheDocument();
+  });
+
+  it('list pages distinguish unavailable from zero and from filtered-out', async () => {
+    const backend = createFakeBackend();
+    backend.failures.missions = 'http500';
+    const { adapter } = restTestAdapter(backend);
+    await renderApp(adapter, '#/missions');
+    expect(await screen.findByText('Missions data unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('No missions from the data source')).not.toBeInTheDocument();
+  });
+
   it('unknown worker status renders as "Unknown state", not as a healthy state', async () => {
     const backend = createFakeBackend();
     const workers = (backend.data.workers as { workers: Record<string, unknown>[] }).workers;

@@ -23,6 +23,20 @@ for (const vp of VIEWPORTS) {
   });
 }
 
+// Layout must not depend on the data: large counts and long labels (as a real
+// backend may send) once pushed filter bars past the viewport on phones.
+test('no horizontal overflow at 320px with the large stress dataset', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  for (const route of ['/floor', '/missions', '/workers', '/approvals', '/alerts', '/activity']) {
+    await page.goto(`/?demo=stress,paused#${route}`);
+    await page.locator('[data-surface="ready"]').waitFor();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, `${route} overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(0);
+  }
+});
+
 test('demo runs live for a while without errors and never shows LIVE', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/#/');

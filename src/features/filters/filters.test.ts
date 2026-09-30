@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildSeedSnapshot } from '@/adapters/demo/seed';
 import {
   activeFilterCount,
+  DEFAULT_ALERT_FILTER,
   DEFAULT_APPROVAL_FILTER,
   DEFAULT_MISSION_FILTER,
   DEFAULT_WORKER_FILTER,
@@ -62,6 +63,15 @@ describe('worker filters', () => {
         .sort(),
     ).toEqual(['w-ada', 'w-juniper', 'w-otto']);
   });
+  it('worker sorting: attention puts the Founder-gated worker first; name is alphabetical', () => {
+    expect(filterWorkers(s, DEFAULT_WORKER_FILTER)[0]!.id).toBe('w-cyrus');
+    const names = filterWorkers(s, { ...DEFAULT_WORKER_FILTER, sort: 'name' }).map((w) => w.name);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+    const since = filterWorkers(s, { ...DEFAULT_WORKER_FILTER, sort: 'longest-in-state' }).map(
+      (w) => w.stateSince,
+    );
+    expect(since).toEqual([...since].sort());
+  });
 });
 
 describe('approval and alert filters', () => {
@@ -83,15 +93,20 @@ describe('approval and alert filters', () => {
     expect(filterApprovals(u, { ...DEFAULT_APPROVAL_FILTER, view: 'unknown' })).toHaveLength(1);
   });
   it('alerts by severity, human action and text', () => {
-    expect(
-      filterAlerts(s.alerts, { q: '', severity: 'WARNING', humanOnly: false }).map((a) => a.id),
-    ).toEqual(['ALR-007']);
-    expect(
-      filterAlerts(s.alerts, { q: '', severity: 'ALL', humanOnly: true }).map((a) => a.id),
-    ).toEqual(['ALR-008']);
-    expect(filterAlerts(s.alerts, { q: 'runner', severity: 'ALL', humanOnly: false })).toHaveLength(
-      1,
-    );
+    const A = DEFAULT_ALERT_FILTER;
+    expect(filterAlerts(s.alerts, { ...A, severity: 'WARNING' }).map((a) => a.id)).toEqual([
+      'ALR-007',
+    ]);
+    expect(filterAlerts(s.alerts, { ...A, humanOnly: true }).map((a) => a.id)).toEqual(['ALR-008']);
+    expect(filterAlerts(s.alerts, { ...A, q: 'runner' })).toHaveLength(1);
+  });
+  it('alert sorting: severity first by default; newest/oldest are exact reverses', () => {
+    const rank = { CRITICAL: 0, WARNING: 1, NOTICE: 2, INFO: 3 } as const;
+    const bySeverity = filterAlerts(s.alerts, DEFAULT_ALERT_FILTER).map((a) => rank[a.severity]);
+    expect(bySeverity).toEqual([...bySeverity].sort((a, b) => a - b));
+    const newest = filterAlerts(s.alerts, { ...DEFAULT_ALERT_FILTER, sort: 'newest' });
+    const times = newest.map((a) => a.raisedAt);
+    expect(times).toEqual([...times].sort().reverse());
   });
   it('active filter count ignores sort', () => {
     expect(

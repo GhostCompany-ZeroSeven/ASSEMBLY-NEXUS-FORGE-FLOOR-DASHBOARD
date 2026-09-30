@@ -28,6 +28,18 @@ const PATHS: Record<string, string> = {
   lock: 'M6 11h12v10H6zM8 11V7a4 4 0 118 0v4',
   wolf: 'M4 4l4 5h8l4-5v8l-3 4-5 4-5-4-3-4z',
   health: 'M3 12h4l2-5 4 10 2-5h6',
+  // Worker state glyphs (drawn, not font characters, so they render identically everywhere).
+  'state-idle': 'M5 7h6l-6 7h6M13 13h5l-5 5h5',
+  'state-planning': 'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
+  'state-working': 'M4 20l9-9M11 4l6 6-3 3-6-6zM15 3l6 6',
+  'state-waiting': 'M6 12h.01M12 12h.01M18 12h.01',
+  'state-blocked': 'M12 5v9M12 19h.01',
+  'state-reviewing': 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',
+  'state-certifying': 'M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2 8 12.7 4 8.8l5.5-.8z',
+  'state-complete': 'M4 12l5 5L20 6',
+  'state-failed': 'M6 6l12 12M18 6L6 18',
+  'state-stopped': 'M7 7h10v10H7z',
+  'state-unknown': 'M9 9a3 3 0 115 2c-1 .8-2 1.4-2 3M12 18h.01',
 };
 
 export type IconName = keyof typeof PATHS;

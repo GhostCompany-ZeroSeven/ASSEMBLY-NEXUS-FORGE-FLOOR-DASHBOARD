@@ -661,6 +661,18 @@
 .stream__refs {
   font-size: 11px;
   padding-left: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+/* Small inline links still get a 24×24 target (WCAG 2.2 SC 2.5.8). */
+.stream__refs a,
+a.target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  min-width: 24px;
 }
 
 .filters {
@@ -690,7 +702,7 @@
 /* ======================================================================== */
 .worker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: 12px;
 }
 .worker-card {

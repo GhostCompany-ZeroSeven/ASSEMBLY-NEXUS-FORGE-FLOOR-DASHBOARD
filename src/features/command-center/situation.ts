@@ -26,7 +26,15 @@ export interface Situation {
     latest?: Pick<Mission, 'id' | 'title' | 'completedAt'>;
   };
   completed: { count: number; latest?: Pick<Mission, 'id' | 'title' | 'completedAt'> };
+  /**
+   * Resources the latest sync could not load. Answers that depend on them are
+   * UNKNOWN, never "Nothing": an empty list from a failed fetch is not reassurance.
+   */
+  unavailable: Record<SituationResource, boolean>;
 }
+
+export type SituationResource = 'workers' | 'missions' | 'approvals' | 'alerts';
+const RESOURCES: readonly SituationResource[] = ['workers', 'missions', 'approvals', 'alerts'];
 
 const BUSY = new Set(['PLANNING', 'WORKING', 'REVIEWING', 'CERTIFYING']);
 
@@ -40,7 +48,15 @@ export function selectSituation(
     s.missions
       .filter((m) => m.status === status)
       .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))[0];
+  const failedSources = new Set(
+    s.quality.issues.filter((i) => i.severity === 'error').map((i) => i.source),
+  );
+  const unavailable = Object.fromEntries(RESOURCES.map((r) => [r, failedSources.has(r)])) as Record<
+    SituationResource,
+    boolean
+  >;
   return {
+    unavailable,
     founder: {
       approvals: gates.length,
       humanAlerts: openAlerts(s).filter((a) => a.humanActionRequired && !a.acknowledgedAt).length,

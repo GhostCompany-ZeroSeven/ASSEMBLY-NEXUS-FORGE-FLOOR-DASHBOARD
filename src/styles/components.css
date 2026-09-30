@@ -42,7 +42,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   padding: 12px var(--space) 0;
 }
 .panel__eyebrow {
@@ -61,6 +62,7 @@
 .panel__actions {
   font-size: 12px;
   flex-shrink: 0;
+  max-width: 100%;
 }
 .panel__body {
   padding: 12px var(--space) var(--space);
@@ -504,6 +506,9 @@ a.stat:hover {
 /* ---- Filter bar --------------------------------------------------------- */
 .filterbar {
   display: grid;
+  /* minmax(0, …): the track must not grow to the rows' min-content, or long
+     segment lists push the page wider than the viewport on phones. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 10px 12px;
   border: 1px solid var(--line);

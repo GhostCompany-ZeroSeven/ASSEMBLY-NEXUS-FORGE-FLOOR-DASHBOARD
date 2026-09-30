@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Panel } from '@/components/ui';
 import { ShowMore } from '@/components/ShowMore';
+import { resourceUnavailable } from '@/domain/selectors';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
 import {
   activeFilterCount,
@@ -103,6 +104,7 @@ export function MissionsPage() {
         {missions.length === 0 ? (
           <FilteredEmpty
             total={snapshot.missions.length}
+            unavailable={resourceUnavailable(snapshot, 'missions')}
             noun="missions"
             onReset={() => set(DEFAULT_MISSION_FILTER)}
           />

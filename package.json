@@ -16,11 +16,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "npm run build && playwright test",
+    "build:e2e-rest": "vite build --mode e2e-rest --outDir dist-e2e-rest",
+    "test:e2e": "npm run build && npm run build:e2e-rest && playwright test",
     "test:a11y": "vitest run src/test/a11y.test.tsx && npm run test:e2e -- e2e/a11y.spec.ts",
+    "test:visual": "npm run build && npm run build:e2e-rest && playwright test e2e/visual.spec.ts",
+    "test:visual:update": "npm run build && npm run build:e2e-rest && playwright test e2e/visual.spec.ts --update-snapshots",
     "mock:rest": "node scripts/mock-rest-server.ts"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
