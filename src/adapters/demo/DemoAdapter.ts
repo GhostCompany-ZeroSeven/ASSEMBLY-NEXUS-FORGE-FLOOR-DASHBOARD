@@ -212,7 +212,13 @@ export class DemoAdapter implements DashboardAdapter {
     let snap = this.current();
     const events: DashboardEvent[] = [];
     for (const draft of drafts) {
-      const event = { ...draft, id: this.nextId('evt'), at, via: 'simulated' } as DashboardEvent;
+      const event = {
+        ...draft,
+        id: this.nextId('evt'),
+        at,
+        via: 'simulated',
+        receivedAt: at,
+      } as DashboardEvent;
       snap = applyEvent(snap, event);
       events.push(event);
     }

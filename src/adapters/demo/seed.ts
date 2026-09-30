@@ -656,7 +656,7 @@ function buildSeedHistory(at: (ms: number) => string): DashboardEvent[] {
   let n = 0;
   const id = () => `seed-${++n}`;
   const e = <E extends DashboardEvent>(ev: Omit<E, 'id'>): E =>
-    ({ id: id(), via: 'simulated', ...ev }) as E;
+    ({ id: id(), via: 'simulated', receivedAt: at(0), ...ev }) as E;
   return [
     e({
       kind: 'mission.failed',

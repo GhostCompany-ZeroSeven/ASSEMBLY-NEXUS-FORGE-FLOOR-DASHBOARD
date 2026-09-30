@@ -434,13 +434,17 @@ export class RestAdapter implements DashboardAdapter {
           const list = listFrom(data, 'events', log);
           if (!list) failed.add(name);
           else
-            next.events = dedupe(
-              list.map((x, i) => normalizeEvent(x, i, log)),
-              log,
-              'events',
-            )
-              .sort((a, b) => a.at.localeCompare(b.at))
-              .slice(-MAX_EVENTS);
+            next.events = keepFirstIngest(
+              dedupe(
+                list.map((x, i) => normalizeEvent(x, i, log)),
+                log,
+                'events',
+              )
+                .sort((a, b) => a.at.localeCompare(b.at))
+                .slice(-MAX_EVENTS),
+              prev.events,
+              at,
+            );
           break;
         }
       }
@@ -571,6 +575,7 @@ export class RestAdapter implements DashboardAdapter {
       return;
     }
     this.lastStreamEventAt = at;
+    event.receivedAt = at;
     this.snapshot = applyEvent(this.snapshot, event);
     this.touchFreshness(at);
     this.publish([event]);
@@ -628,6 +633,23 @@ export class RestAdapter implements DashboardAdapter {
   private iso(): string {
     return new Date(this.now()).toISOString();
   }
+}
+
+/**
+ * Ingest facts (how and when THIS dashboard first received an event) belong to
+ * the first arrival. A re-sync that lists an event already received over the
+ * stream must not relabel it as polled or move its arrival time.
+ */
+function keepFirstIngest(
+  events: DashboardSnapshot['events'],
+  prev: DashboardSnapshot['events'],
+  at: string,
+): DashboardSnapshot['events'] {
+  const first = new Map(prev.map((e) => [e.id, e]));
+  return events.map((e) => {
+    const p = first.get(e.id);
+    return { ...e, via: p?.via ?? e.via, receivedAt: p?.receivedAt ?? at };
+  });
 }
 
 function dedupe<T extends { id: string }>(items: (T | null)[], log: IssueLog, source: string): T[] {

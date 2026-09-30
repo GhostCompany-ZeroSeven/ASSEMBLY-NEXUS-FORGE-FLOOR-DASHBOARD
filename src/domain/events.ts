@@ -31,6 +31,11 @@ interface EventBase<K extends string, P> {
    * whether the event's claims are authorized.
    */
   via?: EventVia;
+  /**
+   * When this dashboard first received the event (adapter clock, ISO). Distinct
+   * from `at`, which is the source's claimed event time. Observability only.
+   */
+  receivedAt?: ISODateString;
 }
 
 export type EventVia = 'stream' | 'poll' | 'simulated';
