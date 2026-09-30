@@ -195,6 +195,8 @@ test('DUPLICATES: SSE→SSE, REST→REST, SSE→REST and REST→SSE are each cou
 
   await go(page, '/quality');
   await expect(page.locator('.quality__issues [data-class="duplicate-delivery"]')).toHaveCount(1);
+  // Identical re-deliveries are transport duplicates, never conflicts (Phase 8, P8-D1).
+  await expect(page.locator('.quality__issues [data-class="event-conflict"]')).toHaveCount(0);
   await expect(page.locator('[data-available="false"]')).toHaveCount(0);
 });
 

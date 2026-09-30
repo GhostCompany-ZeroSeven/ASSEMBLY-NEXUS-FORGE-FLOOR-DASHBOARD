@@ -89,18 +89,28 @@ export async function go(page: Page, route: string) {
   await page.locator('[data-surface="ready"]').waitFor();
 }
 
-let seq = 0;
-/** A wire event for mission AN-0142 with a source time relative to the mock server clock. */
+/**
+ * A wire event for mission AN-0142, with its source time relative to now.
+ * The time and payload are PINNED per (id, offset): delivering the same event
+ * twice sends identical facts (a true duplicate); only a copy with other facts
+ * is a conflict. (Phase 8 found that relative times resolved per call made
+ * "duplicates" differ by milliseconds.)
+ */
+const pinned = new Map<string, WireEvent>();
 export function wireEvent(id: string, atOffsetMs: number, extra: WireEvent = {}): WireEvent {
-  seq += 1;
-  return {
-    id,
-    kind: 'task.completed',
-    atOffsetMs,
-    missionId: 'AN-0142',
-    payload: { taskId: `AN-0142-X${seq}` },
-    ...extra,
-  };
+  const key = `${id}|${atOffsetMs}`;
+  let base = pinned.get(key);
+  if (!base) {
+    base = {
+      id,
+      kind: 'task.completed',
+      at: new Date(Date.now() + atOffsetMs).toISOString(),
+      missionId: 'AN-0142',
+      payload: { taskId: `AN-0142-X${pinned.size + 1}` },
+    };
+    pinned.set(key, base);
+  }
+  return { ...base, ...extra };
 }
 
 /** The timeline row of an event. */
