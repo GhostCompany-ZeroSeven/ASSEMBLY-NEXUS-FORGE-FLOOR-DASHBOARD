@@ -7,7 +7,9 @@ import type { AdapterConfig, DashboardConfig } from './types';
  *   (+ VITE_FORGE_REST_STREAM=/stream to enable the optional SSE stream)
  *
  * Vite inlines `VITE_*` variables into the client bundle, so they must NEVER
- * contain secrets. Only the adapter kind and a base URL are read here.
+ * contain secrets. Only the adapter kind, a base URL, a label, the stream path
+ * and two timing numbers are read here. The timings are clamped by
+ * `resolveRestConfig` (poll ≥ 1s; re-sync ≥ poll); non-numbers are ignored.
  */
 export function withEnvOverrides(
   config: DashboardConfig,
@@ -42,8 +44,24 @@ export function withEnvOverrides(
         decide: '/approvals/:id/decision',
         acknowledge: '/alerts/:id/acknowledge',
       },
-      ...(env.VITE_FORGE_REST_STREAM ? { stream: { path: env.VITE_FORGE_REST_STREAM } } : {}),
+      ...(ms(env.VITE_FORGE_REST_POLL_MS) !== undefined
+        ? { pollIntervalMs: ms(env.VITE_FORGE_REST_POLL_MS) }
+        : {}),
+      ...(env.VITE_FORGE_REST_STREAM
+        ? {
+            stream: {
+              path: env.VITE_FORGE_REST_STREAM,
+              resyncIntervalMs: ms(env.VITE_FORGE_REST_RESYNC_MS),
+            },
+          }
+        : {}),
     },
   };
   return { ...config, adapter };
+}
+
+/** A positive integer number of milliseconds, or undefined. */
+function ms(v: string | undefined): number | undefined {
+  if (!v || !/^\d{1,7}$/.test(v)) return undefined;
+  return Number(v);
 }

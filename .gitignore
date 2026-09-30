@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-e2e-rest
+dist-e2e-runtime
 coverage
 *.local
 .env
@@ -8,6 +9,8 @@ coverage
 !.env.example
 # Test-only build mode (no secrets): points the REST adapter at a Playwright mock.
 !.env.e2e-rest
+# Test-only build mode (no secrets): same-origin REST/SSE mock for the Phase 7 runtime suite.
+!.env.e2e-runtime
 .DS_Store
 *.tsbuildinfo
 playwright-report
