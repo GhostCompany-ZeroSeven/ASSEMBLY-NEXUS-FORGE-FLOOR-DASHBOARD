@@ -7,8 +7,86 @@ _Operational continuity log. A later session should read this first._
 - **Session 2:** `1d2600c` → `7ae4ed8` (hardening, generic adapter, accessibility)
 - **Session 3:** `7ae4ed8` → `0d77f3a` (UI/UX product hardening, Phase 3)
 - **Session 4:** `0d77f3a` → `4d5279e` (product hardening Phase 4)
-- **Session 5:** `4d5279e` → Founder operations intelligence (Phase 5); see `git log` for the head
+- **Session 5:** `4d5279e` → `c3286ba` (Founder operations intelligence, Phase 5)
+- **Session 6:** `c3286ba` → Founder command intelligence (Phase 6); see `git log` for the head
 - **Last updated:** 2026-09-30
+
+## Session 6: Founder command intelligence (Phase 6)
+
+Continuity was verified at the start. Branch `claude/epic-cannon-zezh6m` was at HEAD `c3286ba`,
+matching the remote; `main` was at `3a3e217`; the tree was clean; and there were no AI co-author
+trailers. The baseline passed first: 424 unit tests, and 110 browser tests in 3 of 4 runs (one
+run had a single failure that was not identified and did not reproduce in 10+ later runs). A
+Phase 5 production build was kept for the performance comparison.
+
+### Delivered
+
+| Objective                  | Result                                                                                                                                                                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Event coverage watermark   | The checkpoint (now v2) keeps the ids of the newest observed events (up to 600). Counts are EXACT only when the checkpoint's newest event is still retained (identity, never clock comparison); otherwise LOWER_BOUND, UNKNOWN or NOT_APPLICABLE          |
+| Mission-scoped checkpoints | Per-mission views (`forge-floor:mission-views`, max 50, 1 MB bound, validated fail-closed). Recorded on leave/hide from complete, connected data only. Explicit "Mark mission as seen" and "Forget this mission view". No authority, no decisions         |
+| Mission change digest      | "Since you last viewed this mission": status, gates, alerts, crew, tasks, dependencies, result, evidence and events. Unknown areas are named; missing history is never "no change"                                                                        |
+| Mission Control markers    | NEW, CHANGED and NEEDS FOUNDER as text (not colour only), with hidden explanations for screen readers. "Since last view" filter and "Recent activity" sort, URL-persisted                                                                                 |
+| Mission command detail     | Header with freshness, attention for this mission, changes, gates, scoped timeline with NEW SINCE YOUR VIEW tags and a retained-history boundary, alerts, crew, tasks, dependencies and evidence                                                          |
+| Attention explanations     | "Why is this here?" with a reason code (`PENDING_FOUNDER_GATE`, `GATE_AUTHORITY_INVALID`, `GATE_STATUS_UNRECOGNIZED`, `ALERT_EXPLICIT_HUMAN_ACTION`, `DATA_UNAVAILABLE_AFFECTS_QUEUE`, `DATA_NOT_CURRENT`), the triggering facts, known and unknown facts |
+| Data-quality inspector     | `#/quality`: explicit dimensions per resource (available, freshness, dropped/repaired records, transport), no score. Linked from the brief and transport diagnostics                                                                                      |
+| Palette and search         | Mission-scoped "What changed in this mission?", Founder/changed/blocked/failed mission lists, recent activity and the inspector. Search results show their provenance (source mode and freshness)                                                         |
+| Timeline and evidence      | Timelines filterable by approval and alert; gate and alert cards link to them. Evidence lists artifacts with http(s)-only links and never presents an artifact as certification                                                                           |
+| Governance                 | `src/app/governance.phase6.test.tsx`: 15 rules plus a static guard that no Phase 6 module calls a decision, acknowledgement, messaging or network API                                                                                                     |
+
+### Defects found and fixed this session (each with regression coverage)
+
+| ID  | Defect                                                                                                                        | Fix                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| D1  | **Clock mixing:** the digest compared source event time with the browser-clock checkpoint time; skew could give a false EXACT | Event watermark with identity coverage; test "never compares the source clock" |
+| D2  | **Empty vs unknown:** a timeline showed "No activity yet" when the events resource had failed                                 | UNKNOWN empty state with a warning; mutation-checked                           |
+| D3  | **Stream events dropped on re-sync:** a REST re-sync removed events observed only on the stream (found in the runtime run)    | `mergeObserved` keeps observed events the listing omits; mutation-checked      |
+| D4  | RED ALERT banner text clipped at 320px (pseudo)                                                                               | `overflow-wrap` on the banner                                                  |
+| D5  | Mission record status badge overflowing at 1440px (pseudo)                                                                    | The key/value badge wrap applies at every width                                |
+| D6  | Inspector "most recently received" picked an arbitrary event within an arrival batch                                          | Tie-break by event time                                                        |
+| D7  | Id-based record paths ("mission AN-0139.artifact") were classified as "Other"                                                 | Classifier extended                                                            |
+
+### Bundle
+
+| Measure           | Phase 5                   | Phase 6                                                                                                  |
+| ----------------- | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Initial JS        | 319.5 kB / ~100.9 kB gzip | 341.0 kB / 108.2 kB gzip (+7.3 kB gzip: English strings and mission-view recording, split across chunks) |
+| Mission detail    | smaller lazy chunk        | 15.25 kB                                                                                                 |
+| Quality inspector | n/a                       | lazy chunk, 5.93 kB                                                                                      |
+| Spanish catalog   | 36.37 kB                  | 45.7 kB                                                                                                  |
+| Pseudo-locale     | 1.46 kB (lazy)            | 1.45 kB (lazy)                                                                                           |
+
+### Performance (Phase 5 vs Phase 6 builds, stress dataset, fresh load, median)
+
+| Median (ms)           | Phase 5 | Phase 6 |
+| --------------------- | ------- | ------- |
+| Render `/activity`    | 669     | 678     |
+| Render `/missions`    | 569     | 573     |
+| Render mission detail | 537     | 535     |
+| Render `/brief`       | 518     | 527     |
+| Render `/quality`     | n/a     | 156     |
+| Palette open + search | 295     | 322     |
+| Locale switch en → es | 68      | 100     |
+
+The locale switch is slower because the Spanish chunk is larger; the palette difference is
+within the spread of runs. Raw computation on the stress dataset: global digest 0.90 ms,
+mission digest 0.05 ms, markers for 400 missions 1.51 ms, attention queue 0.50 ms, inspector
+0.05 ms, explanations 0.04 ms, checkpoint serialize/restore 0.20 ms. Sizes: checkpoint 19 kB,
+one mission view 401 B, 50 mission views 21 kB. Budgets are in `src/test/perf.test.tsx`.
+
+### Runtime browser exercise (real mock server, REST + SSE)
+
+1. **First visit:** no mission baseline (UNKNOWN).
+2. **Leave the mission:** the view was stored; stream events then marked the card CHANGED.
+3. **Return:** "EXACT · 3 new events observed", with 3 NEW tags in the scoped timeline.
+4. **Approvals HTTP 500:** detected after 41s (`LIVE · STREAM · PARTIAL`); the approvals area
+   became UNKNOWN and the mission's attention read Incomplete. The inspector named the resource.
+5. **Recovery:** after 59–60s. After the D3 fix the inspector showed stream 9 / poll 15.
+6. **Reload:** the mission baseline was kept.
+7. **Other languages:** Spanish at 320, pseudo at 320 and English at 2560 had no overflow.
+
+The only console error was the injected 500. A late-arriving event was NOT TESTED at runtime
+(the mock has no injection endpoint); it is covered by unit tests.
 
 ## Session 5: Founder operations intelligence (Phase 5)
 
@@ -300,7 +378,23 @@ tree, and `main` untouched.
   end in Chromium: LIVE·MOCK → HOLD delivered → PARTIAL DATA → DISCONNECTED/Reconnecting → LIVE.
 - **CI:** a second job runs the Playwright browser suite and uploads the report on failure.
 
-## Verification (last run, session 5)
+## Verification (last run, session 6)
+
+| Check                                                    | Result                                                                                                                        |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check`                                   | pass                                                                                                                          |
+| `npm run typecheck`                                      | pass (app, and node/e2e)                                                                                                      |
+| `npm run lint`                                           | pass (0 warnings)                                                                                                             |
+| `npm test` (Vitest)                                      | **502/502** across 44 files                                                                                                   |
+| — adapter conformance / REST adapter, config, normalize  | 16/16 · 17/17 · 11/11 · 15/15                                                                                                 |
+| — transport conformance / SSE / stream / adversarial     | 10/10 · 10/10 · 9/9 · 9/9                                                                                                     |
+| — governance (phase 2 / 3 / 4 / 5 / 6)                   | 23/23 · 24/24 · 16/16 · 13/13 · 15/15                                                                                         |
+| — Phase 6: mission view/coverage, mission UI, resilience | 34/34 · 16/16 · 5/5 (plus digest 36/36, resilience phase 5 17/17, timeline 8/8, perf 21/21)                                   |
+| `npm run test:e2e`                                       | **128/128** in CI mode, 0 flaky: a11y 19, keyboard 7, runtime 6, performance 6, phase 4 18, phase 5 15, phase 6 15, visual 42 |
+| Visual suite in the pinned CI image                      | 42/42 (update, verify, and a final verify), and 42/42 on the host                                                             |
+| `npm run build` / `npm run build:e2e-rest`               | pass                                                                                                                          |
+
+## Session 5 verification (historical)
 
 | Check                                                                    | Result                                                                                                   |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -373,9 +467,10 @@ tree, and `main` untouched.
    freshness model can represent either choice.
 5. **Assembly Nexus event stream:** whether one exists, and its contract. The SSE path is built
    against this project's mock contract only.
-6. **Last-view scope (Phase 5, optional):** the "last looked" checkpoint is per browser and
+6. **Last-view scope (Phases 5–6, optional):** the "last looked" checkpoint is per browser and
    local-only by design. The Founder may later want it per identity across devices; that needs
-   an authenticated backend store and is deliberately not built.
+   an authenticated backend store and is deliberately not built. Phase 6 mission views are
+   local-only for the same reason.
 
 ## Known limitations
 
@@ -407,14 +502,18 @@ tree, and `main` untouched.
   - Date words (month names) come from `Intl` in English.
   - The phone topbar's data-source label may break inside a pseudo word as a last resort (never
     in English or Spanish).
+- **Mission views (Phase 6):** at most 50 missions are remembered (oldest dropped). Leaving a
+  mission records a view by design; "Forget" removes it now, and a later visit records a new one.
+- **Event coverage:** only the newest 600 observed event ids are kept, so a backend that lists
+  far more events between visits gives LOWER_BOUND rather than EXACT.
+- **Unidentified flake:** one baseline browser run at the start of session 6 had one failure that
+  was not identified and has not reproduced since.
 - **Brief detection delay:** while the stream is healthy, a REST resource failure reaches the
   brief within the 60s re-sync window (measured: 42s).
 
 ## Next autonomous actions
 
-1. Watch the first GitHub CI run of the browser job in the pinned image, and act on any diffs.
-2. Digest across reloads for REST: optionally persist the newest event id seen, to prove
-   coverage when a backend lists only recent events.
-3. A per-mission "since last view" marker on Mission Control cards, reusing the checkpoint.
-4. More locales once requested. The pseudo-locale sweep is the acceptance gate for each.
-5. An adapter for the real Assembly Nexus contract, once the Founder decides it.
+1. Watch the GitHub CI run for this branch's head, and act on any diffs.
+2. An adapter for the real Assembly Nexus contract, once the Founder decides it.
+3. More locales once requested. The pseudo-locale sweep is the acceptance gate for each.
+4. A runtime late-event exercise once the mock server can inject events on demand.

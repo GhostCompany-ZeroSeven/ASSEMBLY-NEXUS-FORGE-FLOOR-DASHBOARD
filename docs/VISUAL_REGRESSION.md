@@ -40,29 +40,31 @@ old 1% budget let through. Do not loosen the tolerance to hide a difference.
 
 ## What is covered
 
-| Baseline                                                                    | State                                                                          |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `command-center-{desktop,wide,phone}`                                       | Command Center, situation board                                                |
-| `forge-floor-{phone,tablet,desktop,hd,wide}`                                | Forge Floor at 390, 820, 1440, 1920 (1080p) and 2560 wide                      |
-| `forge-floor-selected-worker`, `forge-floor-room`                           | Worker selected; Founder Gate room panel                                       |
-| `missions-desktop`, `mission-complete`, `missions-url-filtered`             | Mission Control; completed mission; URL deep link with filters                 |
-| `workers-desktop`, `worker-focus`                                           | Roster; worker focus view                                                      |
-| `approvals-{desktop,tablet}`, `approval-confirm-deny`                       | Approval gates; the explicit confirmation step                                 |
-| `alerts-desktop`, `red-alert`                                               | Alerts; RED ALERT after a critical event                                       |
-| `palette-search`                                                            | Command palette with global search results                                     |
-| `missions-filtered-empty`                                                   | Zero results because of a filter (not because of the data)                     |
-| `es-command-center-desktop`, `es-forge-floor-phone`, `es-approvals-desktop` | Spanish UI                                                                     |
-| `settings-transport-demo`, `settings-transport-rest`                        | Transport and freshness diagnostics                                            |
-| `rest-live`                                                                 | REST adapter, healthy mock backend: LIVE                                       |
-| `rest-partial`                                                              | Malformed workers + HTTP 500 missions: LIVE · STALE · PARTIAL, answers UNKNOWN |
-| `rest-down`                                                                 | Backend unavailable: DISCONNECTED, no reassurance                              |
-| `rest-empty-missions`                                                       | Backend reports zero missions                                                  |
-| `brief-first-visit`                                                         | Founder brief with no recorded last view: history UNKNOWN, not "nothing"       |
-| `brief-changes-{desktop,phone}`                                             | Brief after "Mark all as seen" and 6 simulated steps (+1 min): digest items    |
-| `es-brief-desktop`                                                          | Spanish brief                                                                  |
-| `rest-brief-approvals-down`                                                 | REST, approvals failing: Needs Founder UNKNOWN, queue INCOMPLETE               |
-| `activity-timeline-details`, `activity-timeline-phone`                      | Operations timeline with arrival details and "Now" state; phone layout         |
-| `pseudo-approvals-phone`                                                    | Pseudo-locale diagnostic (`?pseudo=1`) on a 390px phone                        |
+| Baseline                                                                    | State                                                                                         |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `command-center-{desktop,wide,phone}`                                       | Command Center, situation board                                                               |
+| `forge-floor-{phone,tablet,desktop,hd,wide}`                                | Forge Floor at 390, 820, 1440, 1920 (1080p) and 2560 wide                                     |
+| `forge-floor-selected-worker`, `forge-floor-room`                           | Worker selected; Founder Gate room panel                                                      |
+| `missions-desktop`, `mission-complete`, `missions-url-filtered`             | Mission Control; completed mission; URL deep link with filters                                |
+| `workers-desktop`, `worker-focus`                                           | Roster; worker focus view                                                                     |
+| `approvals-{desktop,tablet}`, `approval-confirm-deny`                       | Approval gates; the explicit confirmation step                                                |
+| `alerts-desktop`, `red-alert`                                               | Alerts; RED ALERT after a critical event                                                      |
+| `palette-search`                                                            | Command palette with global search results                                                    |
+| `missions-filtered-empty`                                                   | Zero results because of a filter (not because of the data)                                    |
+| `es-command-center-desktop`, `es-forge-floor-phone`, `es-approvals-desktop` | Spanish UI                                                                                    |
+| `settings-transport-demo`, `settings-transport-rest`                        | Transport and freshness diagnostics                                                           |
+| `rest-live`                                                                 | REST adapter, healthy mock backend: LIVE                                                      |
+| `rest-partial`                                                              | Malformed workers + HTTP 500 missions: LIVE · STALE · PARTIAL, answers UNKNOWN                |
+| `rest-down`                                                                 | Backend unavailable: DISCONNECTED, no reassurance                                             |
+| `rest-empty-missions`                                                       | Backend reports zero missions                                                                 |
+| `brief-first-visit`                                                         | Founder brief with no recorded last view: history UNKNOWN, not "nothing"                      |
+| `brief-changes-{desktop,phone}`                                             | Brief after "Mark all as seen" and 6 simulated steps (+1 min): digest items                   |
+| `es-brief-desktop`                                                          | Spanish brief                                                                                 |
+| `rest-brief-approvals-down`                                                 | REST, approvals failing: Needs Founder UNKNOWN, queue INCOMPLETE                              |
+| `activity-timeline-details`, `activity-timeline-phone`                      | Operations timeline with arrival details and "Now" state; phone layout                        |
+| `pseudo-approvals-phone`                                                    | Pseudo-locale diagnostic (`?pseudo=1`) on a 390px phone                                       |
+| `mission-changes-{desktop,phone}`                                           | Mission viewed, left, demo advanced: proven changes, EXACT coverage, NEW SINCE YOUR VIEW tags |
+| `quality-desktop`                                                           | Data-quality inspector (explicit dimensions, no score)                                        |
 
 The `rest-*` and `settings-transport-rest` shots run against a second build
 (`npm run build:e2e-rest`, `.env.e2e-rest`) whose REST adapter points at
@@ -100,6 +102,25 @@ pinned image:
 
 The new shots were captured twice in the image (update, then verify) and once on
 the host: 39/39 identical each time.
+
+## Phase 6 baseline changes (reviewed before regeneration)
+
+The 39 Phase 5 baselines were run in the pinned image first; 25 differed.
+Each was classified by region (expected vs actual) and inspected:
+
+| Baselines                                                                                                                | Cause (all intended)                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command-center-{desktop,wide}`, `es-command-center-desktop`, `rest-live`, `rest-partial`, `alerts-desktop`, `red-alert` | "Open in timeline" link on alert cards (alert-scoped timeline)                                                                                                                                              |
+| `approvals-{desktop,tablet}`, `approval-confirm-deny`, `es-approvals-desktop`, `pseudo-approvals-phone`                  | "Open in timeline" link on gate cards; in pseudo, wrapped status badges                                                                                                                                     |
+| `missions-desktop`, `missions-url-filtered`                                                                              | NEEDS FOUNDER marker on AN-0144                                                                                                                                                                             |
+| `mission-complete`                                                                                                       | New mission hierarchy: header status + source, Founder attention, "since you last viewed this mission"                                                                                                      |
+| `brief-first-visit`, `brief-changes-{desktop,phone}`, `es-brief-desktop`, `rest-brief-approvals-down`                    | "Why is this here?" explanations; "Explain data quality" link; digest wording ("New events observed")                                                                                                       |
+| `activity-timeline-{details,phone}`                                                                                      | Approval-gate and alert filters; retained-history boundary line                                                                                                                                             |
+| `settings-transport-{demo,rest}`                                                                                         | "Explain data quality" link in the transport panel header                                                                                                                                                   |
+| `palette-search`                                                                                                         | SIMULATED provenance on results. Its sidebar pixels are the Phase 5 "Brief" nav item behind the blurred backdrop: it stayed within tolerance in Phase 5 (blur), so that baseline was never regenerated then |
+
+Three baselines were added (mission changes desktop/phone, inspector). All 42
+matched in the pinned image twice (update, then verify) and on the host.
 
 ## Updating baselines
 

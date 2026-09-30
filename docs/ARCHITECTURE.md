@@ -241,6 +241,144 @@ Links appear only where the data carries a relationship:
 - Queue items link to the gate's mission and to the workers blocked on it.
 - The activity stream links the ids an event carries.
 
+## Founder command intelligence (Phase 6)
+
+### Event coverage (`domain/eventCoverage.ts`)
+
+"How many events happened since a view?" is answered only as far as the
+evidence allows:
+
+| State            | Meaning                                                                                                | UI                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | ------------------------- |
+| `exact`          | The retained log still holds the newest event the view had seen, so every later event it lists is here | `EXACT` + count           |
+| `lower-bound`    | New events were observed but earlier ones may have been dropped                                        | `AT LEAST` + "at least N" |
+| `unknown`        | Events unavailable now or then, or nothing new while coverage is unproven                              | `UNKNOWN` (never 0)       |
+| `not-applicable` | No comparable view                                                                                     | `NO COMPARABLE VIEW`      |
+
+Rules:
+
+- Event **ids are opaque**: they answer "seen before?" and never "which came
+  first". Lexical order is not chronology.
+- **No clock is compared with another clock.** A view stores a watermark
+  (the ids it had seen, plus the newest event's id and source time). Coverage
+  is proven by identity overlap. The newest-seen event must still be
+  retained, because retention drops the oldest event times first.
+- "New" means _newly observed_, so an old event that arrives late is counted
+  once (and flagged ARRIVED LATE in the timeline).
+
+Phase 5 compared source event times with the browser-clock view time. With a
+skewed source clock, that could present a wrong count as exact. It was fixed
+in Phase 6; checkpoint schema v2 carries the watermark, and v1 records are
+discarded and reported as "outdated".
+
+### Mission checkpoints and mission digest (`domain/missionView.ts`)
+
+Each mission has its own local "last viewed" record, stored in
+`forge-floor:mission-views`.
+
+- **Storage:** at most 50 missions (most recent first) and 1 MB, validated
+  fail-closed.
+- **Contents:** ids and enum states only, per area:
+  - status, result present, assignment
+  - assigned workers' states, linked gates' statuses
+  - alerts naming the mission, artifact ids
+  - the mission's event watermark
+  - which resources were unavailable, and the freshness at the time
+- **When it is recorded:**
+  - automatically, on leaving the mission view, hiding the tab or closing the
+    page, but only from complete, connected data
+  - explicitly, with "Mark mission as seen"
+  - removed with "Forget this mission view"
+- **Scope:** local only. Nothing is sent to the backend. It is not an
+  acknowledgement, approval, completion or certification.
+- **No global fallback:** a mission never viewed says so (it does not
+  inherit the global last view).
+
+Digest rules:
+
+- Each area is compared only when known then and now. Otherwise it is
+  UNKNOWN, with a reason: unavailable then or now, mission not reported, or
+  history not covered.
+- Records that disappear are "no longer reported", and records that return
+  are "reported again". Neither means deleted, completed or resumed.
+- "Nothing changed" is shown only when every area was comparable and event
+  coverage is exact. Otherwise it says "cannot say" (snapshot equality does
+  not rule out a change that reverted).
+
+### Mission Control markers (`domain/missionMarkers.ts`)
+
+| Marker        | Definition                                                                                                            |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| NEW           | In the data now, but not listed by the comparable global last view (same source, missions loaded then and now)        |
+| CHANGED       | Has its own view record from the same source, and a mission-record change or a new mission event is proven since then |
+| NEEDS FOUNDER | A linked gate is in the attention queue as `PENDING_FOUNDER_GATE`                                                     |
+
+Every marker is text, with an accessible explanation (not colour alone). No
+marker means "not proven", not "proven absent".
+
+Filter `?since=new|changed` and sort `?sort=activity` both come from these
+definitions. Sort by activity uses the latest source event time, and
+missions with no retained event go last.
+
+### Attention explanations (`domain/attentionExplain.ts`)
+
+Each queue entry shows its explanation under "Why is this here?":
+
+- a stable reason code
+- the triggering source fact
+- what is known and what is unknown
+- source time and data-received time
+- freshness
+- where acting is possible
+
+| Code                             | Trigger                                                     | Action surface     |
+| -------------------------------- | ----------------------------------------------------------- | ------------------ |
+| `PENDING_FOUNDER_GATE`           | Gate PENDING/HELD; required authority = the human authority | Approval gate card |
+| `GATE_AUTHORITY_INVALID`         | Open gate; required authority missing or a worker           | Approval gate card |
+| `GATE_STATUS_UNRECOGNIZED`       | Gate status UNKNOWN                                         | Approval gate card |
+| `ALERT_EXPLICIT_HUMAN_ACTION`    | Alert says human action required; not acknowledged/resolved | Alert card         |
+| `DATA_UNAVAILABLE_AFFECTS_QUEUE` | Approvals or alerts could not be loaded (queue incomplete)  | none               |
+| `DATA_NOT_CURRENT`               | Disconnected or stale data while items are shown            | none               |
+
+Severity is shown as context and is never a trigger on its own. The order is
+the table order, then oldest source time, then id. There is no score, weight
+or prediction.
+
+### Data-quality inspector (`#/quality`, `domain/dataQuality.ts`)
+
+The inspector shows explicit dimensions and deliberately no single score:
+
+- source (adapter, environment, verified, transport, connection)
+- freshness (last complete sync, stale threshold, snapshot time)
+- per-resource availability
+- event history (retained / capacity, oldest and newest source times,
+  coverage since the last view, newest event, most recently received event)
+- arrival path counts
+- classified issues (resource unavailable, record dropped, value repaired,
+  transport, other), with adapter messages behind disclosure and never stack
+  traces
+- local view storage state, with "Forget all mission views"
+
+It is reached from the brief, Settings → Transport and the palette. It has
+no sidebar item.
+
+### Evidence, search provenance, scoped timelines
+
+- **Artifacts** are shown as reported evidence: who reported them, "not
+  verified by the dashboard", and "an artifact is not certification".
+  Certification is shown separately. The UI re-checks that links are http(s)
+  (the adapter already enforces this).
+- **Search results** carry `SIMULATED`, `REPLAY`, `LAST KNOWN` or `STALE`
+  when the data is not LIVE and current.
+- **Timeline scoping** uses `?approval=` and `?alert=` (events that
+  explicitly name them), `?mission=` (with "NEW SINCE YOUR VIEW" tags from
+  that mission's view) and a stated retained-history boundary.
+- **Events vs empty:** when the events resource is unavailable, the timeline
+  says UNKNOWN, never "No activity yet".
+- **REST re-sync keeps observed events:** events already observed (for
+  example over the stream) that a listing omits are kept, bounded to 500 with
+  the oldest dropped first. Ingest facts keep their first arrival.
+
 ## Loading and code splitting
 
 - `main.tsx` loads the viewer's language catalog (English is bundled, Spanish is a

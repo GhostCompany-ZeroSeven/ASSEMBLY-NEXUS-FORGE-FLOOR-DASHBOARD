@@ -130,6 +130,27 @@ Findings fixed in Phase 5:
 - a status badge overflowing mission details at 320px
 - room labels truncated without their full text (they now have a `title`)
 
+### Phase 6
+
+- Every Phase 6 surface uses the catalogs, in English and Spanish: mission
+  changes, markers, attention explanations, the data-quality inspector,
+  coverage states, scoped timelines, evidence and palette commands. Reason
+  codes (`PENDING_FOUNDER_GATE`…) and ids are shown untranslated
+  (`translate="no"`).
+- The pseudo detector moved to `e2e/pseudo.ts` and is shared by Phase 5 and
+  Phase 6 suites unchanged. `e2e/phase6.spec.ts` sweeps these, with every
+  explanation opened, at 320/390/1440/2560:
+  - the mission pages (after a real view and change)
+  - `?since=changed`
+  - `?sort=activity`
+  - the inspector
+  - the scoped timelines
+  - the palette on a mission
+- Fixed from that sweep:
+  - RED ALERT banner text clipped at 320px
+  - status badge overflowing the mission record at 1440px (the Phase 5 wrap
+    rule was phone-only)
+
 ## Adding a language
 
 1. Add the code to `SUPPORTED_LOCALES` and its own name to `LOCALE_NAMES` (`locales.ts`).
