@@ -1,14 +1,16 @@
 import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { ProgressBar, StatusBadge } from '@/components/ui';
-import { MISSION_STATUS_META, REVIEW_STATUS_META } from '@/domain/status';
+import { MISSION_STATUS_META } from '@/domain/status';
 import { formatClock, missionTiming } from '@/domain/time';
 import type { Mission } from '@/domain/types';
+import { useI18n } from '@/i18n/useI18n';
 import { useNow, useSnapshot } from '@/store/hooks';
 
 export function MissionCard({ mission }: { mission: Mission }) {
   const snapshot = useSnapshot();
   const now = useNow(1000);
+  const { m } = useI18n();
   const meta = MISSION_STATUS_META[mission.status];
   const t = missionTiming(mission, now);
   const workers = mission.assignedWorkerIds
@@ -27,25 +29,29 @@ export function MissionCard({ mission }: { mission: Mission }) {
         <div className="mission-card__top">
           <span className="mono mission-card__id">{mission.id}</span>
           <StatusBadge tone={meta.tone} size="sm" pulse={mission.status === 'ACTIVE'}>
-            {meta.label}
+            {m.status.mission[mission.status]}
           </StatusBadge>
           {mission.priority === 'high' || mission.priority === 'critical' ? (
-            <span className="chip chip--hot">{mission.priority}</span>
+            <span className="chip chip--hot">{m.status.priority[mission.priority]}</span>
           ) : null}
         </div>
         <div className="mission-card__title">{mission.title}</div>
-        <ProgressBar value={mission.progress} tone={meta.tone} label={`${mission.id} progress`} />
+        <ProgressBar
+          value={mission.progress}
+          tone={meta.tone}
+          label={m.common.progressLabel(mission.id)}
+        />
       </div>
       <div className="mission-card__side">
-        <div className="mission-card__clock mono" title="Elapsed">
+        <div className="mission-card__clock mono" title={m.missions.elapsedTitle}>
           {t.elapsedMs === null ? '--:--:--' : formatClock(t.elapsedMs)}
         </div>
         <div className="mission-card__sub">
           {t.remainingMs !== null
-            ? `${formatClock(t.remainingMs)} left (est.)`
+            ? m.missions.left(formatClock(t.remainingMs))
             : mission.status === 'COMPLETE' || mission.status === 'FAILED'
-              ? 'final'
-              : 'no estimate'}
+              ? m.missions.final
+              : m.missions.noEstimate}
         </div>
         <div className="mission-card__crew">
           {workers.map((w) => (
@@ -53,7 +59,7 @@ export function MissionCard({ mission }: { mission: Mission }) {
           ))}
         </div>
         {mission.review.status !== 'NOT_REQUESTED' && (
-          <div className="mission-card__sub">{REVIEW_STATUS_META[mission.review.status].label}</div>
+          <div className="mission-card__sub">{m.status.review[mission.review.status]}</div>
         )}
       </div>
     </a>

@@ -16,7 +16,9 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01 } },
+  // Baselines are rendered in the pinned CI image, where runs are pixel-identical
+  // (measured). A strict budget catches real layout shifts; the old 1% ratio hid one.
+  expect: { toHaveScreenshot: { maxDiffPixels: 20, threshold: 0.1 } },
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',

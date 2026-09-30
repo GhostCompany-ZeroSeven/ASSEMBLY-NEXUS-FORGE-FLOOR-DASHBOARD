@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { Icon } from '@/components/Icon';
 import { EmptyState, SimulatedTag } from '@/components/ui';
 import { formatTimeOfDay } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import type { Worker } from '@/domain/types';
 import { useConfig, useDashboard, useSnapshot } from '@/store/hooks';
 
@@ -18,6 +19,7 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputId = useId();
+  const t = useI18n().m.convo;
   const messages = snapshot.messages.filter((m) => m.workerId === worker.id);
   const enabled = features.workerMessaging && sendWorkerMessage !== null;
 
@@ -39,20 +41,16 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
 
   return (
     <div className="convo">
-      <ol className="convo__log" aria-live="polite" aria-label={`Conversation with ${worker.name}`}>
-        {messages.length === 0 && <EmptyState title="No messages" />}
+      <ol className="convo__log" aria-live="polite" aria-label={t.log(worker.name)}>
+        {messages.length === 0 && <EmptyState title={t.none} />}
         {messages.map((m) => (
           <li key={m.id} className="convo__msg" data-direction={m.direction}>
             <div className="convo__meta">
               <strong>{m.author}</strong> <span className="mono">{formatTimeOfDay(m.sentAt)}</span>
               {m.delivery === 'simulated' && (
-                <SimulatedTag>
-                  {m.direction === 'to-worker' ? 'Not delivered — demo' : 'Demo'}
-                </SimulatedTag>
+                <SimulatedTag>{m.direction === 'to-worker' ? t.notDelivered : t.demo}</SimulatedTag>
               )}
-              {m.delivery === 'failed' && (
-                <span className="text-danger small">Delivery failed</span>
-              )}
+              {m.delivery === 'failed' && <span className="text-danger small">{t.failed}</span>}
             </div>
             <div className="convo__body">{m.body}</div>
           </li>
@@ -61,28 +59,25 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
       {enabled ? (
         <form className="convo__form" onSubmit={submit}>
           <label htmlFor={inputId} className="visually-hidden">
-            Message {worker.name}
+            {t.label(worker.name)}
           </label>
           <input
             id={inputId}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={`Message ${worker.name.split(' ')[0]}…`}
+            placeholder={t.placeholder(worker.name.split(' ')[0]!)}
             autoComplete="off"
             disabled={busy}
           />
           <button type="submit" className="btn" disabled={busy || !draft.trim()}>
-            <Icon name="send" size={14} /> Send
+            <Icon name="send" size={14} /> {t.send}
           </button>
         </form>
       ) : (
-        <p className="muted small">Messaging is not supported by the connected adapter.</p>
+        <p className="muted small">{t.unsupported}</p>
       )}
       {enabled && snapshot.provenance.mode === 'demo' && (
-        <p className="muted small">
-          Demo adapter: messages are recorded locally and are not delivered to any agent. No replies
-          are generated.
-        </p>
+        <p className="muted small">{t.demoNote}</p>
       )}
       {error && (
         <p className="text-danger" role="alert">

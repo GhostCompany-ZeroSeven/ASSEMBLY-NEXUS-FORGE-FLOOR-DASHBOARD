@@ -14,7 +14,8 @@ import {
 } from '@/components/ui';
 import { eventsForWorker, findMission, findWorker } from '@/domain/selectors';
 import { WORKER_STATE_META } from '@/domain/status';
-import { formatRelative, toMs } from '@/domain/time';
+import { toMs } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import { isTypingTarget } from '@/features/command/commands';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { ApprovalGateCard } from '@/features/approvals/ApprovalGateCard';
@@ -31,6 +32,8 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
   const snapshot = useSnapshot();
   const { crews, floor } = useConfig();
   const now = useNow(1000);
+  const { m, rel } = useI18n();
+  const t = m.focus;
   const worker = findWorker(snapshot, workerId);
   const roomOf = useWorkerRoom();
 
@@ -56,9 +59,9 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
     return (
       <div className="page">
         <a className="back-link" href={href.workers()}>
-          <Icon name="back" size={14} /> Workers
+          <Icon name="back" size={14} /> {t.back}
         </a>
-        <EmptyState title={`Worker ${workerId} not found`} />
+        <EmptyState title={t.notFound(workerId)} />
       </div>
     );
   }
@@ -83,10 +86,10 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
     <div className="focus" data-tone={meta.tone}>
       <div className="focus__bar">
         <a className="back-link" href={href.workers()}>
-          <Icon name="back" size={14} /> Workers <span className="muted small">(Esc)</span>
+          <Icon name="back" size={14} /> {t.back} <span className="muted small">(Esc)</span>
         </a>
         <a className="back-link" href={href.floor()}>
-          <Icon name="floor" size={14} /> Forge Floor
+          <Icon name="floor" size={14} /> {m.nav.floor}
         </a>
       </div>
 
@@ -96,7 +99,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
             characterId={worker.characterId}
             state={worker.state}
             size={140}
-            label={`${worker.name} portrait`}
+            label={t.portrait(worker.name)}
           />
         </div>
         <div className="focus__identity">
@@ -104,45 +107,44 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           <h1 className="focus__name">{worker.name}</h1>
           <div className="focus__role">
             {worker.role}
-            {home && <span className="muted"> · Station: {home.label}</span>}
+            {home && <span className="muted"> · {t.station(home.label)}</span>}
             {current && (
               <>
                 {' · '}
-                <a href={withQuery(href.floor(), { worker: worker.id })}>Now at {current.label}</a>
+                <a href={withQuery(href.floor(), { worker: worker.id })}>
+                  {t.nowAt(current.label)}
+                </a>
               </>
             )}
           </div>
           <div className="focus__state">
             <StatusBadge tone={meta.tone} size="lg" pulse={worker.state === 'WORKING'}>
-              {meta.label}
+              {m.status.worker[worker.state]}
             </StatusBadge>
-            <span className="muted">{meta.description}</span>
+            <span className="muted">{m.status.workerDescription[worker.state]}</span>
           </div>
           {worker.currentActivity && <p className="focus__activity">“{worker.currentActivity}”</p>}
         </div>
         <div className="focus__telemetry">
           <SegmentClock
-            label="In state"
+            label={t.inState}
             ms={since === null ? null : now - since}
             tone={meta.tone}
             size="lg"
           />
           <KeyValue
             items={[
-              ['Events', events.length],
-              ['Artifacts', artifacts.length],
-              [
-                'Last event',
-                events.length ? formatRelative(events[events.length - 1]!.at, now) : '—',
-              ],
-              ['Worker id', <span className="mono">{worker.id}</span>],
+              [t.events, events.length],
+              [t.artifacts, artifacts.length],
+              [t.lastEvent, events.length ? rel(events[events.length - 1]!.at, now) : '—'],
+              [t.workerId, <span className="mono">{worker.id}</span>],
             ]}
           />
         </div>
       </header>
 
       <div className="grid grid--focus">
-        <Panel title="Current job" className="span-2">
+        <Panel title={t.currentJob} className="span-2">
           {mission ? (
             <>
               <a href={href.mission(mission.id)} className="focus__mission-link">
@@ -150,45 +152,45 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
               </a>
               <p className="muted">{mission.objective}</p>
               <MissionInstrument mission={mission} size="md" />
-              <ProgressBar value={worker.progress} tone={meta.tone} label="Worker progress" />
-              <h3 className="subhead">Tasks</h3>
+              <ProgressBar value={worker.progress} tone={meta.tone} label={t.progress} />
+              <h3 className="subhead">{t.tasks}</h3>
               <ul className="plain-list">
-                {mission.tasks.map((t) => (
-                  <li key={t.id} data-current={t.id === worker.currentTaskId || undefined}>
-                    <span className="mono small muted">{t.id}</span> {t.title} ·{' '}
-                    <span className="small">{t.status.replace('_', ' ')}</span>
-                    {t.assigneeId === worker.id && <span className="chip">assigned</span>}
+                {mission.tasks.map((task) => (
+                  <li key={task.id} data-current={task.id === worker.currentTaskId || undefined}>
+                    <span className="mono small muted">{task.id}</span> {task.title} ·{' '}
+                    <span className="small">{m.status.task[task.status]}</span>
+                    {task.assigneeId === worker.id && <span className="chip">{t.assigned}</span>}
                   </li>
                 ))}
               </ul>
             </>
           ) : (
-            <EmptyState title="No current mission">This worker is available.</EmptyState>
+            <EmptyState title={t.noMission}>{t.available}</EmptyState>
           )}
         </Panel>
 
-        <Panel title="Status card">
+        <Panel title={t.statusCard}>
           <WorkerCard worker={worker} />
         </Panel>
 
-        <Panel title="Conversation" className="span-2">
+        <Panel title={t.conversation} className="span-2">
           <ConversationPanel worker={worker} />
         </Panel>
 
-        <Panel title="Dependencies & blockers">
+        <Panel title={t.blockers}>
           {worker.blockers.length === 0 && (!mission || mission.dependsOn.length === 0) ? (
-            <EmptyState title="Nothing blocking" />
+            <EmptyState title={t.nothingBlocking} />
           ) : (
             <ul className="plain-list">
               {worker.blockers.map((b) => (
                 <li key={b.id} className="text-danger">
                   <Icon name="alert" size={13} /> {b.description}{' '}
-                  <span className="muted small">since {formatRelative(b.since, now)}</span>
+                  <span className="muted small">{t.since(rel(b.since, now))}</span>
                 </li>
               ))}
               {mission?.dependsOn.map((d) => (
                 <li key={d}>
-                  Mission depends on{' '}
+                  {t.missionDependsOn}{' '}
                   <a href={href.mission(d)} className="mono">
                     {d}
                   </a>
@@ -198,20 +200,20 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           )}
         </Panel>
 
-        <Panel title="Timeline" className="span-2">
+        <Panel title={t.timeline} className="span-2">
           <ActivityStream filter={{ workerId: worker.id, includeLowSignal: true }} limit={80} />
         </Panel>
 
-        <Panel title={`Artifacts (${artifacts.length})`}>
+        <Panel title={t.artifactsTitle(artifacts.length)}>
           {artifacts.length === 0 ? (
-            <EmptyState title="No artifacts" />
+            <EmptyState title={t.noArtifacts} />
           ) : (
             <ul className="plain-list">
               {artifacts.map((a) => (
                 <li key={a.id}>
                   <Icon name="artifact" size={13} />{' '}
                   <a href={withQuery(href.mission(a.missionId), { focus: a.id })}>{a.title}</a>{' '}
-                  <span className="chip">{a.kind}</span>{' '}
+                  <span className="chip">{m.status.artifact[a.kind]}</span>{' '}
                   <span className="small muted mono">{a.missionId}</span>
                 </li>
               ))}
@@ -220,10 +222,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
         </Panel>
 
         {alerts.length > 0 && (
-          <Panel
-            title={`Alerts affecting ${worker.name.split(' ')[0]} (${alerts.length})`}
-            className="span-3"
-          >
+          <Panel title={t.alerts(worker.name.split(' ')[0]!, alerts.length)} className="span-3">
             <div className="stack">
               {alerts.map((al) => (
                 <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
@@ -233,7 +232,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
         )}
 
         {approvals.length > 0 && (
-          <Panel title="Approvals requested" className="span-3">
+          <Panel title={t.approvals} className="span-3">
             <div className="gate-list">
               {approvals.map((a) => (
                 <ApprovalGateCard key={a.id} request={a} />

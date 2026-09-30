@@ -2,26 +2,14 @@ import { href, withQuery } from '@/app/router';
 import type { FloorConfig } from '@/config/types';
 import { describeEvent } from '@/domain/describe';
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import {
-  ALERT_SEVERITY_META,
-  APPROVAL_STATUS_META,
-  MISSION_STATUS_META,
-  WORKER_STATE_META,
-} from '@/domain/status';
 import { layoutFloor } from '@/features/forge-floor/layout';
+import { en, type Messages } from '@/i18n/en';
 
 export type SearchType =
   'mission' | 'worker' | 'room' | 'alert' | 'approval' | 'artifact' | 'event';
 
-export const SEARCH_TYPE_LABEL: Record<SearchType, string> = {
-  mission: 'Mission',
-  worker: 'Worker',
-  room: 'Room',
-  alert: 'Alert',
-  approval: 'Approval gate',
-  artifact: 'Artifact',
-  event: 'Event',
-};
+/** English type labels (kept for callers without a locale). */
+export const SEARCH_TYPE_LABEL: Record<SearchType, string> = en.search.type;
 
 export interface SearchResult {
   type: SearchType;
@@ -45,9 +33,18 @@ const MAX_EVENTS_INDEXED = 200;
 /**
  * Builds a flat, typed index over everything searchable. Only relationships that
  * exist in the data model are shown as context; nothing is inferred.
+ *
+ * Display text is in the active language; English status labels are also
+ * indexed so either language finds the same records. A result is navigation
+ * only: it carries no authority and cannot decide anything.
  */
-export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entry[] {
+export function buildSearchIndex(
+  s: DashboardSnapshot,
+  floor: FloorConfig,
+  m: Messages = en,
+): Entry[] {
   const entries: Entry[] = [];
+  const t = m.search;
   const workerName = (id?: string) =>
     id ? (s.workers.find((w) => w.id === id)?.name ?? id) : undefined;
   const push = (e: Omit<Entry, 'hay'>, extra = '') =>
@@ -62,15 +59,19 @@ export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entr
         type: 'approval',
         id: a.id,
         title: a.title,
-        status: APPROVAL_STATUS_META[a.status].label,
-        surface: 'Approval Gates',
-        context: [a.missionId, `requested by ${workerName(a.requestedBy)}`, `${a.risk} risk`]
+        status: m.status.approval[a.status],
+        surface: t.surface.approvals,
+        context: [
+          a.missionId,
+          t.requestedBy(workerName(a.requestedBy) ?? a.requestedBy),
+          t.risk(m.status.risk[a.risk]),
+        ]
           .filter(Boolean)
           .join(' · '),
         href: withQuery(href.approvals(), { focus: a.id }),
         weight: 0,
       },
-      a.action,
+      `${a.action} ${en.status.approval[a.status]}`,
     );
   }
   for (const al of s.alerts) {
@@ -79,40 +80,43 @@ export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entr
         type: 'alert',
         id: al.id,
         title: al.title,
-        status: `${ALERT_SEVERITY_META[al.severity].label}${al.resolvedAt ? ' · resolved' : al.acknowledgedAt ? ' · acknowledged' : ''}`,
-        surface: 'Alerts',
+        status: `${m.status.severity[al.severity]}${al.resolvedAt ? t.resolved : al.acknowledgedAt ? t.acknowledged : ''}`,
+        surface: t.surface.alerts,
         context: al.affected.map((x) => x.label).join(', ') || undefined,
         href: withQuery(href.alerts(), { focus: al.id }),
         weight: 1,
       },
-      `${al.whatHappened} ${al.attention}`,
+      `${al.whatHappened} ${al.attention} ${en.status.severity[al.severity]}`,
     );
   }
-  for (const m of s.missions) {
+  for (const mission of s.missions) {
     push(
       {
         type: 'mission',
-        id: m.id,
-        title: m.title,
-        status: MISSION_STATUS_META[m.status].label,
-        surface: 'Mission Control',
-        context: m.assignedWorkerIds.map(workerName).join(', ') || 'unassigned',
-        href: href.mission(m.id),
+        id: mission.id,
+        title: mission.title,
+        status: m.status.mission[mission.status],
+        surface: t.surface.missionControl,
+        context: mission.assignedWorkerIds.map(workerName).join(', ') || t.unassigned,
+        href: href.mission(mission.id),
         weight: 2,
       },
-      `${m.objective} ${m.priority}`,
+      `${mission.objective} ${mission.priority} ${en.status.mission[mission.status]}`,
     );
-    for (const art of m.artifacts) {
+    for (const art of mission.artifacts) {
       push({
         type: 'artifact',
         id: art.id,
         title: art.title,
-        status: art.kind,
-        surface: `Mission ${m.id}`,
-        context: [m.title, art.producedBy ? `by ${workerName(art.producedBy)}` : undefined]
+        status: m.status.artifact[art.kind],
+        surface: t.surface.mission(mission.id),
+        context: [
+          mission.title,
+          art.producedBy ? m.common.by(workerName(art.producedBy) ?? art.producedBy) : undefined,
+        ]
           .filter(Boolean)
           .join(' · '),
-        href: withQuery(href.mission(m.id), { focus: art.id }),
+        href: withQuery(href.mission(mission.id), { focus: art.id }),
         weight: 5,
       });
     }
@@ -125,15 +129,15 @@ export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entr
         type: 'worker',
         id: w.id,
         title: w.name,
-        status: WORKER_STATE_META[w.state].label,
-        surface: 'Worker focus',
-        context: [w.role, w.currentMissionId, room ? `in ${room.label}` : undefined]
+        status: m.status.worker[w.state],
+        surface: t.surface.workerFocus,
+        context: [w.role, w.currentMissionId, room ? t.inRoom(room.label) : undefined]
           .filter(Boolean)
           .join(' · '),
         href: href.worker(w.id),
         weight: 3,
       },
-      `${w.currentActivity ?? ''} ${w.crewId}`,
+      `${w.currentActivity ?? ''} ${w.crewId} ${en.status.worker[w.state]}`,
     );
   }
   for (const r of floor.rooms) {
@@ -143,8 +147,8 @@ export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entr
         type: 'room',
         id: r.id,
         title: r.label,
-        status: `${count} worker${count === 1 ? '' : 's'}`,
-        surface: 'Forge Floor',
+        status: t.workers(count),
+        surface: t.surface.floor,
         context: r.description,
         href: withQuery(href.floor(), { room: r.id }),
         weight: 4,
@@ -153,13 +157,13 @@ export function buildSearchIndex(s: DashboardSnapshot, floor: FloorConfig): Entr
     );
   }
   for (const e of s.events.slice(-MAX_EVENTS_INDEXED)) {
-    const d = describeEvent(e, s);
+    const d = describeEvent(e, s, m);
     push({
       type: 'event',
       id: e.id,
       title: d.title,
       status: e.kind,
-      surface: 'Activity',
+      surface: t.surface.activity,
       context: [e.at.slice(11, 19), e.missionId, d.detail].filter(Boolean).join(' · '),
       href: withQuery(href.activity(), { focus: e.id }),
       weight: 6,

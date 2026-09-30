@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Dialog } from '@/components/Dialog';
+import { useI18n } from '@/i18n/useI18n';
 import { filterCommands, type Command } from './commands';
 
 /**
@@ -21,6 +22,8 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const statusId = useId();
+  const { m } = useI18n();
+  const p = m.palette;
   const results = useMemo(() => {
     const cmds = filterCommands(commands, query, query.trim() ? 6 : 50);
     return query.trim() && search ? [...cmds, ...search(query)] : cmds;
@@ -68,7 +71,7 @@ export function CommandPalette({
 
   return (
     <Dialog
-      title="Command palette"
+      title={p.title}
       onClose={onClose}
       initialFocusRef={inputRef}
       className="palette"
@@ -79,12 +82,12 @@ export function CommandPalette({
         className="palette__input"
         type="text"
         role="combobox"
-        aria-label="Search commands, missions, workers, rooms, alerts, gates, artifacts and events"
+        aria-label={p.input}
         aria-expanded="true"
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={results.length ? optionId(current) : undefined}
-        placeholder="Search missions, workers, rooms, alerts, gates… or type a command"
+        placeholder={p.placeholder}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -95,9 +98,9 @@ export function CommandPalette({
         spellCheck={false}
       />
       <div id={statusId} className="visually-hidden" role="status" aria-live="polite">
-        {results.length === 0 ? 'No matching commands' : `${results.length} results`}
+        {results.length === 0 ? p.none : p.count(results.length)}
       </div>
-      <ul id={listId} role="listbox" aria-label="Commands" className="palette__list">
+      <ul id={listId} role="listbox" aria-label={p.list} className="palette__list">
         {results.map((c, i) => (
           <li
             key={c.id}
@@ -108,12 +111,12 @@ export function CommandPalette({
             onMouseMove={() => setActive(i)}
             onClick={() => run(c)}
           >
-            <span className="palette__group">{c.result ? c.result.type : c.group}</span>
+            <span className="palette__group">{c.result ? c.result.type : p.group[c.group]}</span>
             <span className="palette__title">{c.title}</span>
             {c.result ? (
               <span className="palette__hint">
-                <span className="palette__status">{c.result.status}</span> · opens{' '}
-                {c.result.surface}
+                <span className="palette__status">{c.result.status}</span> ·{' '}
+                {p.opens(c.result.surface)}
                 {c.result.context && <> · {c.result.context}</>}
               </span>
             ) : (
@@ -122,10 +125,10 @@ export function CommandPalette({
             {c.shortcut && <kbd className="palette__kbd">{c.shortcut}</kbd>}
           </li>
         ))}
-        {results.length === 0 && <li className="palette__empty">No matching commands</li>}
+        {results.length === 0 && <li className="palette__empty">{p.none}</li>}
       </ul>
       <p className="palette__foot small muted">
-        <kbd>↑</kbd> <kbd>↓</kbd> to move · <kbd>Enter</kbd> to run · <kbd>Esc</kbd> to close
+        <kbd>↑</kbd> <kbd>↓</kbd> {p.move} · <kbd>Enter</kbd> {p.run} · <kbd>Esc</kbd> {p.close}
       </p>
     </Dialog>
   );

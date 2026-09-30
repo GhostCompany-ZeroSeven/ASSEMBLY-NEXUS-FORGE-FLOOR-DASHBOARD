@@ -1,12 +1,12 @@
 import { isStale } from '@/domain/selectors';
-import { formatRelative } from '@/domain/time';
 import { useDashboard, useNow, useSnapshot } from '@/store/hooks';
+import { useI18n } from '@/i18n/useI18n';
 import { Icon } from './Icon';
 
-const CONNECTION_COPY: Partial<Record<string, { title: string; tone: 'warning' | 'danger' }>> = {
-  reconnecting: { title: 'Reconnecting: backend not responding', tone: 'warning' },
-  error: { title: 'Data source unavailable', tone: 'danger' },
-  closed: { title: 'Connection closed', tone: 'warning' },
+const CONNECTION_TONE: Partial<Record<string, 'warning' | 'danger'>> = {
+  reconnecting: 'warning',
+  error: 'danger',
+  closed: 'warning',
 };
 
 /**
@@ -17,7 +17,15 @@ export function DataStatusBanners() {
   const { status, error, retry } = useDashboard();
   const snapshot = useSnapshot();
   const now = useNow(5000);
-  const conn = CONNECTION_COPY[status];
+  const { m, rel } = useI18n();
+  const b = m.banners;
+  const tone = CONNECTION_TONE[status];
+  const conn = tone
+    ? {
+        tone,
+        title: status === 'error' ? b.unavailable : status === 'closed' ? b.closed : b.reconnecting,
+      }
+    : undefined;
   const stale = isStale(snapshot, now);
   const { quality } = snapshot;
   const errors = quality.issues.filter((i) => i.severity === 'error');
@@ -34,16 +42,14 @@ export function DataStatusBanners() {
             <strong>{conn.title}</strong>
             {error && <span>{error}</span>}
             <span className="muted">
-              Showing{' '}
               {quality.lastSuccessfulSyncAt
-                ? `data last synced ${formatRelative(quality.lastSuccessfulSyncAt, now)}`
-                : 'no verified data'}
-              . Retrying automatically.
+                ? b.showingSynced(rel(quality.lastSuccessfulSyncAt, now))
+                : b.showingNone}
             </span>
           </div>
           {status === 'error' && (
             <button type="button" className="btn btn--ghost" onClick={retry}>
-              Retry now
+              {b.retryNow}
             </button>
           )}
         </div>
@@ -52,11 +58,8 @@ export function DataStatusBanners() {
         <div className="data-banner" data-tone="warning" role="status">
           <Icon name="activity" size={16} />
           <div className="data-banner__text">
-            <strong>STREAM FALLBACK</strong>
-            <span>
-              The live event stream is not available. Updates now arrive by polling, so changes may
-              appear a few seconds later.
-            </span>
+            <strong>{b.fallbackTitle}</strong>
+            <span>{b.fallbackBody}</span>
           </div>
         </div>
       )}
@@ -64,12 +67,12 @@ export function DataStatusBanners() {
         <div className="data-banner" data-tone="warning" role="status">
           <Icon name="clock" size={16} />
           <div className="data-banner__text">
-            <strong>STALE DATA</strong>
+            <strong>{b.staleTitle}</strong>
             <span>
               {quality.lastSuccessfulSyncAt
-                ? `Last complete sync ${formatRelative(quality.lastSuccessfulSyncAt, now)}.`
-                : 'No complete sync has succeeded yet.'}{' '}
-              Values may no longer reflect reality.
+                ? b.staleSynced(rel(quality.lastSuccessfulSyncAt, now))
+                : b.staleNever}{' '}
+              {b.staleTail}
             </span>
           </div>
         </div>
@@ -78,15 +81,13 @@ export function DataStatusBanners() {
         <details
           className="data-banner data-banner--details"
           data-tone={errors.length ? 'danger' : 'warning'}
+          data-show={b.showDetails}
+          data-hide={b.hideDetails}
         >
           <summary>
             <Icon name="info" size={16} />
-            <strong>{quality.partial ? 'PARTIAL DATA' : 'DATA WARNINGS'}</strong>
-            <span>
-              {errors.length} error{errors.length === 1 ? '' : 's'}, {warnings.length} warning
-              {warnings.length === 1 ? '' : 's'} while reading the data source. Affected records are
-              hidden or marked UNKNOWN, never shown as healthy.
-            </span>
+            <strong>{quality.partial ? b.partialTitle : b.warningsTitle}</strong>
+            <span>{b.issuesSummary(errors.length, warnings.length)}</span>
           </summary>
           <ul className="data-banner__issues">
             {quality.issues.slice(0, 50).map((i) => (
@@ -94,7 +95,7 @@ export function DataStatusBanners() {
                 <span className="mono">{i.source}</span> {i.message}
               </li>
             ))}
-            {quality.issues.length > 50 && <li>…and {quality.issues.length - 50} more</li>}
+            {quality.issues.length > 50 && <li>{b.andMore(quality.issues.length - 50)}</li>}
           </ul>
         </details>
       )}

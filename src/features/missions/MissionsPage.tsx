@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Panel } from '@/components/ui';
 import { ShowMore } from '@/components/ShowMore';
+import { useUrlState } from '@/app/urlState';
 import { resourceUnavailable } from '@/domain/selectors';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
 import {
@@ -8,53 +8,57 @@ import {
   DEFAULT_MISSION_FILTER,
   filterMissions,
   missionMatchesGroup,
-  type MissionFilter,
   type MissionGroup,
 } from '@/features/filters/filters';
+import { MISSION_SCHEMA } from '@/features/filters/urlSchemas';
 import { useIncremental } from '@/hooks/useIncremental';
+import { cap } from '@/i18n/format';
+import { useI18n } from '@/i18n/useI18n';
 import { useSnapshot } from '@/store/hooks';
 import { MissionCard } from './MissionCard';
 
-const GROUPS: { value: MissionGroup; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'founder', label: 'Awaiting Founder' },
-  { value: 'in-flight', label: 'In flight' },
-  { value: 'blocked', label: 'Blocked' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'complete', label: 'Complete' },
-  { value: 'failed', label: 'Failed' },
+const GROUPS: MissionGroup[] = [
+  'all',
+  'founder',
+  'in-flight',
+  'blocked',
+  'queued',
+  'complete',
+  'failed',
 ];
 
 export function MissionsPage() {
   const snapshot = useSnapshot();
-  const [f, setF] = useState<MissionFilter>(DEFAULT_MISSION_FILTER);
-  const missions = filterMissions(snapshot, f);
+  const { m } = useI18n();
+  const t = m.missions;
+  // Filters, sorting and search text live in the URL (?group=&priority=&worker=&sort=&q=).
+  const [f, setF] = useUrlState(DEFAULT_MISSION_FILTER, MISSION_SCHEMA);
+  const missions = filterMissions(snapshot, f, undefined, m);
   const page = useIncremental(missions, 60);
-  const set = (patch: Partial<MissionFilter>) => {
-    setF((cur) => ({ ...cur, ...patch }));
+  const set: typeof setF = (patch, mode) => {
+    setF(patch, mode);
     page.reset();
   };
-  const hasUnknown = snapshot.missions.some((m) => m.status === 'UNKNOWN');
-  const groups = hasUnknown
-    ? [...GROUPS, { value: 'unknown' as const, label: 'Unknown status' }]
-    : GROUPS;
+  const hasUnknown = snapshot.missions.some((x) => x.status === 'UNKNOWN');
+  const groups: MissionGroup[] =
+    hasUnknown || f.group === 'unknown' ? [...GROUPS, 'unknown'] : GROUPS;
 
   return (
     <div className="page">
       <header className="page__header">
         <div>
-          <div className="page__eyebrow">Mission Control</div>
-          <h1 className="page__title">Missions</h1>
+          <div className="page__eyebrow">{t.eyebrow}</div>
+          <h1 className="page__title">{t.title}</h1>
         </div>
       </header>
       <FilterBar
-        label="Filter missions"
-        noun="missions"
+        resource="missions"
         query={f.q}
-        onQuery={(q) => set({ q })}
+        onQuery={(q) => set({ q }, 'replace')}
         quick={groups.map((g) => ({
-          ...g,
-          count: snapshot.missions.filter((m) => missionMatchesGroup(m, g.value, snapshot)).length,
+          value: g,
+          label: t.group[g],
+          count: snapshot.missions.filter((x) => missionMatchesGroup(x, g, snapshot)).length,
         }))}
         quickValue={f.group}
         onQuick={(group) => set({ group })}
@@ -65,37 +69,34 @@ export function MissionsPage() {
         more={
           <>
             <SelectFilter
-              label="Priority"
+              label={t.priority}
               value={f.priority}
               onChange={(priority) => set({ priority })}
               options={[
-                { value: 'all', label: 'Any priority' },
-                { value: 'critical', label: 'Critical' },
-                { value: 'high', label: 'High' },
-                { value: 'normal', label: 'Normal' },
-                { value: 'low', label: 'Low' },
+                { value: 'all', label: t.anyPriority },
+                ...(['critical', 'high', 'normal', 'low'] as const).map((p) => ({
+                  value: p,
+                  label: cap(m.status.priority[p]),
+                })),
               ]}
             />
             <SelectFilter
-              label="Worker"
+              label={t.worker}
               value={f.workerId}
               onChange={(workerId) => set({ workerId })}
               options={[
-                { value: 'all', label: 'Any worker' },
+                { value: 'all', label: t.anyWorker },
                 ...snapshot.workers.map((w) => ({ value: w.id, label: w.name })),
               ]}
             />
             <SelectFilter
-              label="Sort by"
+              label={m.filters.sortBy}
               value={f.sort}
               onChange={(sort) => set({ sort })}
-              options={[
-                { value: 'status', label: 'Needs attention first' },
-                { value: 'priority', label: 'Priority' },
-                { value: 'elapsed', label: 'Longest running' },
-                { value: 'newest', label: 'Newest' },
-                { value: 'id', label: 'Mission id' },
-              ]}
+              options={(['status', 'priority', 'elapsed', 'newest', 'id'] as const).map((s) => ({
+                value: s,
+                label: t.sort[s],
+              }))}
             />
           </>
         }
@@ -103,19 +104,19 @@ export function MissionsPage() {
       <Panel>
         {missions.length === 0 ? (
           <FilteredEmpty
+            resource="missions"
             total={snapshot.missions.length}
             unavailable={resourceUnavailable(snapshot, 'missions')}
-            noun="missions"
             onReset={() => set(DEFAULT_MISSION_FILTER)}
           />
         ) : (
           <>
             <div className="mission-list">
-              {page.visible.map((m) => (
-                <MissionCard key={m.id} mission={m} />
+              {page.visible.map((x) => (
+                <MissionCard key={x.id} mission={x} />
               ))}
             </div>
-            <ShowMore hidden={page.hidden} onClick={page.showMore} noun="missions" />
+            <ShowMore hidden={page.hidden} onClick={page.showMore} />
           </>
         )}
       </Panel>

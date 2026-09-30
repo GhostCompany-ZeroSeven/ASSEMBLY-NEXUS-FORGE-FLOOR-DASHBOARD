@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import type { Tone } from '@/domain/status';
 import { formatClock } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import { Icon, type IconName } from './Icon';
 
 export function Panel({
@@ -81,13 +82,14 @@ export function ProgressBar({
   label: string;
   showValue?: boolean;
 }) {
+  const { m } = useI18n();
   if (value === null || value === undefined) {
     return (
-      <div className="progress progress--unknown" aria-label={`${label}: not reported`}>
+      <div className="progress progress--unknown" aria-label={`${label}: ${m.common.notReported}`}>
         <div className="progress__track">
           <div className="progress__indeterminate" />
         </div>
-        {showValue && <span className="progress__value">n/a</span>}
+        {showValue && <span className="progress__value">{m.common.na}</span>}
       </div>
     );
   }
@@ -127,6 +129,7 @@ export function SegmentClock({
   caption?: ReactNode;
 }) {
   const labelId = useId();
+  const { m } = useI18n();
   const text = ms === null ? '--:--:--' : formatClock(ms);
   return (
     <div
@@ -145,7 +148,7 @@ export function SegmentClock({
         <span className="segclock__digits" aria-hidden={ms === null ? true : undefined}>
           {text}
         </span>
-        {ms === null && <span className="visually-hidden">not available</span>}
+        {ms === null && <span className="visually-hidden">{m.common.notAvailable}</span>}
       </div>
       {caption && <div className="segclock__caption">{caption}</div>}
     </div>
@@ -210,10 +213,21 @@ export function KeyValue({ items }: { items: [ReactNode, ReactNode][] }) {
   );
 }
 
-export function SimulatedTag({ children = 'Simulated' }: { children?: ReactNode }) {
+export function SimulatedTag({ children }: { children?: ReactNode }) {
+  const { m } = useI18n();
   return (
-    <span className="sim-tag" title="Produced by the local demo adapter. No backend involved.">
-      {children}
+    <span className="sim-tag" title={m.common.simulatedTitle}>
+      {children ?? m.common.simulated}
     </span>
+  );
+}
+
+/** "See all"-style link with a drawn arrow (no font glyph, so it renders identically everywhere). */
+export function MoreLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a className="more-link" href={href}>
+      {children}
+      <Icon name="arrow-right" size={12} />
+    </a>
   );
 }

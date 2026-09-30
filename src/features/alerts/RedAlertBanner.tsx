@@ -1,5 +1,6 @@
 import { href } from '@/app/router';
 import { Icon } from '@/components/Icon';
+import { useI18n } from '@/i18n/useI18n';
 import { useSnapshot } from '@/store/hooks';
 
 /**
@@ -9,6 +10,7 @@ import { useSnapshot } from '@/store/hooks';
  */
 export function RedAlertBanner() {
   const snapshot = useSnapshot();
+  const t = useI18n().m.redAlert;
   const critical = snapshot.alerts.filter(
     (a) => a.severity === 'CRITICAL' && !a.resolvedAt && !a.acknowledgedAt,
   );
@@ -18,17 +20,15 @@ export function RedAlertBanner() {
     <div className="red-alert" role="alert">
       <Icon name="alert" size={20} />
       <div className="red-alert__text">
-        <strong>RED ALERT</strong>
+        <strong>{t.title}</strong>
         <span>
           {first.title}
-          {critical.length > 1 && ` (+${critical.length - 1} more)`}
+          {critical.length > 1 && t.more(critical.length - 1)}
         </span>
-        {first.humanActionRequired && (
-          <span className="red-alert__action">Human action required</span>
-        )}
+        {first.humanActionRequired && <span className="red-alert__action">{t.humanAction}</span>}
       </div>
       <a className="btn btn--danger" href={href.alerts()}>
-        Review alert
+        {t.review}
       </a>
     </div>
   );

@@ -22,6 +22,8 @@ const PATHS: Record<string, string> = {
   shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
   hold: 'M12 21a9 9 0 100-18 9 9 0 000 18zM10 9v6M14 9v6',
   back: 'M15 18l-6-6 6-6',
+  // Drawn arrow: the bundled fonts do not include U+2192, so never use the character.
+  'arrow-right': 'M5 12h14M13 6l6 6-6 6',
   expand: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   send: 'M22 2L11 13M22 2l-7 20-4-9-9-4z',
   info: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 11v6M12 7h.01',

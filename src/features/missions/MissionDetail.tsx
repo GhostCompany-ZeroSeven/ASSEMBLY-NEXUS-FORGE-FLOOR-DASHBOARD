@@ -10,7 +10,6 @@ import {
   WORKER_STATE_META,
   type Tone,
 } from '@/domain/status';
-import { formatRelative } from '@/domain/time';
 import type { TaskStatus } from '@/domain/types';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { ApprovalGateCard } from '@/features/approvals/ApprovalGateCard';
@@ -20,6 +19,7 @@ import { MissionResultPanel } from './MissionResultPanel';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { useWorkerRoom } from '@/hooks/useWorkerRoom';
 import { AlertCard } from '@/features/alerts/AlertCard';
+import { useI18n } from '@/i18n/useI18n';
 
 const TASK_TONE: Record<TaskStatus, Tone> = {
   PENDING: 'muted',
@@ -33,6 +33,8 @@ const TASK_TONE: Record<TaskStatus, Tone> = {
 export function MissionDetail({ missionId }: { missionId: string }) {
   const snapshot = useSnapshot();
   const now = useNow(5000);
+  const { m, rel } = useI18n();
+  const t = m.mission;
   const mission = findMission(snapshot, missionId);
   useFocusTarget(mission !== undefined);
   const roomOf = useWorkerRoom();
@@ -41,9 +43,9 @@ export function MissionDetail({ missionId }: { missionId: string }) {
     return (
       <div className="page">
         <a className="back-link" href={href.missions()}>
-          <Icon name="back" size={14} /> Missions
+          <Icon name="back" size={14} /> {t.back}
         </a>
-        <EmptyState title={`Mission ${missionId} not found`} />
+        <EmptyState title={t.notFound(missionId)} />
       </div>
     );
   }
@@ -62,7 +64,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
   return (
     <div className="page">
       <a className="back-link" href={href.missions()}>
-        <Icon name="back" size={14} /> Missions
+        <Icon name="back" size={14} /> {t.back}
       </a>
       <header className="page__header">
         <div>
@@ -75,41 +77,41 @@ export function MissionDetail({ missionId }: { missionId: string }) {
       <MissionResultPanel mission={mission} />
 
       <div className="grid grid--mission">
-        <Panel title="Instrumentation" className="span-2" tone={meta.tone}>
+        <Panel title={t.instrumentation} className="span-2" tone={meta.tone}>
           <MissionInstrument mission={mission} size="xl" />
-          <ProgressBar value={mission.progress} tone={meta.tone} label="Mission progress" />
+          <ProgressBar value={mission.progress} tone={meta.tone} label={t.progress} />
         </Panel>
 
-        <Panel title="Mission record">
+        <Panel title={t.record}>
           <KeyValue
             items={[
-              ['Status', <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>],
-              ['Priority', mission.priority],
-              ['Created', formatRelative(mission.createdAt, now)],
               [
-                'Started',
-                mission.startedAt ? formatRelative(mission.startedAt, now) : 'not started',
+                t.status,
+                <StatusBadge tone={meta.tone}>{m.status.mission[mission.status]}</StatusBadge>,
               ],
-              ['Completed', mission.completedAt ? formatRelative(mission.completedAt, now) : '—'],
+              [t.priority, m.status.priority[mission.priority]],
+              [t.created, rel(mission.createdAt, now)],
+              [t.started, mission.startedAt ? rel(mission.startedAt, now) : t.notStarted],
+              [t.completed, mission.completedAt ? rel(mission.completedAt, now) : '—'],
               [
-                'Review',
+                t.review,
                 <StatusBadge tone={REVIEW_STATUS_META[mission.review.status].tone} size="sm">
-                  {REVIEW_STATUS_META[mission.review.status].label}
+                  {m.status.review[mission.review.status]}
                 </StatusBadge>,
               ],
               [
-                'Certification',
+                t.certification,
                 <StatusBadge tone={CERT_TONE[mission.certification]} size="sm">
-                  {mission.certification.replace('_', ' ')}
+                  {m.status.certification[mission.certification]}
                 </StatusBadge>,
               ],
             ]}
           />
         </Panel>
 
-        <Panel title="Assigned crew">
+        <Panel title={t.crew}>
           {workers.length === 0 ? (
-            <EmptyState title="Unassigned" />
+            <EmptyState title={t.unassigned} />
           ) : (
             <ul className="crew-list">
               {workers.map((w) => (
@@ -120,11 +122,11 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                       <strong>{w.name}</strong>
                       <span className="muted small">
                         {w.role}
-                        {roomOf(w.id) && ` · at ${roomOf(w.id)!.label}`}
+                        {roomOf(w.id) && t.atRoom(roomOf(w.id)!.label)}
                       </span>
                     </span>
                     <StatusBadge tone={WORKER_STATE_META[w.state].tone} size="sm">
-                      {WORKER_STATE_META[w.state].label}
+                      {m.status.worker[w.state]}
                     </StatusBadge>
                   </a>
                 </li>
@@ -134,31 +136,31 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           {workers.length > 0 && (
             <p className="small">
               <a className="target" href={withQuery(href.floor(), { mission: mission.id })}>
-                Show this crew on the Forge Floor
+                {t.showCrew}
               </a>
             </p>
           )}
         </Panel>
 
-        <Panel title="Tasks" className="span-2">
+        <Panel title={t.tasks} className="span-2">
           {mission.tasks.length === 0 ? (
-            <EmptyState title="No tasks reported" />
+            <EmptyState title={t.noTasks} />
           ) : (
             <ol className="task-list">
-              {mission.tasks.map((t) => (
-                <li key={t.id} className="task" data-status={t.status}>
-                  <span className="mono muted small">{t.id}</span>
-                  <span className="task__title">{t.title}</span>
-                  <StatusBadge tone={TASK_TONE[t.status]} size="sm">
-                    {t.status.replace('_', ' ')}
+              {mission.tasks.map((task) => (
+                <li key={task.id} className="task" data-status={task.status}>
+                  <span className="mono muted small">{task.id}</span>
+                  <span className="task__title">{task.title}</span>
+                  <StatusBadge tone={TASK_TONE[task.status]} size="sm">
+                    {m.status.task[task.status]}
                   </StatusBadge>
                   <ProgressBar
-                    value={t.progress}
-                    tone={TASK_TONE[t.status]}
-                    label={`${t.title} progress`}
+                    value={task.progress}
+                    tone={TASK_TONE[task.status]}
+                    label={m.common.progressLabel(task.title)}
                   />
-                  {t.dependsOn.length > 0 && (
-                    <span className="small muted">depends on {t.dependsOn.join(', ')}</span>
+                  {task.dependsOn.length > 0 && (
+                    <span className="small muted">{t.dependsOn(task.dependsOn.join(', '))}</span>
                   )}
                 </li>
               ))}
@@ -166,9 +168,9 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           )}
         </Panel>
 
-        <Panel title="Dependencies">
+        <Panel title={t.dependencies}>
           {deps.length === 0 ? (
-            <EmptyState title="No dependencies" />
+            <EmptyState title={t.noDependencies} />
           ) : (
             <ul className="plain-list">
               {deps.map((d) => (
@@ -178,10 +180,10 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                   </a>{' '}
                   {d.mission ? (
                     <StatusBadge tone={MISSION_STATUS_META[d.mission.status].tone} size="sm">
-                      {MISSION_STATUS_META[d.mission.status].label}
+                      {m.status.mission[d.mission.status]}
                     </StatusBadge>
                   ) : (
-                    <span className="muted">unknown</span>
+                    <span className="muted">{m.common.unknown}</span>
                   )}
                 </li>
               ))}
@@ -189,9 +191,9 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           )}
         </Panel>
 
-        <Panel title={`Artifacts (${mission.artifacts.length})`} className="span-2">
+        <Panel title={t.artifacts(mission.artifacts.length)} className="span-2">
           {mission.artifacts.length === 0 ? (
-            <EmptyState title="No artifacts yet" />
+            <EmptyState title={t.noArtifacts} />
           ) : (
             <ul className="artifact-list">
               {mission.artifacts.map((a) => (
@@ -210,7 +212,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                     {a.summary && <div className="small muted">{a.summary}</div>}
                     {a.producedBy && (
                       <div className="small muted">
-                        by{' '}
+                        {m.common.by('')}
                         <a href={href.worker(a.producedBy)}>
                           {snapshot.workers.find((w) => w.id === a.producedBy)?.name ??
                             a.producedBy}
@@ -218,25 +220,25 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                       </div>
                     )}
                   </div>
-                  <span className="chip">{a.kind}</span>
-                  <span className="small muted">{formatRelative(a.createdAt, now)}</span>
+                  <span className="chip">{m.status.artifact[a.kind]}</span>
+                  <span className="small muted">{rel(a.createdAt, now)}</span>
                 </li>
               ))}
             </ul>
           )}
         </Panel>
 
-        <Panel title="Review">
+        <Panel title={t.review}>
           <KeyValue
             items={[
-              ['Status', REVIEW_STATUS_META[mission.review.status].label],
+              [t.status, m.status.review[mission.review.status]],
               [
-                'Reviewer',
+                t.reviewer,
                 snapshot.workers.find((w) => w.id === mission.review.reviewerId)?.name ??
                   mission.review.reviewerId ??
                   '—',
               ],
-              ['Summary', mission.review.summary ?? '—'],
+              [t.summary, mission.review.summary ?? '—'],
             ]}
           />
           {mission.review.findings && mission.review.findings.length > 0 && (
@@ -249,7 +251,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
         </Panel>
 
         {approvals.length > 0 && (
-          <Panel title="Approval gates" className="span-3">
+          <Panel title={t.gates} className="span-3">
             <div className="gate-list">
               {approvals.map((a) => (
                 <ApprovalGateCard key={a.id} request={a} />
@@ -259,7 +261,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
         )}
 
         {alerts.length > 0 && (
-          <Panel title={`Alerts affecting this mission (${alerts.length})`} className="span-3">
+          <Panel title={t.alerts(alerts.length)} className="span-3">
             <div className="stack">
               {alerts.map((al) => (
                 <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
@@ -268,7 +270,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           </Panel>
         )}
 
-        <Panel title="Mission timeline" className="span-3">
+        <Panel title={t.timeline} className="span-3">
           <ActivityStream
             filter={{ missionId: mission.id, includeLowSignal: true }}
             showLinks={false}

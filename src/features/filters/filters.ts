@@ -1,5 +1,5 @@
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import { ALERT_SEVERITY_META, MISSION_STATUS_META, WORKER_STATE_META } from '@/domain/status';
+import { en, type Messages } from '@/i18n/en';
 import { isOpenForDecision } from '@/domain/governance';
 import { isMissionInFlight } from '@/domain/selectors';
 import type {
@@ -101,13 +101,21 @@ export function filterMissions(
   s: DashboardSnapshot,
   f: MissionFilter,
   nowMs = Date.now(),
+  m: Messages = en,
 ): Mission[] {
   const out = s.missions.filter(
-    (m) =>
-      missionMatchesGroup(m, f.group, s) &&
-      (f.priority === 'all' || m.priority === f.priority) &&
-      (f.workerId === 'all' || m.assignedWorkerIds.includes(f.workerId)) &&
-      text(f.q, m.id, m.title, m.objective, MISSION_STATUS_META[m.status].label),
+    (mission) =>
+      missionMatchesGroup(mission, f.group, s) &&
+      (f.priority === 'all' || mission.priority === f.priority) &&
+      (f.workerId === 'all' || mission.assignedWorkerIds.includes(f.workerId)) &&
+      text(
+        f.q,
+        mission.id,
+        mission.title,
+        mission.objective,
+        en.status.mission[mission.status],
+        m.status.mission[mission.status],
+      ),
   );
   const statusRank = (m: Mission) =>
     missionAwaitsFounder(m, s)
@@ -192,6 +200,7 @@ export function filterWorkers(
   s: DashboardSnapshot,
   f: WorkerFilter,
   roomOf: (w: Worker) => string | undefined = () => undefined,
+  m: Messages = en,
 ): Worker[] {
   const out = s.workers.filter(
     (w) =>
@@ -208,7 +217,8 @@ export function filterWorkers(
         w.role,
         w.currentActivity,
         w.currentMissionId,
-        WORKER_STATE_META[w.state].label,
+        en.status.worker[w.state],
+        m.status.worker[w.state],
       ),
   );
   const rank = (w: Worker) =>
@@ -309,7 +319,7 @@ const SEVERITY_RANK: Record<AlertSeverity, number> = {
   INFO: 3,
 };
 
-export function filterAlerts(alerts: readonly Alert[], f: AlertFilter): Alert[] {
+export function filterAlerts(alerts: readonly Alert[], f: AlertFilter, m: Messages = en): Alert[] {
   const newest = (a: Alert, b: Alert) => b.raisedAt.localeCompare(a.raisedAt);
   const cmp = {
     severity: (a: Alert, b: Alert) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity],
@@ -327,7 +337,8 @@ export function filterAlerts(alerts: readonly Alert[], f: AlertFilter): Alert[] 
           a.title,
           a.whatHappened,
           a.attention,
-          ALERT_SEVERITY_META[a.severity].label,
+          en.status.severity[a.severity],
+          m.status.severity[a.severity],
           ...a.affected.map((x) => x.label),
         ),
     )

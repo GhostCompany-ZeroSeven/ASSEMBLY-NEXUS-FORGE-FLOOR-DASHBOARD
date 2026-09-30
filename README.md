@@ -16,17 +16,17 @@ little Snow Wolf chaos. 🐺⚡
 
 ## Surfaces
 
-| Surface             | What it shows                                                                                                                                                                                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Command Center**  | Situation board (what needs the Founder, live or simulated, backend health, running, blocked, failed, just completed), featured mission, Founder Gate queue, floor preview, alerts, health, crew, activity. A question it cannot answer from the data says **Unknown**     |
-| **Forge Floor**     | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes. Highlight filters, mission association, room panel; state shown as text and a glyph, never by colour alone |
-| **Missions**        | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                                                                                      |
-| **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                                                                            |
-| **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                                                                                 |
-| **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert                                                          |
-| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                                                                                  |
-| **Command palette** | `Ctrl/⌘ + K`: commands plus **global search** across missions, workers, rooms, alerts, approval gates, artifacts and events. Each result shows its type, name, status, location and context; choosing one navigates and focuses it. Press `?` for every shortcut           |
-| **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                                                                            |
+| Surface             | What it shows                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Command Center**  | Situation board (what needs the Founder, live or simulated, backend health, running, blocked, failed, just completed), featured mission, Founder Gate queue, floor preview, alerts, health, crew, activity. A question it cannot answer from the data says **Unknown**                                                                                                                                                                                                               |
+| **Forge Floor**     | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes. Highlight filters, mission association, room panel; state shown as text and a glyph, never by colour alone                                                                                                                                                                                                           |
+| **Missions**        | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                                                                                                                                                                                                                                                                                                |
+| **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                                                                                                                                                                                                                                                                                      |
+| **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                                                                                                                                                                                                                                                                                           |
+| **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert                                                                                                                                                                                                                                                                    |
+| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Command palette** | `Ctrl/⌘ + K`: commands plus **global search** across missions, workers, rooms, alerts, approval gates, artifacts and events. Each result shows its type, name, status, location and context; choosing one navigates and focuses it. Also: jump to what needs the Founder or to a data problem, open transport diagnostics, clear filters, switch language. Palette commands only navigate or change presentation; they never decide, grant or dispatch. Press `?` for every shortcut |
+| **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                                                                                                                                                                                                                                                                                      |
 
 ## Quick start
 
@@ -55,21 +55,22 @@ secrets in them.
 
 ## Scripts
 
-| Command                      | Purpose                                                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                | Vite dev server                                                                                               |
-| `npm run build`              | Typecheck + production build to `dist/`                                                                       |
-| `npm run preview`            | Serve the production build                                                                                    |
-| `npm run typecheck`          | TypeScript project check                                                                                      |
-| `npm run lint`               | ESLint (typescript-eslint, react-hooks)                                                                       |
-| `npm run format:check`       | Prettier check (`npm run format` to write)                                                                    |
-| `npm test`                   | Vitest unit, component, conformance, governance and axe tests (jsdom)                                         |
-| `npm run test:e2e`           | Build, then Playwright: axe incl. contrast, keyboard, reduced motion, runtime errors, overflow at 4 viewports |
-| `npm run test:a11y`          | Only the accessibility audits (jsdom + browser)                                                               |
-| `npm run test:visual`        | Visual regression screenshots (see [docs/VISUAL_REGRESSION.md](docs/VISUAL_REGRESSION.md))                    |
-| `npm run test:visual:update` | Rewrite visual baselines after an intended change (review the PNGs before committing)                         |
-| `npm run mock:rest`          | Local mock REST backend for the GenericRESTAdapter                                                            |
-| `npm run verify`             | typecheck → lint → test → build (CI also runs format check and e2e)                                           |
+| Command                        | Purpose                                                                                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                  | Vite dev server                                                                                                                                                |
+| `npm run build`                | Typecheck + production build to `dist/`                                                                                                                        |
+| `npm run preview`              | Serve the production build                                                                                                                                     |
+| `npm run typecheck`            | TypeScript project check                                                                                                                                       |
+| `npm run lint`                 | ESLint (typescript-eslint, react-hooks)                                                                                                                        |
+| `npm run format:check`         | Prettier check (`npm run format` to write)                                                                                                                     |
+| `npm test`                     | Vitest unit, component, conformance, governance and axe tests (jsdom)                                                                                          |
+| `npm run test:e2e`             | Build, then Playwright: axe incl. contrast (English and Spanish), keyboard, reduced motion, runtime errors, overflow from 320px to 2560px, performance, visual |
+| `npm run test:a11y`            | Only the accessibility audits (jsdom + browser)                                                                                                                |
+| `npm run test:visual`          | Visual regression screenshots (see [docs/VISUAL_REGRESSION.md](docs/VISUAL_REGRESSION.md))                                                                     |
+| `npm run test:visual:update`   | Rewrite visual baselines after an intended change (review the PNGs before committing)                                                                          |
+| `npm run test:visual:ci-image` | Visual regression inside the pinned CI image (Docker); `:update` rewrites baselines there                                                                      |
+| `npm run mock:rest`            | Local mock REST backend for the GenericRESTAdapter                                                                                                             |
+| `npm run verify`               | typecheck → lint → test → build (CI also runs format check and e2e)                                                                                            |
 
 ## Stack
 
@@ -90,6 +91,8 @@ than a hard-coded dependency. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.
 ## Customizing
 
 - Brand, rooms, crews, characters, flags: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
+- Languages (English, Spanish): [docs/LOCALIZATION.md](docs/LOCALIZATION.md)
+- Screenshot baselines: [docs/VISUAL_REGRESSION.md](docs/VISUAL_REGRESSION.md)
 - Connecting a backend: [docs/ADAPTERS.md](docs/ADAPTERS.md)
 - Build progress and next steps: [docs/BUILD_STATUS.md](docs/BUILD_STATUS.md)
 
@@ -125,6 +128,25 @@ everything. Empty results say which case applies:
 - "No missions from the data source": the backend reported zero.
 - "Missions data unavailable": the fetch failed, so the true number is unknown.
 
+Filters, sorting and search text are kept in the URL (`#/missions?group=blocked&sort=priority`),
+so refresh, deep links and Back/Forward restore the view. Invalid parameters fall back to the
+defaults. URL state only changes what is shown: it never creates data or authority.
+
+## Languages
+
+The UI is available in **English** (default) and **Spanish**. The first visit follows the
+browser's language. Choose explicitly under **Settings → Display → Language**, or with the palette
+command "Switch language to …". Switching is instant and keeps the current view and data.
+Identifiers, backend text and authority values (`Founder #0007`) are never translated.
+
+## Data freshness and transport
+
+The provenance badge shows the source (**LIVE**, **DISCONNECTED**, **DEMO · SIMULATED**) together
+with any qualifier that also applies: **STALE**, **PARTIAL**, **LAST KNOWN DATA**. LIVE never
+implies complete data. **Settings → Transport and freshness** shows the configured and active
+transport (REST polling and/or the optional stream), fallback, stream state, last message,
+last verification and intervals. Anything the adapter does not report shows as UNKNOWN.
+
 ## Keyboard
 
 | Keys                       | Action                                                                          |
@@ -150,7 +172,10 @@ reference (WCAG 2.1.4).
 - **Automated checks:** axe runs on every surface and state (Red Alert, confirmation, dialogs,
   failure states) in jsdom, and again in Chromium with colour contrast (WCAG 2.2 AA tags).
   Playwright also verifies keyboard flows, focus visibility, reduced motion, and the absence of
-  runtime errors and horizontal overflow at phone, tablet, desktop and 2560px widths.
+  runtime errors and horizontal overflow from 320px to 2560px, including Spanish text, very long
+  names and large counts.
+- **Language:** `<html lang>` follows the UI language, so screen readers pronounce Spanish
+  correctly, and axe runs on every surface in both languages.
 
 ## Licence
 

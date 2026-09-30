@@ -26,8 +26,11 @@ export async function installMockBackend(
   page: Page,
   mode: MockMode,
   nowMs: number,
+  /** Optional edit of the seed data before it is served (e.g. very long names). */
+  transform?: (s: ReturnType<typeof buildSeedSnapshot>) => void,
 ): Promise<MockBackend> {
   const s = buildSeedSnapshot(nowMs);
+  transform?.(s);
   const data: Record<string, unknown> = {
     health: { ...s.health, checkedAt: new Date(nowMs).toISOString(), environment: 'e2e' },
     workers: { workers: s.workers },

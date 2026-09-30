@@ -3,10 +3,10 @@ import { href } from '@/app/router';
 import { Icon } from '@/components/Icon';
 import type { RoomDefinition } from '@/config/types';
 import { pendingApprovals, resourceUnavailable } from '@/domain/selectors';
-import { WORKER_STATE_META } from '@/domain/status';
 import type { Worker } from '@/domain/types';
 import { isWaitingForFounder } from '@/features/filters/filters';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useSnapshot } from '@/store/hooks';
 import { Equipment } from './Equipment';
 import { layoutFloor, type Placement } from './layout';
@@ -41,6 +41,8 @@ export function ForgeFloorMap({
 }) {
   const { floor, crews } = useConfig();
   const snapshot = useSnapshot();
+  const { m } = useI18n();
+  const t = m.floor;
   const stacked = useMediaQuery('(max-width: 900px)');
   const placements = useMemo(() => layoutFloor(snapshot.workers, floor), [snapshot.workers, floor]);
   const gatesWaiting = pendingApprovals(snapshot).length;
@@ -85,9 +87,7 @@ export function ForgeFloorMap({
 
   const emptyNotice = snapshot.workers.length === 0 && (
     <p className={stacked ? 'empty' : 'floor__empty'} role="status">
-      {resourceUnavailable(snapshot, 'workers')
-        ? 'Worker data unavailable: see data warnings above.'
-        : 'No workers reported by the data source.'}
+      {resourceUnavailable(snapshot, 'workers') ? t.workersUnavailable : t.noWorkers}
     </p>
   );
 
@@ -106,10 +106,10 @@ export function ForgeFloorMap({
     <p className="floor__movement" aria-live="polite">
       {lastMove ? (
         <>
-          <span className="floor__movement-label">Latest movement</span> {lastMove}
+          <span className="floor__movement-label">{t.latestMovement}</span> {lastMove}
         </>
       ) : (
-        <span className="visually-hidden">No recent movement</span>
+        <span className="visually-hidden">{t.noMovement}</span>
       )}
     </p>
   );
@@ -130,12 +130,12 @@ export function ForgeFloorMap({
                 data-alert={alerting || undefined}
                 data-selected={selectedRoomId === room.id || undefined}
                 data-focus-id={`room:${room.id}`}
-                aria-label={`${room.label}: ${people.length} worker${people.length === 1 ? '' : 's'}`}
+                aria-label={t.roomPeople(room.label, people.length)}
               >
                 {header(room, people.length, crew?.status === 'reserved')}
                 <div className="room__stack-people">
                   {people.length === 0 ? (
-                    <span className="muted small">Empty</span>
+                    <span className="muted small">{t.empty}</span>
                   ) : (
                     people.map((w) => <WorkerToken key={w.id} {...tokenProps(w)} size={44} />)
                   )}
@@ -156,7 +156,7 @@ export function ForgeFloorMap({
         data-critical={hasCritical || undefined}
         data-filtering={highlight ? true : undefined}
         role="group"
-        aria-label="Forge Floor plan"
+        aria-label={t.plan}
       >
         <div className="floor__grid" aria-hidden="true" />
         {emptyNotice}
@@ -180,7 +180,7 @@ export function ForgeFloorMap({
                 width: `${room.area.w}%`,
                 height: `${room.area.h}%`,
               }}
-              aria-label={`${room.label}: ${people.length} worker${people.length === 1 ? '' : 's'}`}
+              aria-label={t.roomPeople(room.label, people.length)}
             >
               {header(room, people.length, crew?.status === 'reserved')}
               <div className="room__equipment">
@@ -194,7 +194,7 @@ export function ForgeFloorMap({
               </div>
               {crew?.status === 'reserved' && !compact && (
                 <div className="room__reserved">
-                  <Icon name="wolf" size={14} /> Reserved for {crew.label}
+                  <Icon name="wolf" size={14} /> {t.reservedFor(crew.label)}
                 </div>
               )}
               {overflow > 0 && (
@@ -202,9 +202,9 @@ export function ForgeFloorMap({
                   type="button"
                   className="room__overflow"
                   onClick={() => onSelectRoom?.(room.id)}
-                  aria-label={`${overflow} more workers in ${room.label}. Show room`}
+                  aria-label={t.overflowAria(overflow, room.label)}
                 >
-                  +{overflow} more
+                  {m.common.more(overflow)}
                 </button>
               )}
             </section>
@@ -243,6 +243,7 @@ function RoomHeader({
   selected: boolean;
   onSelect?: (roomId: string) => void;
 }) {
+  const t = useI18n().m.floor;
   return (
     <header className="room__header">
       {onSelect ? (
@@ -251,35 +252,36 @@ function RoomHeader({
           className="room__label room__label--button"
           onClick={() => onSelect(room.id)}
           aria-pressed={selected}
-          aria-label={`${room.label}, ${count} worker${count === 1 ? '' : 's'}. Show room details`}
+          aria-label={t.roomButton(room.label, count)}
         >
           {room.label}
         </button>
       ) : (
         <span className="room__label">{room.label}</span>
       )}
-      <span className="room__count" title="Workers present" aria-hidden="true">
+      <span className="room__count" title={t.workersPresent} aria-hidden="true">
         {count}
       </span>
       {room.kind === 'founder-gate' && gatesWaiting > 0 && (
         <a className="room__gate-flag" href={href.approvals()}>
-          {gatesWaiting} awaiting decision
+          {t.awaitingDecision(gatesWaiting)}
         </a>
       )}
-      {reserved && <span className="room__tag">reserved</span>}
+      {reserved && <span className="room__tag">{t.reservedTag}</span>}
     </header>
   );
 }
 
 /**
  * Text description of the most recent room change, e.g.
- * "Pim Calloway → Review Chamber (Reviewing)".
+ * "Pim Calloway moved to Review Chamber (Reviewing)".
  */
 function useMovementLog(
   workers: readonly Worker[],
   placements: Map<string, Placement>,
   rooms: readonly RoomDefinition[],
 ): string | null {
+  const { m } = useI18n();
   const prev = useRef<Map<string, string> | null>(null);
   const [last, setLast] = useState<string | null>(null);
   useEffect(() => {
@@ -291,16 +293,19 @@ function useMovementLog(
     if (moved.length === 0) return;
     const text = moved
       .slice(0, 3)
-      .map(
-        (w) =>
-          `${w.name} → ${rooms.find((r) => r.id === now.get(w.id))?.label ?? 'unknown room'} (${WORKER_STATE_META[w.state].label})`,
+      .map((w) =>
+        m.floor.movedTo(
+          w.name,
+          rooms.find((r) => r.id === now.get(w.id))?.label ?? m.floor.unknownRoom,
+          m.status.worker[w.state],
+        ),
       )
       .join('; ');
     const t = setTimeout(
-      () => setLast(moved.length > 3 ? `${text}; +${moved.length - 3} more` : text),
+      () => setLast(moved.length > 3 ? `${text}; ${m.common.more(moved.length - 3)}` : text),
       0,
     );
     return () => clearTimeout(t);
-  }, [workers, placements, rooms]);
+  }, [workers, placements, rooms, m]);
   return last;
 }

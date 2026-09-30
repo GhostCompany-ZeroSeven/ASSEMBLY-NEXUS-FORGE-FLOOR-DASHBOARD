@@ -7,13 +7,14 @@ import { StatusBadge } from '@/components/ui';
 import { selectOverview, redAlertActive } from '@/domain/selectors';
 import { HEALTH_STATUS_META } from '@/domain/status';
 import { formatTimeOfDay } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import { RedAlertBanner } from '@/features/alerts/RedAlertBanner';
 import { buildCommands, resultToCommand } from '@/features/command/commands';
 import { buildSearchIndex, searchIndex } from '@/features/search/search';
 import { useGlobalShortcuts } from '@/features/command/useGlobalShortcuts';
 import { useSimulation } from '@/hooks/useSimulation';
 import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
-import { createSurfaces, SURFACE_LABEL, usePrefetchSurfaces } from './surfaces';
+import { createSurfaces, usePrefetchSurfaces } from './surfaces';
 import { Suspense, SurfaceErrorBoundary, SurfaceLoading, SurfaceReady } from './SurfaceParts';
 import { href, navigate, parseHashQuery, routeKey, useRoute, type Route } from './router';
 
@@ -41,6 +42,8 @@ export function Shell() {
   const route = useRoute();
   const now = useNow(1000);
   const mainRef = useRef<HTMLElement>(null);
+  const i18n = useI18n();
+  const { m } = i18n;
 
   // Move focus to main content on navigation for keyboard/screen-reader users.
   // Not on first load, so Tab still reaches the skip link and header first.
@@ -79,17 +82,22 @@ export function Shell() {
             sim: simState ? { controls: simState.sim, running: simState.running } : null,
             openShortcuts: () => setDialog('shortcuts'),
             setTheme: prefs.setThemeId,
+            m,
+            locale: i18n.locale,
+            setLocale: i18n.setPreference,
+            hash: window.location.hash,
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dialog, snapshot, config, simState?.running, prefs.setThemeId],
+    [dialog, snapshot, config, simState?.running, prefs.setThemeId, m, i18n.locale],
   );
 
+  // One index per palette opening (rebuilt only when the data or language changes).
   const search = useMemo(() => {
     if (!snapshot || dialog !== 'palette') return undefined;
-    const index = buildSearchIndex(snapshot, config.floor);
-    return (q: string) => searchIndex(index, q).map((r) => resultToCommand(r, navigate));
-  }, [dialog, snapshot, config.floor]);
+    const index = buildSearchIndex(snapshot, config.floor, m);
+    return (q: string) => searchIndex(index, q).map((r) => resultToCommand(r, navigate, m));
+  }, [dialog, snapshot, config.floor, m]);
 
   if (!snapshot) {
     return (
@@ -98,17 +106,17 @@ export function Shell() {
         {status === 'error' ? (
           <div role="alert" className="boot__text">
             <p>
-              <strong>Adapter error.</strong> The data source could not be initialised:{' '}
-              {error ?? 'unknown error'}
+              <strong>{m.shell.adapterError}</strong>{' '}
+              {m.shell.adapterErrorBody(error ?? m.common.unknown)}
             </p>
-            <p className="muted">No data is shown because none has been verified.</p>
+            <p className="muted">{m.shell.noVerifiedData}</p>
             <button type="button" className="btn" onClick={retry}>
-              Retry
+              {m.common.retry}
             </button>
           </div>
         ) : (
           <p className="boot__text" role="status">
-            Connecting to data source…
+            {m.shell.connecting}
           </p>
         )}
       </main>
@@ -120,12 +128,12 @@ export function Shell() {
   const health = HEALTH_STATUS_META[snapshot.health.status];
 
   const nav: NavItem[] = [
-    { route: 'command', label: 'Command Center', icon: 'command', href: href.command() },
+    { route: 'command', label: m.nav.command, icon: 'command', href: href.command() },
     ...(config.features.forgeFloor
       ? [
           {
             route: 'floor' as const,
-            label: 'Forge Floor',
+            label: m.nav.floor,
             icon: 'floor' as const,
             href: href.floor(),
           },
@@ -133,14 +141,14 @@ export function Shell() {
       : []),
     {
       route: 'missions',
-      label: 'Missions',
+      label: m.nav.missions,
       icon: 'mission',
       href: href.missions(),
       count: stats.activeMissions,
     },
     {
       route: 'workers',
-      label: 'Workers',
+      label: m.nav.workers,
       icon: 'workers',
       href: href.workers(),
       count: stats.workersTotal,
@@ -149,7 +157,7 @@ export function Shell() {
       ? [
           {
             route: 'approvals' as const,
-            label: 'Approval Gates',
+            label: m.nav.approvals,
             icon: 'gate' as const,
             href: href.approvals(),
             count: stats.approvalsPending,
@@ -161,7 +169,7 @@ export function Shell() {
       ? [
           {
             route: 'alerts' as const,
-            label: 'Alerts',
+            label: m.nav.alerts,
             icon: 'alert' as const,
             href: href.alerts(),
             count: stats.alertsOpen,
@@ -169,8 +177,8 @@ export function Shell() {
           },
         ]
       : []),
-    { route: 'activity', label: 'Activity', icon: 'activity', href: href.activity() },
-    { route: 'settings', label: 'Settings', icon: 'settings', href: href.settings() },
+    { route: 'activity', label: m.nav.activity, icon: 'activity', href: href.activity() },
+    { route: 'settings', label: m.nav.settings, icon: 'settings', href: href.settings() },
   ];
 
   const activeNav =
@@ -187,13 +195,13 @@ export function Shell() {
             mainRef.current?.focus();
           }}
         >
-          Skip to content
+          {m.nav.skip}
         </a>
         <header className="topbar">
           <a
             className="brand"
             href={href.command()}
-            aria-label={`${config.branding.productName} ${config.branding.surfaceName} home`}
+            aria-label={m.nav.home(config.branding.productName, config.branding.surfaceName)}
           >
             <span className="brand__mark" aria-hidden="true">
               {config.branding.monogram}
@@ -215,30 +223,30 @@ export function Shell() {
             className="topbar__palette"
             onClick={() => setDialog('palette')}
             aria-keyshortcuts="Control+K Meta+K"
-            title="Command palette (Ctrl/⌘+K)"
+            title={m.shell.paletteTitle}
           >
             <Icon name="command" size={14} />
-            <span className="topbar__palette-label">Commands</span>
+            <span className="topbar__palette-label">{m.shell.commands}</span>
             <kbd>Ctrl K</kbd>
           </button>
 
           <a
             className="topbar__health"
             href={href.command()}
-            aria-label={`System health: ${health.label}`}
+            aria-label={m.shell.health(m.status.health[snapshot.health.status])}
           >
             <Icon name="health" size={16} />
             <StatusBadge tone={health.tone} size="sm">
-              {health.label}
+              {m.status.health[snapshot.health.status]}
             </StatusBadge>
           </a>
-          <div className="topbar__clock" role="timer" aria-label="Local time">
+          <div className="topbar__clock" role="timer" aria-label={m.shell.localTime}>
             <Icon name="clock" size={16} />
             <time dateTime={new Date(now).toISOString()}>
               {formatTimeOfDay(new Date(now).toISOString())}
             </time>
           </div>
-          <div className="topbar__authority" title="Human authority for approval gates">
+          <div className="topbar__authority" title={m.shell.authorityTitle}>
             <Icon name="lock" size={14} />
             {config.governance.humanAuthority}
           </div>
@@ -248,7 +256,7 @@ export function Shell() {
         <DataStatusBanners />
 
         <div className="shell__body">
-          <nav className="sidenav" aria-label="Primary">
+          <nav className="sidenav" aria-label={m.nav.primary}>
             <ul>
               {nav.map((item) => (
                 <li key={item.route}>
@@ -270,7 +278,7 @@ export function Shell() {
             </ul>
             <div className="sidenav__footer">
               {config.branding.hierarchy.length > 0 && (
-                <ol className="hierarchy" aria-label="Identity hierarchy">
+                <ol className="hierarchy" aria-label={m.nav.identityHierarchy}>
                   {config.branding.hierarchy.map((line) => (
                     <li key={line}>{line}</li>
                   ))}
@@ -301,22 +309,22 @@ function RouteView({ route }: { route: Route }) {
     surfaces: createSurfaces(),
   }));
   usePrefetchSurfaces();
+  const { m } = useI18n();
 
   if (route.name === 'not-found') {
     return (
       <SurfaceReady name="not-found">
         <div className="page">
-          <h1 className="page__title">Not found</h1>
+          <h1 className="page__title">{m.shell.notFound}</h1>
           <p>
-            No surface at <code>{route.path}</code>.{' '}
-            <a href={href.command()}>Return to Command Center</a>.
+            {m.shell.notFoundBody(route.path)} <a href={href.command()}>{m.shell.returnHome}</a>.
           </p>
         </div>
       </SurfaceReady>
     );
   }
   const Surface = surfaces[route.name];
-  const label = SURFACE_LABEL[route.name];
+  const label = m.surface.label[route.name];
   const props =
     route.name === 'mission'
       ? { missionId: route.id }

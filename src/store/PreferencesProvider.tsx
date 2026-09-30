@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { isLocalePreference, PREFERENCES_KEY, type LocalePreference } from '@/i18n/locales';
 import { PreferencesContext } from './contexts';
 
 export type MotionPreference = 'system' | 'reduced' | 'full';
@@ -10,6 +11,8 @@ export interface Preferences {
   density: Density;
   /** Single-key shortcuts (g+letter, ?, /, P, N). Ctrl/⌘+K always works. WCAG 2.1.4. */
   singleKeyShortcuts: boolean;
+  /** UI language. `auto` follows the browser until the viewer picks one. */
+  locale: LocalePreference;
 }
 
 export interface PreferencesContextValue extends Preferences {
@@ -17,17 +20,22 @@ export interface PreferencesContextValue extends Preferences {
   setMotion: (m: MotionPreference) => void;
   setDensity: (d: Density) => void;
   setSingleKeyShortcuts: (on: boolean) => void;
+  setLocale: (l: LocalePreference) => void;
   /** Resolved: true when animations should be minimised. */
   reducedMotion: boolean;
 }
 
-const STORAGE_KEY = 'forge-floor:preferences';
+const STORAGE_KEY = PREFERENCES_KEY;
 
 function load(defaults: Preferences): Preferences {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults;
-    return { ...defaults, ...(JSON.parse(raw) as Partial<Preferences>) };
+    const stored = JSON.parse(raw) as Partial<Preferences>;
+    const merged = { ...defaults, ...stored };
+    // Stored values are untrusted: an unknown locale falls back to `auto`.
+    if (!isLocalePreference(merged.locale)) merged.locale = defaults.locale;
+    return merged;
   } catch {
     return defaults;
   }
@@ -53,6 +61,7 @@ export function PreferencesProvider({
       motion: 'system',
       density: 'comfortable',
       singleKeyShortcuts: true,
+      locale: 'auto',
     }),
   );
   const [systemReduced, setSystemReduced] = useState(systemPrefersReducedMotion);
@@ -91,6 +100,7 @@ export function PreferencesProvider({
       setDensity: (density) => setPrefs((p) => ({ ...p, density })),
       setSingleKeyShortcuts: (singleKeyShortcuts) =>
         setPrefs((p) => ({ ...p, singleKeyShortcuts })),
+      setLocale: (locale) => setPrefs((p) => (isLocalePreference(locale) ? { ...p, locale } : p)),
     }),
     [prefs, reducedMotion],
   );

@@ -579,3 +579,39 @@ a.stat:hover {
     margin-left: 0;
   }
 }
+
+.more-link,
+.gate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+}
+
+/* Accessible internal scroll container (focusable, labelled) for wide tables on phones. */
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/*
+ * Backend-supplied names and titles can contain very long unbreakable words.
+ * Let them wrap inside content containers instead of widening the page
+ * (min-content sizing), so no layout depends on the data.
+ */
+.panel,
+.worker-card,
+.gate,
+.mission-card,
+.alert-card,
+.room,
+.crew-list__item,
+.kv dd,
+.result,
+.focus__identity,
+.stream__content,
+.palette__item,
+.token__plate {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

@@ -1,77 +1,100 @@
 # Visual regression
 
-`e2e/visual.spec.ts` captures full-page screenshots of the key dashboard states
-and compares them with the committed baselines in `e2e/__screenshots__/`.
-CI (`browser` job) fails when any screen differs by more than 1% of its pixels,
-and uploads the actual/expected/diff images as the `visual-diffs` artifact.
+`e2e/visual.spec.ts` captures screenshots of the key dashboard states and
+compares them with the committed baselines in `e2e/__screenshots__/`. CI (the
+`browser` job) fails on any real difference, and uploads the
+actual/expected/diff images as the `visual-diffs` artifact.
+
+## Baseline environment (certified in Phase 4)
+
+Baselines are rendered in the **pinned CI image**
+`mcr.microsoft.com/playwright:v1.56.1-noble` (image digest
+`sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a`), the same
+image the CI `browser` job runs in, with the same `@playwright/test` version.
+
+How this was established:
+
+1. The Phase 3 baselines (made in the session's Chromium) were compared pixel by
+   pixel with renders from the pinned image. Two kinds of difference showed up:
+   - **Environment rendering.** The `→` arrow is not in the bundled font subsets,
+     so each machine drew it with a different fallback OS font. The fix was to
+     remove the cause: arrows are now a drawn icon, and `src/i18n/glyphs.test.ts`
+     keeps any uncovered glyph out of the UI.
+   - **Stale baselines** (`command-center-phone`, `mission-complete`, `forge-floor-phone`).
+     Real layout changes from late Phase 3 fixes had been hidden by the old
+     tolerance (1% of pixels, with a lenient per-pixel threshold). They were
+     investigated and confirmed intended, not blanket-updated.
+2. Every remaining difference was reviewed and attributed to an intended change
+   before the baselines were regenerated in the pinned image.
+3. Three consecutive captures in the image: 61 of 62 image comparisons were
+   byte-identical. One pixel differed, by 7/255, on the focused search box's ring.
+4. With the glyph fallback removed, the session's Chromium and the pinned image
+   now produce byte-identical screenshots (31 of 31). Local runs and CI agree.
+
+## Tolerance
+
+`playwright.config.ts`: `maxDiffPixels: 20`, `threshold: 0.1`. That absorbs the
+measured single-pixel antialiasing noise but catches real changes: each of the
+three stale baselines above now fails (129 to 5,281 differing pixels), which the
+old 1% budget let through. Do not loosen the tolerance to hide a difference.
 
 ## What is covered
 
-| Baseline                                              | State                                                      |
-| ----------------------------------------------------- | ---------------------------------------------------------- |
-| `command-center-{desktop,wide,phone}`                 | Command Center, situation board                            |
-| `forge-floor-{phone,tablet,desktop,hd,wide}`          | Forge Floor at 390, 820, 1440, 1920 (1080p) and 2560 wide  |
-| `forge-floor-selected-worker`, `forge-floor-room`     | Worker selected; Founder Gate room panel                   |
-| `missions-desktop`, `mission-complete`                | Mission Control; completed mission detail                  |
-| `workers-desktop`, `worker-focus`                     | Roster; worker focus view                                  |
-| `approvals-{desktop,tablet}`, `approval-confirm-deny` | Approval gates; the explicit confirmation step             |
-| `alerts-desktop`, `red-alert`                         | Alerts; RED ALERT after a critical event                   |
-| `palette-search`                                      | Command palette with global search results                 |
-| `missions-filtered-empty`                             | Zero results because of a filter (not because of the data) |
-| `rest-live`                                           | REST adapter, healthy mock backend: LIVE                   |
-| `rest-partial`                                        | Malformed workers + HTTP 500 missions: PARTIAL, UNKNOWN    |
-| `rest-down`                                           | Backend unavailable: DISCONNECTED, no reassurance          |
-| `rest-empty-missions`                                 | Backend reports zero missions                              |
+| Baseline                                                                    | State                                                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `command-center-{desktop,wide,phone}`                                       | Command Center, situation board                                                |
+| `forge-floor-{phone,tablet,desktop,hd,wide}`                                | Forge Floor at 390, 820, 1440, 1920 (1080p) and 2560 wide                      |
+| `forge-floor-selected-worker`, `forge-floor-room`                           | Worker selected; Founder Gate room panel                                       |
+| `missions-desktop`, `mission-complete`, `missions-url-filtered`             | Mission Control; completed mission; URL deep link with filters                 |
+| `workers-desktop`, `worker-focus`                                           | Roster; worker focus view                                                      |
+| `approvals-{desktop,tablet}`, `approval-confirm-deny`                       | Approval gates; the explicit confirmation step                                 |
+| `alerts-desktop`, `red-alert`                                               | Alerts; RED ALERT after a critical event                                       |
+| `palette-search`                                                            | Command palette with global search results                                     |
+| `missions-filtered-empty`                                                   | Zero results because of a filter (not because of the data)                     |
+| `es-command-center-desktop`, `es-forge-floor-phone`, `es-approvals-desktop` | Spanish UI                                                                     |
+| `settings-transport-demo`, `settings-transport-rest`                        | Transport and freshness diagnostics                                            |
+| `rest-live`                                                                 | REST adapter, healthy mock backend: LIVE                                       |
+| `rest-partial`                                                              | Malformed workers + HTTP 500 missions: LIVE · STALE · PARTIAL, answers UNKNOWN |
+| `rest-down`                                                                 | Backend unavailable: DISCONNECTED, no reassurance                              |
+| `rest-empty-missions`                                                       | Backend reports zero missions                                                  |
 
-The `rest-*` shots run against a second build (`npm run build:e2e-rest`,
-`.env.e2e-rest`) whose REST adapter points at `http://mock-backend.test/api`.
-That host does not exist: Playwright answers it in-browser (`e2e/mockBackend.ts`)
-from the same deterministic seed the demo uses. No credentials are involved.
+The `rest-*` and `settings-transport-rest` shots run against a second build
+(`npm run build:e2e-rest`, `.env.e2e-rest`) whose REST adapter points at
+`http://mock-backend.test/api`. That host does not exist: Playwright answers it
+in-browser (`e2e/mockBackend.ts`) from the same deterministic seed the demo
+uses. No credentials are involved.
 
 ## Determinism
 
 - **Time is frozen** with `page.clock.setFixedTime(2026-09-30T12:00:00Z)`.
-- **The simulation is paused** via the demo-only `?demo=paused` flag. Any change
-  in state (for example the Red Alert shot) comes from explicit key presses.
+- **The simulation is paused** via the demo-only `?demo=paused` flag. Any change in
+  state (for example the Red Alert shot) comes from explicit key presses.
 - **No motion**: `prefers-reduced-motion: reduce` plus `animations: 'disabled'`.
-  No test waits on an animation.
-- **Bundled fonts**: Inter and JetBrains Mono are self-hosted (`@fontsource-variable/*`,
-  OFL-1.1), so the output does not depend on system fonts. State glyphs are SVG, not emoji.
-- **Masked**: the decorative identity hierarchy line (Unicode box characters).
-- The page is ready when the lazy surface reports `data-surface="ready"` and
-  `document.fonts.ready` resolves.
-
-Each run repeats deterministically: `npx playwright test e2e/visual.spec.ts --repeat-each=2`
-passes locally.
+- **Bundled fonts only**: Inter and JetBrains Mono are self-hosted (OFL-1.1), and
+  the glyph-coverage test forbids characters outside their subsets. State glyphs
+  and arrows are SVG.
+- **Masked**: the identity hierarchy line (verbatim Founder text using symbol
+  characters outside the bundled fonts).
+- The page is ready when the lazy surface reports `data-surface="ready"`,
+  `document.fonts.ready` resolves, and (for Spanish shots) `<html lang="es">` is set.
 
 ## Updating baselines
 
-Update baselines only when a visual change is intended:
+Update only for an intended visual change, and review every changed PNG first.
+The authoritative way is inside the pinned image (Docker required):
 
 ```bash
-npm run test:visual:update      # builds both bundles, rewrites e2e/__screenshots__
+npm run build && npm run build:e2e-rest
+npm run test:visual:ci-image:update   # rewrites e2e/__screenshots__ in the CI image
+npm run test:visual:ci-image          # verify
 git diff --stat e2e/__screenshots__
 ```
 
-Open the changed PNGs and check them before committing. Commit them with the
-code change that caused them, never on their own. To update one screen, run:
+These scripts mount the working tree (including its `node_modules`) into the
+image, so run them on Linux x64. Because local Chromium now renders identically,
+`npm run test:visual:update` gives the same result on a Linux machine with the
+same Playwright version. If CI ever disagrees, trust the image.
 
-```bash
-npx playwright test e2e/visual.spec.ts -g "rest-partial" --update-snapshots
-```
-
-This needs `npm run build && npm run build:e2e-rest` first.
-
-**Rendering environment.** Baselines are sensitive to the browser build and
-OS font rasterisation. CI runs in `mcr.microsoft.com/playwright:v1.56.1-noble`,
-which matches the `@playwright/test` version. For CI-identical baselines,
-update inside that image:
-
-```bash
-docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.56.1-noble \
-  sh -c "npm ci && npm run test:visual:update"
-```
-
-If CI reports only sub-pixel text differences on every screen after a Playwright
-upgrade or environment change, download the `visual-diffs` artifact to confirm,
-then regenerate in the image. Do not raise the threshold to hide differences.
+Commit baselines together with the change that caused them. If CI fails,
+download the `visual-diffs` artifact, find out what changed, and fix either the
+code or (only for an intended change) the baseline.

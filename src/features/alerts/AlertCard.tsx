@@ -3,7 +3,7 @@ import { href, withQuery } from '@/app/router';
 import { Icon } from '@/components/Icon';
 import { StatusBadge } from '@/components/ui';
 import { ALERT_SEVERITY_META } from '@/domain/status';
-import { formatRelative } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import type { Alert } from '@/domain/types';
 import { useConfig, useDashboard, useNow } from '@/store/hooks';
 
@@ -30,6 +30,8 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
   const { acknowledgeAlert, adapter } = useDashboard();
   const { governance } = useConfig();
   const now = useNow(5000);
+  const { m, rel } = useI18n();
+  const t = m.alert;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const state = alert.resolvedAt ? 'resolved' : alert.acknowledgedAt ? 'acknowledged' : 'open';
@@ -56,23 +58,23 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
     >
       <header className="alert-card__head">
         <StatusBadge tone={meta.tone} pulse={state === 'open' && alert.severity === 'CRITICAL'}>
-          {meta.label}
+          {m.status.severity[alert.severity]}
         </StatusBadge>
         <h3 className="alert-card__title" id={`alert-title-${alert.id}`}>
           {alert.title}
         </h3>
         <span className="alert-card__time">
-          <span className="mono">{alert.id}</span> · {formatRelative(alert.raisedAt, now)}
+          <span className="mono">{alert.id}</span> · {rel(alert.raisedAt, now)}
         </span>
       </header>
       {!compact && (
         <dl className="alert-card__grid">
           <div>
-            <dt>What happened</dt>
+            <dt>{t.whatHappened}</dt>
             <dd>{alert.whatHappened || '—'}</dd>
           </div>
           <div>
-            <dt>What is affected</dt>
+            <dt>{t.affected}</dt>
             <dd>
               {alert.affected.length === 0
                 ? '—'
@@ -87,16 +89,16 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
             </dd>
           </div>
           <div>
-            <dt>What needs attention</dt>
+            <dt>{t.attention}</dt>
             <dd>{alert.attention || '—'}</dd>
           </div>
           <div>
-            <dt>Human action required</dt>
+            <dt>{t.humanAction}</dt>
             <dd>
               {alert.humanActionRequired ? (
-                <strong className="text-warning">Yes — {governance.humanAuthority}</strong>
+                <strong className="text-warning">{t.yesWho(governance.humanAuthority)}</strong>
               ) : (
-                'No'
+                m.common.no
               )}
             </dd>
           </div>
@@ -104,14 +106,14 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
       )}
       <footer className="alert-card__foot">
         {state === 'resolved' && (
-          <span className="muted">Resolved {formatRelative(alert.resolvedAt!, now)}</span>
+          <span className="muted">{t.resolved(rel(alert.resolvedAt!, now))}</span>
         )}
         {state === 'acknowledged' && (
-          <span className="muted">Acknowledged {formatRelative(alert.acknowledgedAt!, now)}</span>
+          <span className="muted">{t.acknowledged(rel(alert.acknowledgedAt!, now))}</span>
         )}
         {state === 'open' && adapter.capabilities.alertAcknowledgement && (
           <button type="button" className="btn btn--ghost" onClick={ack} disabled={busy}>
-            <Icon name="check" size={14} /> Acknowledge
+            <Icon name="check" size={14} /> {t.acknowledge}
           </button>
         )}
         {err && (

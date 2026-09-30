@@ -482,6 +482,19 @@
   color: var(--text);
   border-color: var(--accent-2);
 }
+.provenance__qualifier {
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--tone-warning);
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.provenance__qualifier[data-qualifier='LAST_KNOWN'] {
+  color: var(--text-dim);
+}
 .provenance__env {
   padding: 1px 6px;
   border-radius: 3px;
@@ -553,13 +566,13 @@ kbd {
   display: none;
 }
 .data-banner--details summary::after {
-  content: 'Show details ▾';
+  content: attr(data-show);
   margin-left: auto;
   font-size: 12px;
   color: var(--accent-2);
 }
 .data-banner--details[open] summary::after {
-  content: 'Hide details ▴';
+  content: attr(data-hide);
 }
 .data-banner__issues {
   list-style: none;

@@ -5,6 +5,7 @@ import { WORKER_STATE_META } from '@/domain/status';
 import type { Worker } from '@/domain/types';
 import { Icon } from '@/components/Icon';
 import { STATE_GLYPH } from './stateGlyph';
+import { useI18n } from '@/i18n/useI18n';
 
 const WALK_MS = 1600;
 
@@ -37,9 +38,10 @@ export function WorkerToken({
   compact?: boolean;
 }) {
   const meta = WORKER_STATE_META[worker.state];
+  const { m } = useI18n();
   const moving = useWalking(roomId);
   const pose = resolvePose(worker.state, { moving, waitingForFounder });
-  const stateText = waitingForFounder ? 'Awaiting Founder' : meta.label;
+  const stateText = waitingForFounder ? m.floor.awaitingFounder : m.status.worker[worker.state];
 
   return (
     <button
@@ -58,10 +60,10 @@ export function WorkerToken({
       aria-label={[
         `${worker.name}, ${worker.role}`,
         stateText,
-        worker.currentMissionId ? `mission ${worker.currentMissionId}` : undefined,
-        roomLabel ? `in ${roomLabel}` : undefined,
+        worker.currentMissionId ? m.floor.tokenMission(worker.currentMissionId) : undefined,
+        roomLabel ? m.floor.tokenIn(roomLabel) : undefined,
         worker.currentActivity,
-        dimmed ? 'hidden by filter' : undefined,
+        dimmed ? m.floor.hiddenByFilter : undefined,
       ]
         .filter(Boolean)
         .join(', ')}

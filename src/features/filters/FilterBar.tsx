@@ -1,5 +1,9 @@
 import { useId, type ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
+import { useI18n } from '@/i18n/useI18n';
+
+/** Filterable list surfaces (also the keys of their localized filter copy). */
+export type FilterResource = 'missions' | 'workers' | 'approvals' | 'alerts';
 
 export interface QuickFilter<V extends string> {
   value: V;
@@ -15,7 +19,7 @@ export interface QuickFilter<V extends string> {
  * Everything is native form controls, so it works fully by keyboard.
  */
 export function FilterBar<V extends string>({
-  label,
+  resource,
   query,
   onQuery,
   quick,
@@ -26,9 +30,8 @@ export function FilterBar<V extends string>({
   onReset,
   shown,
   total,
-  noun,
 }: {
-  label: string;
+  resource: FilterResource;
   query: string;
   onQuery: (q: string) => void;
   quick?: QuickFilter<V>[];
@@ -39,26 +42,27 @@ export function FilterBar<V extends string>({
   onReset: () => void;
   shown: number;
   total: number;
-  noun: string;
 }) {
   const inputId = useId();
+  const f = useI18n().m.filters;
+  const label = f.label[resource];
   return (
     <div className="filterbar" role="search" aria-label={label}>
       <div className="filterbar__row">
         <label className="filterbar__search" htmlFor={inputId}>
           <Icon name="command" size={14} />
-          <span className="visually-hidden">Filter {noun}</span>
+          <span className="visually-hidden">{label}</span>
           <input
             id={inputId}
             type="search"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder={`Filter ${noun}…`}
+            placeholder={f.filterPlaceholder[resource]}
             autoComplete="off"
           />
         </label>
         {quick && onQuick && (
-          <div className="segmented" role="radiogroup" aria-label={`${label}: quick filter`}>
+          <div className="segmented" role="radiogroup" aria-label={f.quick(label)}>
             {quick.map((q) => (
               <button
                 key={q.value}
@@ -78,16 +82,16 @@ export function FilterBar<V extends string>({
       <div className="filterbar__row filterbar__row--meta">
         {more && (
           <details className="filterbar__more">
-            <summary>More filters &amp; sorting</summary>
+            <summary>{f.more}</summary>
             <div className="filterbar__more-body">{more}</div>
           </details>
         )}
         <span className="filterbar__count" role="status" aria-live="polite">
-          Showing {shown} of {total} {noun}
+          {f.showing(shown, total)}
         </span>
         {activeCount > 0 && (
           <button type="button" className="btn btn--ghost filterbar__reset" onClick={onReset}>
-            <Icon name="reset" size={13} /> Reset filters ({activeCount})
+            <Icon name="reset" size={13} /> {f.reset(activeCount)}
           </button>
         )}
       </div>
@@ -100,49 +104,41 @@ export function FilterBar<V extends string>({
  * "the data source has nothing".
  */
 export function FilteredEmpty({
+  resource,
   total,
-  noun,
   onReset,
-  sourceEmptyText,
   unavailable = false,
 }: {
+  resource: FilterResource;
   total: number;
-  noun: string;
   onReset: () => void;
-  sourceEmptyText?: string;
   /** The latest fetch of this resource failed: an empty list is NOT "zero". */
   unavailable?: boolean;
 }) {
+  const f = useI18n().m.filters;
   if (total === 0 && unavailable) {
     return (
       <div className="empty" data-empty="unavailable" role="status">
-        <div className="empty__title">
-          {noun.charAt(0).toUpperCase() + noun.slice(1)} data unavailable
-        </div>
-        <div className="empty__body">
-          The data source could not be read, so there may be {noun} that are not shown. See the data
-          warnings above.
-        </div>
+        <div className="empty__title">{f.unavailableTitle[resource]}</div>
+        <div className="empty__body">{f.unavailableBody}</div>
       </div>
     );
   }
   if (total === 0) {
     return (
       <div className="empty" data-empty="source">
-        <div className="empty__title">No {noun} from the data source</div>
-        <div className="empty__body">
-          {sourceEmptyText ?? `The data source currently reports zero ${noun}.`}
-        </div>
+        <div className="empty__title">{f.sourceEmptyTitle[resource]}</div>
+        <div className="empty__body">{f.sourceEmptyBody[resource]}</div>
       </div>
     );
   }
   return (
     <div className="empty" data-empty="filtered">
-      <div className="empty__title">No {noun} match these filters</div>
+      <div className="empty__title">{f.filteredTitle[resource]}</div>
       <div className="empty__body">
-        {total} {noun} are hidden by the current filters.{' '}
+        {f.filteredBody(total)}{' '}
         <button type="button" className="btn btn--ghost" onClick={onReset}>
-          Reset filters
+          {f.resetPlain}
         </button>
       </div>
     </div>
@@ -160,11 +156,17 @@ export function SelectFilter<T extends string>({
   options: { value: T; label: string }[];
   onChange: (v: T) => void;
 }) {
+  const f = useI18n().m.filters;
+  // A value from the URL that the current data does not contain is shown as
+  // such. It is never turned into a real-looking option.
+  const shown = options.some((o) => o.value === value)
+    ? options
+    : [...options, { value, label: f.notInData(value) }];
   return (
     <label className="select-field">
       <span>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value as T)}>
-        {options.map((o) => (
+        {shown.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

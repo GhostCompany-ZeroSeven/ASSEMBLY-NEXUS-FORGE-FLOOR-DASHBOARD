@@ -4,6 +4,8 @@ import { loadAdapter } from './adapters/loadAdapter';
 import { App } from './app/App';
 import { assemblyNexusConfig } from './config/assemblyNexus.config';
 import { withEnvOverrides } from './config/runtime';
+import { loadCatalog } from './i18n/catalogs';
+import { navigatorLanguages, resolveLocale, storedLocalePreference } from './i18n/locales';
 // Bundled (self-hosted, OFL-1.1) fonts: identical rendering everywhere, no font CDN.
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
@@ -14,8 +16,13 @@ if (!root) throw new Error('Missing #root element');
 
 const config = withEnvOverrides(assemblyNexusConfig, import.meta.env, window.location.search);
 
-loadAdapter(config.adapter)
-  .then((adapter) =>
+// Load the viewer's language before first render (no flash of English). A
+// failure here falls back to English; it never blocks the dashboard.
+const locale = resolveLocale(storedLocalePreference(), navigatorLanguages());
+const catalogReady = loadCatalog(locale).catch(() => undefined);
+
+Promise.all([loadAdapter(config.adapter), catalogReady])
+  .then(([adapter]) =>
     createRoot(root).render(
       <StrictMode>
         <App config={config} adapter={adapter} />

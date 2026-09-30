@@ -51,7 +51,15 @@ export interface ThemeDefinition {
   id: string;
   label: string;
   description: string;
+  /** Optional display text per UI locale. IDs are never localized. */
+  i18n?: LocalizedText<'label' | 'description'>;
 }
+
+/**
+ * Per-locale display overrides for config text (labels, descriptions, mottos).
+ * Presentation only: ids, kinds and authority values are never localized.
+ */
+export type LocalizedText<K extends string> = Partial<Record<string, Partial<Record<K, string>>>>;
 
 export type RoomKind =
   | 'planning'
@@ -91,6 +99,7 @@ export interface RoomDefinition {
   description: string;
   /** Crew that owns the room (optional; used for crew-themed rooms). */
   crewId?: string;
+  i18n?: LocalizedText<'label' | 'description'>;
 }
 
 /** `home` sends the worker to their own `homeRoomId`. */
@@ -111,6 +120,7 @@ export interface CrewDefinition {
   /** Reserved crews render as placeholders until assets/workers exist. */
   status: 'active' | 'reserved';
   emblem: 'forge' | 'snow-wolf' | 'generic';
+  i18n?: LocalizedText<'label' | 'motto'>;
 }
 
 export interface FeatureFlags {

@@ -1,4 +1,5 @@
 import { Dialog } from '@/components/Dialog';
+import { useI18n } from '@/i18n/useI18n';
 import { usePreferences } from '@/store/hooks';
 import { GO_KEYS } from './commands';
 
@@ -12,32 +13,34 @@ export function ShortcutsDialog({
 }) {
   const prefs = usePreferences();
   const single = prefs.singleKeyShortcuts;
+  const { m } = useI18n();
+  const t = m.shortcuts;
   const rows: [string, string, boolean][] = [
-    ['Ctrl + K  /  ⌘ + K', 'Open command palette', true],
-    ['/', 'Open command palette (search)', false],
-    ['?', 'Show this keyboard reference', false],
+    [t.ctrlK, t.palette, true],
+    ['/', t.paletteSearch, false],
+    ['?', t.reference, false],
     ...GO_KEYS.map((g): [string, string, boolean] => [
-      `G then ${g.key.toUpperCase()}`,
-      `Go to ${g.label}`,
+      t.thenKey(g.key.toUpperCase()),
+      t.goTo(m.nav[g.nav]),
       false,
     ]),
     ...(hasSimulation
       ? ([
-          ['P', 'Pause / resume demo simulation', false],
-          ['N', 'Advance demo simulation one step', false],
+          ['P', t.pause, false],
+          ['N', t.step, false],
         ] as [string, string, boolean][])
       : []),
-    ['Esc', 'Close dialog · leave worker focus view', true],
-    ['Tab / Shift + Tab', 'Move between controls', true],
+    ['Esc', t.esc, true],
+    ['Tab / Shift + Tab', t.tab, true],
   ];
   return (
-    <Dialog title="Keyboard shortcuts" onClose={onClose} className="shortcuts">
+    <Dialog title={t.title} onClose={onClose} className="shortcuts">
       <table className="table shortcuts__table">
-        <caption className="visually-hidden">Keyboard shortcuts</caption>
+        <caption className="visually-hidden">{t.title}</caption>
         <thead>
           <tr>
-            <th scope="col">Keys</th>
-            <th scope="col">Action</th>
+            <th scope="col">{t.keys}</th>
+            <th scope="col">{t.action}</th>
           </tr>
         </thead>
         <tbody>
@@ -48,7 +51,7 @@ export function ShortcutsDialog({
               </td>
               <td>
                 {action}
-                {!always && !single && <span className="muted small"> (off)</span>}
+                {!always && !single && <span className="muted small">{t.off}</span>}
               </td>
             </tr>
           ))}
@@ -60,12 +63,9 @@ export function ShortcutsDialog({
           checked={single}
           onChange={(e) => prefs.setSingleKeyShortcuts(e.target.checked)}
         />
-        Enable single-key shortcuts (can conflict with speech input or other assistive tech)
+        {t.toggle}
       </label>
-      <p className="small muted">
-        Shortcuts are ignored while typing in a field and never use browser or OS chords apart from
-        Ctrl/⌘ + K.
-      </p>
+      <p className="small muted">{t.note}</p>
     </Dialog>
   );
 }

@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useUrlState } from '@/app/urlState';
 import { ShowMore } from '@/components/ShowMore';
 import { Panel } from '@/components/ui';
 import { resourceUnavailable } from '@/domain/selectors';
-import { WORKER_STATE_META } from '@/domain/status';
 import { WORKER_STATES } from '@/domain/types';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
 import {
@@ -10,55 +10,53 @@ import {
   DEFAULT_WORKER_FILTER,
   filterWorkers,
   workerMatchesFlag,
-  type WorkerFilter,
   type WorkerFlag,
 } from '@/features/filters/filters';
+import { WORKER_SCHEMA } from '@/features/filters/urlSchemas';
 import { layoutFloor } from '@/features/forge-floor/layout';
 import { useIncremental } from '@/hooks/useIncremental';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useSnapshot } from '@/store/hooks';
 import { WorkerCard } from './WorkerCard';
 
-const FLAGS: { value: WorkerFlag; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'founder', label: 'Waiting for Founder' },
-  { value: 'blocked', label: 'Blocked' },
-  { value: 'active', label: 'Active' },
-  { value: 'idle', label: 'Idle / done' },
-  { value: 'failed', label: 'Failed / stopped' },
-];
+const FLAGS: WorkerFlag[] = ['all', 'founder', 'blocked', 'active', 'idle', 'failed'];
 
 export function WorkersPage() {
   const snapshot = useSnapshot();
   const { crews, floor } = useConfig();
-  const [f, setF] = useState<WorkerFilter>(DEFAULT_WORKER_FILTER);
+  const { m } = useI18n();
+  const t = m.workers;
+  // Filters, sorting and search text live in the URL (?show=&state=&room=&crew=&authority=&sort=&q=).
+  const [f, setF] = useUrlState(DEFAULT_WORKER_FILTER, WORKER_SCHEMA);
   const placements = useMemo(() => layoutFloor(snapshot.workers, floor), [snapshot.workers, floor]);
-  const workers = filterWorkers(snapshot, f, (w) => placements.get(w.id)?.roomId);
+  const workers = filterWorkers(snapshot, f, (w) => placements.get(w.id)?.roomId, m);
   const page = useIncremental(workers, 48);
-  const set = (patch: Partial<WorkerFilter>) => {
-    setF((cur) => ({ ...cur, ...patch }));
+  const set: typeof setF = (patch, mode) => {
+    setF(patch, mode);
     page.reset();
   };
   const visible = new Set(page.visible.map((w) => w.id));
-  const flags = snapshot.workers.some((w) => w.state === 'UNKNOWN')
-    ? [...FLAGS, { value: 'unknown' as const, label: 'Unknown state' }]
-    : FLAGS;
+  const flags: WorkerFlag[] =
+    snapshot.workers.some((w) => w.state === 'UNKNOWN') || f.flag === 'unknown'
+      ? [...FLAGS, 'unknown']
+      : FLAGS;
 
   return (
     <div className="page">
       <header className="page__header">
         <div>
-          <div className="page__eyebrow">Crew roster</div>
-          <h1 className="page__title">Workers</h1>
+          <div className="page__eyebrow">{t.eyebrow}</div>
+          <h1 className="page__title">{t.title}</h1>
         </div>
       </header>
       <FilterBar
-        label="Filter workers"
-        noun="workers"
+        resource="workers"
         query={f.q}
-        onQuery={(q) => set({ q })}
+        onQuery={(q) => set({ q }, 'replace')}
         quick={flags.map((x) => ({
-          ...x,
-          count: snapshot.workers.filter((w) => workerMatchesFlag(w, x.value, snapshot)).length,
+          value: x,
+          label: t.flag[x],
+          count: snapshot.workers.filter((w) => workerMatchesFlag(w, x, snapshot)).length,
         }))}
         quickValue={f.flag}
         onQuick={(flag) => set({ flag })}
@@ -69,51 +67,50 @@ export function WorkersPage() {
         more={
           <>
             <SelectFilter
-              label="State"
+              label={t.state}
               value={f.state}
               onChange={(state) => set({ state })}
               options={[
-                { value: 'all', label: 'Any state' },
-                ...WORKER_STATES.map((s) => ({ value: s, label: WORKER_STATE_META[s].label })),
+                { value: 'all', label: t.anyState },
+                ...WORKER_STATES.map((s) => ({ value: s, label: m.status.worker[s] })),
               ]}
             />
             <SelectFilter
-              label="Room"
+              label={t.room}
               value={f.roomId}
               onChange={(roomId) => set({ roomId })}
               options={[
-                { value: 'all', label: 'Any room' },
+                { value: 'all', label: t.anyRoom },
                 ...floor.rooms.map((r) => ({ value: r.id, label: r.label })),
               ]}
             />
             <SelectFilter
-              label="Crew"
+              label={t.crew}
               value={f.crewId}
               onChange={(crewId) => set({ crewId })}
               options={[
-                { value: 'all', label: 'Any crew' },
+                { value: 'all', label: t.anyCrew },
                 ...crews.map((c) => ({ value: c.id, label: c.label })),
               ]}
             />
             <SelectFilter
-              label="Authority"
+              label={t.authority}
               value={f.authority}
               onChange={(authority) => set({ authority })}
               options={[
-                { value: 'all', label: 'Any' },
-                { value: 'none', label: 'No authority granted' },
-                { value: 'granted', label: 'Has human-granted authority' },
+                { value: 'all', label: m.filters.any },
+                { value: 'none', label: t.authorityNone },
+                { value: 'granted', label: t.authorityGranted },
               ]}
             />
             <SelectFilter
-              label="Sort"
+              label={m.filters.sort}
               value={f.sort}
               onChange={(sort) => set({ sort })}
-              options={[
-                { value: 'attention', label: 'Needs attention first' },
-                { value: 'name', label: 'Name' },
-                { value: 'longest-in-state', label: 'Longest in current state' },
-              ]}
+              options={(['attention', 'name', 'longest-in-state'] as const).map((s) => ({
+                value: s,
+                label: t.sort[s],
+              }))}
             />
           </>
         }
@@ -122,9 +119,9 @@ export function WorkersPage() {
       {workers.length === 0 ? (
         <Panel>
           <FilteredEmpty
+            resource="workers"
             total={snapshot.workers.length}
             unavailable={resourceUnavailable(snapshot, 'workers')}
-            noun="workers"
             onReset={() => set(DEFAULT_WORKER_FILTER)}
           />
         </Panel>
@@ -135,12 +132,12 @@ export function WorkersPage() {
           return (
             <Panel
               key={crew.id}
-              eyebrow={crew.status === 'reserved' ? 'Reserved crew' : 'Crew'}
+              eyebrow={crew.status === 'reserved' ? t.reservedCrew : t.crewEyebrow}
               title={crew.label}
               actions={crew.motto && <span className="crew-motto">{crew.motto}</span>}
             >
               {members.length === 0 ? (
-                <p className="muted">No workers from this crew match the current filters.</p>
+                <p className="muted">{t.noCrewMatch}</p>
               ) : (
                 <div className="worker-grid">
                   {members.map((w) => (
@@ -154,7 +151,7 @@ export function WorkersPage() {
       )}
       {/* Workers whose crew is not configured still appear. */}
       {page.visible.some((w) => !crews.some((c) => c.id === w.crewId)) && (
-        <Panel title="Other workers">
+        <Panel title={t.other}>
           <div className="worker-grid">
             {page.visible
               .filter((w) => visible.has(w.id) && !crews.some((c) => c.id === w.crewId))
@@ -164,7 +161,7 @@ export function WorkersPage() {
           </div>
         </Panel>
       )}
-      <ShowMore hidden={page.hidden} onClick={page.showMore} noun="workers" />
+      <ShowMore hidden={page.hidden} onClick={page.showMore} />
     </div>
   );
 }

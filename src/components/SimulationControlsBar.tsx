@@ -1,24 +1,26 @@
 import { useSimulation } from '@/hooks/useSimulation';
+import { useI18n } from '@/i18n/useI18n';
 import { Icon } from './Icon';
 
 const SPEEDS = [0.5, 1, 2, 4];
 /** Demo-only controls. Hidden for adapters that do not expose a simulation. */
 export function SimulationControlsBar() {
   const state = useSimulation();
+  const t = useI18n().m.sim;
   if (!state) return null;
   const { sim, running, speed } = state;
 
   return (
-    <div className="simbar" role="group" aria-label="Demo simulation controls">
+    <div className="simbar" role="group" aria-label={t.group}>
       <span className="simbar__label" aria-hidden="true">
-        Sim
+        {t.label}
       </span>
       <button
         type="button"
         className="icon-btn"
         onClick={() => sim.setRunning(!running)}
-        aria-label={running ? 'Pause simulation' : 'Resume simulation'}
-        title={running ? 'Pause simulation (P)' : 'Resume simulation (P)'}
+        aria-label={running ? t.pause : t.resume}
+        title={running ? t.pauseTitle : t.resumeTitle}
       >
         <Icon name={running ? 'pause' : 'play'} size={14} />
       </button>
@@ -26,13 +28,13 @@ export function SimulationControlsBar() {
         type="button"
         className="icon-btn"
         onClick={() => sim.step()}
-        aria-label="Advance one simulation step"
-        title="Step (N)"
+        aria-label={t.step}
+        title={t.stepTitle}
       >
         <Icon name="step" size={14} />
       </button>
       <label className="simbar__speed">
-        <span className="visually-hidden">Simulation speed</span>
+        <span className="visually-hidden">{t.speed}</span>
         <select value={speed} onChange={(e) => sim.setSpeed(Number(e.target.value))}>
           {SPEEDS.map((s) => (
             <option key={s} value={s}>
@@ -45,8 +47,8 @@ export function SimulationControlsBar() {
         type="button"
         className="icon-btn"
         onClick={() => sim.reset()}
-        aria-label="Reset demo scenario"
-        title="Reset scenario"
+        aria-label={t.reset}
+        title={t.resetTitle}
       >
         <Icon name="reset" size={14} />
       </button>

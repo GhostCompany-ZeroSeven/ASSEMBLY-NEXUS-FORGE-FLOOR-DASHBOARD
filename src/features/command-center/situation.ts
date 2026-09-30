@@ -2,7 +2,7 @@ import type { ConnectionStatus } from '@/adapters/types';
 import { displayMode } from '@/domain/provenance';
 import { isStale, openAlerts, pendingApprovals } from '@/domain/selectors';
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import type { DataMode, HealthStatus, Mission } from '@/domain/types';
+import type { DataMode, DataProvenance, HealthStatus, Mission } from '@/domain/types';
 import { isWaitingForFounder } from '@/features/filters/filters';
 
 /**
@@ -16,7 +16,7 @@ export interface Situation {
     workersWaiting: number;
     oldestRequestAt?: string;
   };
-  data: { display: DataMode; transport?: string };
+  data: { display: DataMode; transport?: DataProvenance['transport'] };
   backend: { health: HealthStatus; connection: ConnectionStatus; stale: boolean; partial: boolean };
   running: { missions: number; workersBusy: number; workersTotal: number };
   blocked: { workers: number; missions: number };

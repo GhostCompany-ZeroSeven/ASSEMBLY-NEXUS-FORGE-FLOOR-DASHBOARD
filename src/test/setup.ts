@@ -10,4 +10,5 @@ afterEach(() => {
   cleanup();
   window.location.hash = '';
   localStorage.clear();
+  document.documentElement.removeAttribute('lang');
 });

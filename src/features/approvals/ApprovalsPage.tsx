@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useUrlState } from '@/app/urlState';
 import { EmptyState, Panel } from '@/components/ui';
 import { resourceUnavailable } from '@/domain/selectors';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
@@ -7,58 +7,58 @@ import {
   approvalMatchesView,
   DEFAULT_APPROVAL_FILTER,
   filterApprovals,
-  type ApprovalFilter,
   type ApprovalView,
 } from '@/features/filters/filters';
+import { APPROVAL_SCHEMA } from '@/features/filters/urlSchemas';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { cap } from '@/i18n/format';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useSnapshot } from '@/store/hooks';
 import { ApprovalGateCard } from './ApprovalGateCard';
 
-const VIEWS: { value: ApprovalView; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'open', label: 'Awaiting decision' },
-  { value: 'held', label: 'On hold' },
-  { value: 'decided', label: 'Decided' },
-];
+const VIEWS: ApprovalView[] = ['all', 'open', 'held', 'decided'];
 
 export function ApprovalsPage() {
   useFocusTarget();
   const snapshot = useSnapshot();
   const { governance } = useConfig();
-  const [f, setF] = useState<ApprovalFilter>(DEFAULT_APPROVAL_FILTER);
-  const set = (patch: Partial<ApprovalFilter>) => setF((cur) => ({ ...cur, ...patch }));
+  const { m } = useI18n();
+  const t = m.approvals;
+  // Filters, sorting and search text live in the URL (?view=&risk=&sort=&q=).
+  // URL state only filters what is shown; it can never decide or authorize anything.
+  const [f, set] = useUrlState(DEFAULT_APPROVAL_FILTER, APPROVAL_SCHEMA);
   const matches = filterApprovals(snapshot, f);
   const open = matches.filter((a) => a.status === 'PENDING' || a.status === 'HELD');
   const unknown = matches.filter((a) => a.status === 'UNKNOWN');
   const decided = matches
     .filter((a) => approvalMatchesView(a, 'decided'))
     .sort((a, b) => (b.decision?.decidedAt ?? '').localeCompare(a.decision?.decidedAt ?? ''));
-  const views = snapshot.approvals.some((a) => a.status === 'UNKNOWN')
-    ? [...VIEWS, { value: 'unknown' as const, label: 'Unknown status' }]
-    : VIEWS;
+  const views: ApprovalView[] =
+    snapshot.approvals.some((a) => a.status === 'UNKNOWN') || f.view === 'unknown'
+      ? [...VIEWS, 'unknown']
+      : VIEWS;
   const reset = () => set(DEFAULT_APPROVAL_FILTER);
 
   return (
     <div className="page">
       <header className="page__header">
         <div>
-          <div className="page__eyebrow">Governance</div>
-          <h1 className="page__title">Approval Gates</h1>
+          <div className="page__eyebrow">{t.eyebrow}</div>
+          <h1 className="page__title">{t.title}</h1>
           <p className="page__lede">
-            Only <strong>{governance.humanAuthority}</strong> opens a gate. Workers can request;
-            they cannot approve. Capability is not authority.
+            {t.ledeOnly} <strong>{governance.humanAuthority}</strong> {t.ledeRest}
           </p>
         </div>
       </header>
 
       <FilterBar
-        label="Filter approval gates"
-        noun="approval gates"
+        resource="approvals"
         query={f.q}
-        onQuery={(q) => set({ q })}
+        onQuery={(q) => set({ q }, 'replace')}
         quick={views.map((v) => ({
-          ...v,
-          count: snapshot.approvals.filter((a) => approvalMatchesView(a, v.value)).length,
+          value: v,
+          label: t.view[v],
+          count: snapshot.approvals.filter((a) => approvalMatchesView(a, v)).length,
         }))}
         quickValue={f.view}
         onQuick={(view) => set({ view })}
@@ -69,26 +69,25 @@ export function ApprovalsPage() {
         more={
           <>
             <SelectFilter
-              label="Risk"
+              label={t.risk}
               value={f.risk}
               onChange={(risk) => set({ risk })}
               options={[
-                { value: 'all', label: 'Any risk' },
-                { value: 'critical', label: 'Critical' },
-                { value: 'high', label: 'High' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'low', label: 'Low' },
+                { value: 'all', label: t.anyRisk },
+                ...(['critical', 'high', 'medium', 'low'] as const).map((r) => ({
+                  value: r,
+                  label: cap(m.status.risk[r]),
+                })),
               ]}
             />
             <SelectFilter
-              label="Sort by"
+              label={m.filters.sortBy}
               value={f.sort}
               onChange={(sort) => set({ sort })}
-              options={[
-                { value: 'oldest', label: 'Waiting longest' },
-                { value: 'risk', label: 'Highest risk' },
-                { value: 'newest', label: 'Newest' },
-              ]}
+              options={(['oldest', 'risk', 'newest'] as const).map((s) => ({
+                value: s,
+                label: t.sort[s],
+              }))}
             />
           </>
         }
@@ -97,24 +96,18 @@ export function ApprovalsPage() {
       {matches.length === 0 ? (
         <Panel>
           <FilteredEmpty
+            resource="approvals"
             total={snapshot.approvals.length}
             unavailable={resourceUnavailable(snapshot, 'approvals')}
-            noun="approval gates"
             onReset={reset}
-            sourceEmptyText="No approval requests have been made."
           />
         </Panel>
       ) : (
         <>
           {(f.view === 'all' || f.view === 'open' || f.view === 'held') && (
-            <Panel
-              title={`Awaiting decision (${open.length})`}
-              tone={open.length ? 'warning' : undefined}
-            >
+            <Panel title={t.sectionOpen(open.length)} tone={open.length ? 'warning' : undefined}>
               {open.length === 0 ? (
-                <EmptyState title="No gates waiting">
-                  Nothing requires a decision right now.
-                </EmptyState>
+                <EmptyState title={t.noneOpen}>{t.noneOpenBody}</EmptyState>
               ) : (
                 <div className="gate-list">
                   {open.map((r) => (
@@ -125,11 +118,8 @@ export function ApprovalsPage() {
             </Panel>
           )}
           {unknown.length > 0 && (
-            <Panel title={`Unknown status (${unknown.length})`} tone="warning">
-              <p className="small muted">
-                The data source reported statuses this dashboard does not recognise. These requests
-                cannot be decided here.
-              </p>
+            <Panel title={t.sectionUnknown(unknown.length)} tone="warning">
+              <p className="small muted">{t.unknownNote}</p>
               <div className="gate-list">
                 {unknown.map((r) => (
                   <ApprovalGateCard key={r.id} request={r} />
@@ -138,9 +128,9 @@ export function ApprovalsPage() {
             </Panel>
           )}
           {(f.view === 'all' || f.view === 'decided') && (
-            <Panel title={`Decision history (${decided.length})`}>
+            <Panel title={t.sectionHistory(decided.length)}>
               {decided.length === 0 ? (
-                <EmptyState title="No decisions yet" />
+                <EmptyState title={t.noneDecided} />
               ) : (
                 <div className="gate-list">
                   {decided.map((r) => (

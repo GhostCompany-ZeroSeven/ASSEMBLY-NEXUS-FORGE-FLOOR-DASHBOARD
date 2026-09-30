@@ -18,15 +18,9 @@ import { useConfig, useSnapshot } from '@/store/hooks';
 import { ForgeFloorMap } from './ForgeFloorMap';
 import { layoutFloor } from './layout';
 import { STATE_GLYPH } from './stateGlyph';
+import { useI18n } from '@/i18n/useI18n';
 
-const FLAGS: { value: WorkerFlag; label: string }[] = [
-  { value: 'all', label: 'Everyone' },
-  { value: 'founder', label: 'Waiting for Founder' },
-  { value: 'blocked', label: 'Blocked' },
-  { value: 'active', label: 'Active' },
-  { value: 'idle', label: 'Idle / done' },
-  { value: 'failed', label: 'Failed / stopped' },
-];
+const FLAGS: WorkerFlag[] = ['all', 'founder', 'blocked', 'active', 'idle', 'failed'];
 
 /**
  * Floor state lives in the URL (?worker=, ?room=, ?show=, ?mission=) so search
@@ -36,9 +30,12 @@ export function ForgeFloorPage() {
   const snapshot = useSnapshot();
   const { crews, floor } = useConfig();
   const query = useHashQuery();
+  const { m } = useI18n();
+  const t = m.floor;
   const selected = query.worker ?? null;
   const roomId = query.room ?? null;
-  const flag = (FLAGS.some((f) => f.value === query.show) ? query.show : 'all') as WorkerFlag;
+  // Unknown ?show= values fall back to "all" (URL state is never trusted blindly).
+  const flag = (FLAGS.some((f) => f === query.show) ? query.show : 'all') as WorkerFlag;
   const missionId = query.mission ?? 'all';
   const worker = findWorker(snapshot, selected ?? undefined);
   const room = floor.rooms.find((r) => r.id === roomId);
@@ -69,20 +66,20 @@ export function ForgeFloorPage() {
     <div className="page page--wide">
       <header className="page__header">
         <div>
-          <div className="page__eyebrow">Visual operations</div>
-          <h1 className="page__title">Forge Floor</h1>
+          <div className="page__eyebrow">{t.eyebrow}</div>
+          <h1 className="page__title">{t.title}</h1>
           {forge?.motto && <p className="page__lede crew-motto">{forge.motto}</p>}
         </div>
         <details className="legend-box">
-          <summary>State legend</summary>
-          <ul className="legend" aria-label="Worker state legend">
+          <summary>{t.legend}</summary>
+          <ul className="legend" aria-label={t.legendAria}>
             {WORKER_STATES.map((s) => (
               <li key={s}>
                 <span className="legend__glyph" aria-hidden="true">
                   <Icon name={STATE_GLYPH[s]} size={12} />
                 </span>
                 <StatusBadge tone={WORKER_STATE_META[s].tone} size="sm">
-                  {WORKER_STATE_META[s].label}
+                  {m.status.worker[s]}
                 </StatusBadge>
               </li>
             ))}
@@ -90,42 +87,38 @@ export function ForgeFloorPage() {
         </details>
       </header>
 
-      <div
-        className="filterbar floor-filter"
-        role="search"
-        aria-label="Highlight workers on the floor"
-      >
+      <div className="filterbar floor-filter" role="search" aria-label={t.highlightAria}>
         <div className="filterbar__row">
-          <div className="segmented" role="radiogroup" aria-label="Highlight">
+          <div className="segmented" role="radiogroup" aria-label={t.highlight}>
             {FLAGS.map((f) => (
               <button
-                key={f.value}
+                key={f}
                 type="button"
                 role="radio"
-                aria-checked={flag === f.value}
+                aria-checked={flag === f}
                 className="segmented__item"
-                onClick={() => setQuery({ show: f.value === 'all' ? undefined : f.value })}
+                onClick={() => setQuery({ show: f === 'all' ? undefined : f })}
               >
-                {f.label}
+                {t.flag[f]}
                 <span className="segmented__count">
-                  {snapshot.workers.filter((w) => workerMatchesFlag(w, f.value, snapshot)).length}
+                  {snapshot.workers.filter((w) => workerMatchesFlag(w, f, snapshot)).length}
                 </span>
               </button>
             ))}
           </div>
           <SelectFilter
-            label="Mission"
+            label={t.mission}
             value={missionId}
-            onChange={(m) => setQuery({ mission: m === 'all' ? undefined : m })}
+            onChange={(id) => setQuery({ mission: id === 'all' ? undefined : id })}
             options={[
-              { value: 'all', label: 'Any mission' },
-              ...missionsOnFloor.map((m) => ({ value: m, label: m })),
+              { value: 'all', label: t.anyMission },
+              ...missionsOnFloor.map((id) => ({ value: id, label: id })),
             ]}
           />
           <span className="filterbar__count" role="status" aria-live="polite">
             {filtering
-              ? `${matches} of ${snapshot.workers.length} workers highlighted`
-              : `${snapshot.workers.length} workers`}
+              ? t.highlighted(matches, snapshot.workers.length)
+              : t.workerCount(snapshot.workers.length)}
           </span>
           {filtering && (
             <button
@@ -133,13 +126,13 @@ export function ForgeFloorPage() {
               className="btn btn--ghost"
               onClick={() => setQuery({ show: undefined, mission: undefined })}
             >
-              <Icon name="reset" size={13} /> Reset highlight
+              <Icon name="reset" size={13} /> {t.resetHighlight}
             </button>
           )}
         </div>
         {filtering && matches === 0 && snapshot.workers.length > 0 && (
           <p className="small muted" role="note">
-            No workers match this highlight. Everyone is shown dimmed. Reset to clear it.
+            {t.noHighlightMatch}
           </p>
         )}
       </div>
@@ -160,7 +153,7 @@ export function ForgeFloorPage() {
         </Panel>
         <aside
           className="floor-aside"
-          aria-label={room ? `Room: ${room.label}` : 'Selected worker'}
+          aria-label={room ? t.roomAria(room.label) : t.selectedWorker}
         >
           {room ? (
             <RoomPanel roomId={room.id} onClose={() => setQuery({ room: undefined })} />
@@ -169,17 +162,14 @@ export function ForgeFloorPage() {
               <WorkerCard worker={worker} />
               {worker.currentMissionId && (
                 <p className="small floor-aside__hint">
-                  Workers ringed on the floor share mission{' '}
+                  {t.sharedMission}{' '}
                   <a href={href.mission(worker.currentMissionId)}>{worker.currentMissionId}</a>.
                 </p>
               )}
             </>
           ) : (
-            <Panel title="Select a worker or room">
-              <p className="muted">
-                Select any crew member, or a room name, to inspect it. Workers walk between rooms as
-                their state changes; those waiting on a human decision gather at the Founder Gate.
-              </p>
+            <Panel title={t.selectTitle}>
+              <p className="muted">{t.selectBody}</p>
             </Panel>
           )}
         </aside>
@@ -196,26 +186,23 @@ function RoomPanel({ roomId, onClose }: { roomId: string; onClose: () => void })
   const people = snapshot.workers.filter((w) => placements.get(w.id)?.roomId === roomId);
   const crew = crews.find((c) => c.id === room.crewId);
   const gates = room.id === floor.approvalRoomId ? pendingApprovals(snapshot) : [];
+  const { m } = useI18n();
+  const t = m.floor;
 
   return (
     <Panel
-      eyebrow={crew ? `${crew.label}${crew.status === 'reserved' ? ' · reserved' : ''}` : 'Room'}
+      eyebrow={crew ? `${crew.label}${crew.status === 'reserved' ? t.reservedSuffix : ''}` : t.room}
       title={room.label}
       actions={
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={onClose}
-          aria-label="Close room details"
-        >
+        <button type="button" className="icon-btn" onClick={onClose} aria-label={t.closeRoom}>
           <Icon name="x" size={14} />
         </button>
       }
     >
       <p className="muted small">{room.description}</p>
-      <h3 className="subhead">Present ({people.length})</h3>
+      <h3 className="subhead">{t.present(people.length)}</h3>
       {people.length === 0 ? (
-        <EmptyState title="Nobody here right now" />
+        <EmptyState title={t.nobody} />
       ) : (
         <ul className="crew-list">
           {people.map((w) => (
@@ -230,12 +217,12 @@ function RoomPanel({ roomId, onClose }: { roomId: string; onClose: () => void })
                 <span>
                   <strong>{w.name}</strong>
                   <span className="muted small">
-                    {w.currentMissionId ?? 'no mission'}
-                    {isWaitingForFounder(w, snapshot) ? ' · awaiting Founder' : ''}
+                    {w.currentMissionId ?? t.noMission}
+                    {isWaitingForFounder(w, snapshot) ? t.awaitingFounderSuffix : ''}
                   </span>
                 </span>
                 <StatusBadge tone={WORKER_STATE_META[w.state].tone} size="sm">
-                  {WORKER_STATE_META[w.state].label}
+                  {m.status.worker[w.state]}
                 </StatusBadge>
               </a>
             </li>
@@ -244,7 +231,7 @@ function RoomPanel({ roomId, onClose }: { roomId: string; onClose: () => void })
       )}
       {gates.length > 0 && (
         <>
-          <h3 className="subhead">Waiting for a decision</h3>
+          <h3 className="subhead">{t.waitingDecision}</h3>
           <ul className="plain-list">
             {gates.map((g) => (
               <li key={g.id}>
@@ -256,8 +243,8 @@ function RoomPanel({ roomId, onClose }: { roomId: string; onClose: () => void })
           </ul>
         </>
       )}
-      <h3 className="subhead">Equipment</h3>
-      <p className="small muted">{room.equipment.join(', ') || 'none'}</p>
+      <h3 className="subhead">{t.equipment}</h3>
+      <p className="small muted">{room.equipment.join(', ') || m.common.none}</p>
     </Panel>
   );
 }

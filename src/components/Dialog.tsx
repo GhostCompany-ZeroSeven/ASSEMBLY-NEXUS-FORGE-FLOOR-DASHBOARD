@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { useI18n } from '@/i18n/useI18n';
 import { Icon } from './Icon';
 
 const FOCUSABLE =
@@ -35,6 +36,7 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const { m } = useI18n();
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -85,7 +87,12 @@ export function Dialog({
           <h2 id={titleId} className="dialog__title">
             {title}
           </h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close dialog">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={onClose}
+            aria-label={m.common.closeDialog}
+          >
             <Icon name="x" size={16} />
           </button>
         </header>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
-import { EmptyState, Panel, StatusBadge } from '@/components/ui';
+import { EmptyState, MoreLink, Panel, StatusBadge } from '@/components/ui';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { DEFAULT_MISSION_FILTER, filterMissions } from '@/features/filters/filters';
 import { SituationBoard } from './SituationBoard';
@@ -12,13 +12,13 @@ import {
   resourceUnavailable,
 } from '@/domain/selectors';
 import { HEALTH_STATUS_META, RISK_TONE, WORKER_STATE_META } from '@/domain/status';
-import { formatRelative } from '@/domain/time';
 import type { Mission } from '@/domain/types';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { AlertCard } from '@/features/alerts/AlertCard';
 import { ForgeFloorMap } from '@/features/forge-floor/ForgeFloorMap';
 import { MissionCard } from '@/features/missions/MissionCard';
 import { MissionInstrument } from '@/features/missions/MissionInstrument';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useNow, useSnapshot } from '@/store/hooks';
 
 /** Pick the mission most worth watching: approval-gated, then high priority, then oldest active. */
@@ -35,6 +35,8 @@ export function CommandCenter() {
   const snapshot = useSnapshot();
   const config = useConfig();
   const now = useNow(5000);
+  const { m, rel } = useI18n();
+  const t = m.command;
   const featured = featuredMission(snapshot.missions);
   const gates = pendingApprovals(snapshot);
   const alerts = openAlerts(snapshot).slice(0, 3);
@@ -56,17 +58,15 @@ export function CommandCenter() {
       <header className="page__header">
         <div>
           <div className="page__eyebrow">
-            {config.branding.productName} · {config.branding.surfaceName}
+            {t.eyebrow(config.branding.productName, config.branding.surfaceName)}
           </div>
-          <h1 className="page__title">Command Center</h1>
+          <h1 className="page__title">{t.title}</h1>
         </div>
       </header>
 
       {snapshot.provenance.mode === 'demo' && (
         <div className="demo-strip" role="note">
-          <strong>LOCAL DEMO DATA.</strong> Every worker, mission, approval and alert on this screen
-          is simulated in your browser by the {snapshot.provenance.adapterLabel}. No Assembly Nexus
-          backend is connected.
+          <strong>{t.demoStrip}</strong> {t.demoStripBody(snapshot.provenance.adapterLabel)}
         </div>
       )}
 
@@ -74,35 +74,41 @@ export function CommandCenter() {
 
       <div className="grid grid--command">
         <Panel
-          title={featured ? featured.title : 'No mission in flight'}
+          title={featured ? featured.title : t.noMission}
           eyebrow={
-            featured ? <span className="mono">Featured · {featured.id}</span> : 'Featured mission'
+            featured ? (
+              <span className="mono">
+                {t.featured} · {featured.id}
+              </span>
+            ) : (
+              t.featuredMission
+            )
           }
           className="span-2"
-          actions={featured && <a href={href.mission(featured.id)}>Open mission →</a>}
+          actions={
+            featured && <MoreLink href={href.mission(featured.id)}>{t.openMission}</MoreLink>
+          }
         >
           {featured ? (
             <MissionInstrument mission={featured} size="xl" />
           ) : (
-            <EmptyState title={missionsMissing ? 'Mission data unavailable' : 'All quiet'}>
-              {missionsMissing && 'Missions could not be loaded; see the data warnings above.'}
+            <EmptyState title={missionsMissing ? t.missionUnavailable : t.allQuiet}>
+              {missionsMissing && t.missionUnavailableBody}
             </EmptyState>
           )}
         </Panel>
 
         <Panel
-          title="Founder Gate"
-          eyebrow={`Decision authority: ${config.governance.humanAuthority}`}
+          title={t.gate}
+          eyebrow={t.gateEyebrow(config.governance.humanAuthority)}
           tone={gates.length ? 'warning' : undefined}
-          actions={<a href={href.approvals()}>All gates →</a>}
+          actions={<MoreLink href={href.approvals()}>{t.allGates}</MoreLink>}
         >
           {gates.length === 0 ? (
             resourceUnavailable(snapshot, 'approvals') ? (
-              <EmptyState title="Approval data unavailable">
-                Pending requests could not be loaded; see the data warnings above.
-              </EmptyState>
+              <EmptyState title={t.approvalUnavailable}>{t.approvalUnavailableBody}</EmptyState>
             ) : (
-              <EmptyState title="No decisions waiting" />
+              <EmptyState title={t.noDecisions} />
             )
           ) : (
             <ul className="gate-mini">
@@ -112,9 +118,9 @@ export function CommandCenter() {
                     <span className="mono small">{g.id}</span>
                     <span className="gate-mini__title">{g.title}</span>
                     <StatusBadge tone={RISK_TONE[g.risk]} size="sm">
-                      {g.risk} risk
+                      {m.search.risk(m.status.risk[g.risk])}
                     </StatusBadge>
-                    <span className="small muted">{formatRelative(g.requestedAt, now)}</span>
+                    <span className="small muted">{rel(g.requestedAt, now)}</span>
                   </a>
                 </li>
               ))}
@@ -122,38 +128,36 @@ export function CommandCenter() {
           )}
           <p className="gate-note">
             {gates.length > 0
-              ? `${gates.length} worker request${gates.length === 1 ? ' is' : 's are'} held until ${config.governance.humanAuthority} decides. Workers cannot approve their own requests.`
-              : `Only ${config.governance.humanAuthority} can open a gate. Workers can request, never approve.`}
+              ? t.gatesHeld(gates.length, config.governance.humanAuthority)
+              : t.gatesNone(config.governance.humanAuthority)}
           </p>
         </Panel>
 
         {config.features.forgeFloor && (
           <Panel
-            title="Forge Floor"
+            title={t.floor}
             className="span-2"
-            actions={<a href={href.floor()}>Full floor →</a>}
+            actions={<MoreLink href={href.floor()}>{t.fullFloor}</MoreLink>}
           >
             <ForgeFloorMap compact selectedId={selected} onSelect={(id) => setSelected(id)} />
             {selected && (
               <p className="small">
-                Selected:{' '}
+                {t.selected}{' '}
                 <a href={href.worker(selected)}>
                   {snapshot.workers.find((w) => w.id === selected)?.name}
                 </a>{' '}
-                — open focus view
+                — {t.openFocus}
               </p>
             )}
           </Panel>
         )}
 
-        <Panel title="Alerts" actions={<a href={href.alerts()}>All alerts →</a>}>
+        <Panel title={t.alerts} actions={<MoreLink href={href.alerts()}>{t.allAlerts}</MoreLink>}>
           {alerts.length === 0 ? (
             resourceUnavailable(snapshot, 'alerts') ? (
-              <EmptyState title="Alert data unavailable">
-                Alerts could not be loaded; see the data warnings above.
-              </EmptyState>
+              <EmptyState title={t.alertUnavailable}>{t.alertUnavailableBody}</EmptyState>
             ) : (
-              <EmptyState title="No open alerts" />
+              <EmptyState title={t.noAlerts} />
             )
           ) : (
             <div className="stack">
@@ -165,20 +169,18 @@ export function CommandCenter() {
         </Panel>
 
         <Panel
-          title={`Missions in flight (${allInFlight.length})`}
+          title={t.inFlight(allInFlight.length)}
           className="span-2"
           actions={
-            <a href={href.missions()}>
+            <MoreLink href={href.missions()}>
               {allInFlight.length > inFlight.length
-                ? `All ${allInFlight.length} in Mission Control →`
-                : 'Mission control →'}
-            </a>
+                ? t.allInControl(allInFlight.length)
+                : t.missionControl}
+            </MoreLink>
           }
         >
           {inFlight.length === 0 ? (
-            <EmptyState
-              title={missionsMissing ? 'Mission data unavailable' : 'Nothing in flight'}
-            />
+            <EmptyState title={missionsMissing ? t.missionUnavailable : t.nothingInFlight} />
           ) : (
             <div className="mission-list">
               {inFlight.map((m) => (
@@ -188,7 +190,7 @@ export function CommandCenter() {
           )}
           {recentlyDone.length > 0 && (
             <>
-              <h3 className="subhead">Recently finished</h3>
+              <h3 className="subhead">{t.recentlyFinished}</h3>
               <div className="mission-list">
                 {recentlyDone.map((m) => (
                   <MissionCard key={m.id} mission={m} />
@@ -199,14 +201,12 @@ export function CommandCenter() {
         </Panel>
 
         <div className="stack">
-          <Panel title="System health" id="health" tone={health.tone} focusId="health">
+          <Panel title={t.health} id="health" tone={health.tone} focusId="health">
             <div className="health">
               <StatusBadge tone={health.tone} size="lg">
-                {health.label}
+                {m.status.health[snapshot.health.status]}
               </StatusBadge>
-              <span className="small muted">
-                checked {formatRelative(snapshot.health.checkedAt, now)}
-              </span>
+              <span className="small muted">{t.checked(rel(snapshot.health.checkedAt, now))}</span>
             </div>
             <ul className="health-list">
               {snapshot.health.components.map((c) => (
@@ -223,16 +223,12 @@ export function CommandCenter() {
             </ul>
           </Panel>
 
-          <Panel title="Crew" actions={<a href={href.workers()}>Roster →</a>}>
+          <Panel title={t.crew} actions={<MoreLink href={href.workers()}>{t.roster}</MoreLink>}>
             {snapshot.workers.length === 0 ? (
               resourceUnavailable(snapshot, 'workers') ? (
-                <EmptyState title="Worker data unavailable">
-                  The data source returned unreadable worker data.
-                </EmptyState>
+                <EmptyState title={t.workerUnavailable}>{t.workerUnavailableBody}</EmptyState>
               ) : (
-                <EmptyState title="No workers reported">
-                  The data source lists zero workers.
-                </EmptyState>
+                <EmptyState title={t.noWorkers}>{t.noWorkersBody}</EmptyState>
               )
             ) : (
               <ul className="crew-strip">
@@ -240,12 +236,12 @@ export function CommandCenter() {
                   <li key={w.id}>
                     <a
                       href={href.worker(w.id)}
-                      title={`${w.name} — ${WORKER_STATE_META[w.state].label}`}
+                      title={`${w.name} — ${m.status.worker[w.state]}`}
                       data-tone={WORKER_STATE_META[w.state].tone}
                     >
                       <CharacterAvatar characterId={w.characterId} state={w.state} size={34} />
                       <span className="visually-hidden">
-                        {w.name}: {WORKER_STATE_META[w.state].label}
+                        {w.name}: {m.status.worker[w.state]}
                       </span>
                     </a>
                   </li>
@@ -256,9 +252,9 @@ export function CommandCenter() {
         </div>
 
         <Panel
-          title="Activity"
+          title={t.activity}
           className="span-3"
-          actions={<a href={href.activity()}>Full log →</a>}
+          actions={<MoreLink href={href.activity()}>{t.fullLog}</MoreLink>}
         >
           <ActivityStream limit={14} />
         </Panel>

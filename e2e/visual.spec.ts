@@ -38,7 +38,6 @@ async function snap(page: Page, name: string) {
     animations: 'disabled',
     caret: 'hide',
     mask: [page.locator('.hierarchy')],
-    maxDiffPixelRatio: 0.01,
   });
 }
 
@@ -152,4 +151,44 @@ test('visual: REST empty backend', async ({ page }) => {
   await page.locator('[data-surface="ready"]').waitFor();
   await expect(page.getByText('No missions from the data source')).toBeVisible();
   await snap(page, 'rest-empty-missions');
+});
+
+/* ------------------------------ Phase 4 states ------------------------------ */
+
+async function openEs(page: Page, route: string, viewport: keyof typeof VIEWPORTS = 'desktop') {
+  await page.addInitScript(() =>
+    localStorage.setItem('forge-floor:preferences', JSON.stringify({ locale: 'es' })),
+  );
+  await open(page, route, viewport);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+}
+
+test('visual: Spanish Command Center', async ({ page }) => {
+  await openEs(page, '/');
+  await snap(page, 'es-command-center-desktop');
+});
+
+test('visual: Spanish Forge Floor (phone)', async ({ page }) => {
+  await openEs(page, '/floor', 'phone');
+  await snap(page, 'es-forge-floor-phone');
+});
+
+test('visual: Spanish approval gates', async ({ page }) => {
+  await openEs(page, '/approvals');
+  await snap(page, 'es-approvals-desktop');
+});
+
+test('visual: settings transport diagnostics (demo)', async ({ page }) => {
+  await open(page, '/settings?focus=transport');
+  await snap(page, 'settings-transport-demo');
+});
+
+test('visual: settings transport diagnostics (REST, live)', async ({ page }) => {
+  await openRest(page, 'healthy', '/settings?focus=transport');
+  await snap(page, 'settings-transport-rest');
+});
+
+test('visual: URL-filtered missions (deep link)', async ({ page }) => {
+  await open(page, '/missions?group=in-flight&sort=priority');
+  await snap(page, 'missions-url-filtered');
 });

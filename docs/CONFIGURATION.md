@@ -95,8 +95,27 @@ They combine, for example `?demo=stress,paused`.
 
 ## Viewer preferences
 
-Theme, motion (system / reduced / full), density and the single-key-shortcut switch are stored per browser in `localStorage`
-(`forge-floor:preferences`). They are not shared across viewers.
+Language (automatic / English / Español), theme, motion (system / reduced / full), density and
+the single-key-shortcut switch are stored per browser in `localStorage`
+(`forge-floor:preferences`). They are not shared across viewers. Stored values are validated on
+load: an unknown language falls back to automatic (the browser's language, if supported).
+
+## Localized config text
+
+Rooms, crews and themes can carry per-locale **display** overrides. Only `label`,
+`description` (rooms, themes) and `motto` (crews) can be overridden:
+
+```ts
+{
+  id: 'founder-gate',
+  label: 'Founder Gate',
+  description: 'Workers wait here for human approval. Only the human authority opens the gate.',
+  i18n: { es: { label: 'Puerta del Founder', description: 'Los trabajadores esperan aquí…' } },
+}
+```
+
+Ids, kinds, routes, the approval room and `governance.humanAuthority` are never localized. See
+[LOCALIZATION.md](LOCALIZATION.md).
 
 ## Build-time adapter override (development)
 

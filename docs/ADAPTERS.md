@@ -25,8 +25,28 @@ interface DashboardAdapter {
   submitApprovalDecision(input): Promise<ApprovalDecisionRecord>;
   acknowledgeAlert(alertId, by): Promise<void>;
   sendWorkerMessage?(workerId, body, author): Promise<WorkerMessage>; // only if capabilities.messaging
+  diagnostics?(): TransportDiagnostics; // optional, read-only; see "Transport diagnostics"
 }
 ```
+
+### Transport diagnostics
+
+`diagnostics()` feeds **Settings → Transport and freshness**. It reports the configured and
+active transport, stream state, failed attempts, the last stream message (including heartbeats),
+the last accepted stream event, rejected stream messages, the last successful REST verification,
+the last REST attempt, and the configured intervals. Rules:
+
+- Values the adapter does not know stay `undefined` and are shown as **UNKNOWN**. An adapter
+  without `diagnostics()` shows UNKNOWN throughout. Nothing is guessed.
+- It must never contain URLs, headers, tokens or credentials (tested). Base URLs can reveal
+  internal hosts, so the diagnostics carry none.
+- The demo adapter reports `simulated`: there is no network transport at all.
+
+### Event ingest path (`via`)
+
+Every event carries `via: 'stream' | 'poll' | 'simulated'`, stamped by the **adapter** at ingest.
+A value in the backend payload is ignored. The Activity view shows it per event (observability
+only; it says nothing about whether the event's claims are authorized).
 
 ## Provenance model
 
@@ -48,7 +68,9 @@ stale, partial and malformed-data banners.
 1. Never report `verifiedBackend: true` unless the backend has just proven itself. For the REST
    adapter, that means a valid health payload in the latest cycle.
 2. Forward human decisions verbatim. Report `delivery: 'delivered'` only after the backend returns
-   a matching decision record. Never auto-approve, and never update approval state optimistically.
+   a matching decision record, and that record must itself pass governance: the required human
+   authority as `decidedBy`, never a worker (**HTTP success ≠ trusted result**). Never
+   auto-approve, and never update approval state optimistically.
 3. Run `assertHumanDecisionAllowed()` (`src/domain/governance.ts`) before sending anything.
 4. Never fabricate worker replies. Without messaging, leave out `sendWorkerMessage`.
 5. Leave out numbers the backend does not provide (`progress`, `estimate`, `latencyMs`). Do not send 0.
@@ -163,10 +185,21 @@ Behaviour (`src/adapters/transport/sse.ts`, `src/adapters/rest/stream.ts`):
   what show continued connectivity, and the REST health payload is re-checked only every
   `resyncIntervalMs`. A health endpoint that fails while the same server's stream stays up is
   therefore noticed within that interval, not within `pollIntervalMs`. Lower
-  `resyncIntervalMs` if that window matters.
+  `resyncIntervalMs` if that window matters. The throttle applies **only while the backend is
+  verified**: once verification is lost, REST re-checks at the normal poll interval even with the
+  stream open, and a stream that reconnects while unverified triggers an immediate re-check. A
+  Phase 4 runtime test found that an open stream had delayed recovery by up to 60s.
 - **Retry counting:** the failure count resets only when a message or heartbeat arrives, not when
   the connection merely opens. A stream that connects but never delivers still reaches
   `maxRetries` and falls back.
+- **Recovery after giving up:** once the stream is `failed`, a successful REST verification
+  re-arms it, but only after a 5-minute cool-down (`STREAM_RECOVERY_MS`). That allows at most one
+  new, itself bounded, attempt series per cool-down: no reconnect storm.
+- **Ordering:** no ordering guarantee is assumed. Duplicate event ids are applied once. A
+  `worker.state_changed` older than the worker's current `stateSince` is kept in the log but does
+  not roll the worker's state back.
+- **Polling backoff:** while REST fails, polling backs off exponentially up to 60s, so after an
+  outage verification can take up to that long to return (sooner if the stream reconnects).
 - **Untrusted input:** each message is size-limited (256 KiB) and parsed. Unknown kinds,
   malformed payloads and invalid JSON are dropped and reported. Approval decisions are checked
   against governance, and an `approval.requested` that arrives already decided is rejected.

@@ -5,8 +5,9 @@ import { Icon } from '@/components/Icon';
 import { ProgressBar, StatusBadge } from '@/components/ui';
 import { describeEvent } from '@/domain/describe';
 import { findMission } from '@/domain/selectors';
-import { REVIEW_STATUS_META, WORKER_STATE_META } from '@/domain/status';
-import { formatClock, formatRelative, toMs } from '@/domain/time';
+import { WORKER_STATE_META } from '@/domain/status';
+import { formatClock, toMs } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import type { Worker } from '@/domain/types';
 import { useConfig, useNow, useSnapshot } from '@/store/hooks';
 
@@ -25,6 +26,8 @@ export function WorkerCard({
   const snapshot = useSnapshot();
   const { crews } = useConfig();
   const now = useNow(1000);
+  const { m, rel } = useI18n();
+  const t = m.workerCard;
   const meta = WORKER_STATE_META[worker.state];
   const mission = findMission(snapshot, worker.currentMissionId);
   const task = mission?.tasks.find((t) => t.id === worker.currentTaskId);
@@ -62,9 +65,9 @@ export function WorkerCard({
               tone={meta.tone}
               pulse={worker.state === 'WORKING' || worker.state === 'BLOCKED'}
             >
-              {meta.label}
+              {m.status.worker[worker.state]}
             </StatusBadge>
-            <span className="mono small" title="Time in current state">
+            <span className="mono small" title={t.timeInState}>
               {since === null ? '--:--:--' : formatClock(now - since)}
             </span>
           </div>
@@ -72,8 +75,8 @@ export function WorkerCard({
         <a
           className="icon-btn worker-card__expand"
           href={href.worker(worker.id)}
-          aria-label={`Open ${worker.name} focus view`}
-          title="Focus view"
+          aria-label={t.open(worker.name)}
+          title={t.focusView}
         >
           <Icon name="expand" size={16} />
         </a>
@@ -81,36 +84,40 @@ export function WorkerCard({
 
       <div className="worker-card__body">
         <div className="worker-card__row">
-          <span className="worker-card__k">Mission</span>
+          <span className="worker-card__k">{t.mission}</span>
           <span>
             {mission ? (
               <a href={href.mission(mission.id)}>
                 <span className="mono">{mission.id}</span> {mission.title}
               </a>
             ) : (
-              <span className="muted">none</span>
+              <span className="muted">{m.common.none}</span>
             )}
           </span>
         </div>
         {room && (
           <div className="worker-card__row">
-            <span className="worker-card__k">Room</span>
+            <span className="worker-card__k">{t.room}</span>
             <span>
               <a href={withQuery(href.floor(), { worker: worker.id })}>{room.label}</a>
             </span>
           </div>
         )}
         <div className="worker-card__row">
-          <span className="worker-card__k">Task</span>
+          <span className="worker-card__k">{t.task}</span>
           <span>{task?.title ?? worker.currentActivity ?? <span className="muted">—</span>}</span>
         </div>
         {variant === 'full' && worker.currentActivity && task && (
           <div className="worker-card__row">
-            <span className="worker-card__k">Doing</span>
+            <span className="worker-card__k">{t.doing}</span>
             <span>{worker.currentActivity}</span>
           </div>
         )}
-        <ProgressBar value={worker.progress} tone={meta.tone} label={`${worker.name} progress`} />
+        <ProgressBar
+          value={worker.progress}
+          tone={meta.tone}
+          label={m.common.progressLabel(worker.name)}
+        />
 
         {worker.blockers.length > 0 && (
           <ul className="worker-card__blockers">
@@ -118,9 +125,9 @@ export function WorkerCard({
               <li key={b.id}>
                 <Icon name="alert" size={13} /> {b.description}
                 {b.dependsOn?.kind === 'approval' && (
-                  <a href={href.approvals()} className="small">
-                    {' '}
-                    → gate
+                  <a href={href.approvals()} className="small gate-link">
+                    <Icon name="arrow-right" size={11} />
+                    {t.gate}
                   </a>
                 )}
               </li>
@@ -132,29 +139,29 @@ export function WorkerCard({
           <>
             {mission && mission.review.status !== 'NOT_REQUESTED' && (
               <div className="worker-card__row">
-                <span className="worker-card__k">Review</span>
-                <span>{REVIEW_STATUS_META[mission.review.status].label}</span>
+                <span className="worker-card__k">{t.review}</span>
+                <span>{m.status.review[mission.review.status]}</span>
               </div>
             )}
             <div className="worker-card__row">
-              <span className="worker-card__k">Latest</span>
+              <span className="worker-card__k">{t.latest}</span>
               <span className="small">
                 {lastEvent ? (
                   <>
-                    {describeEvent(lastEvent, snapshot).title}{' '}
-                    <span className="muted">· {formatRelative(lastEvent.at, now)}</span>
+                    {describeEvent(lastEvent, snapshot, m).title}{' '}
+                    <span className="muted">· {rel(lastEvent.at, now)}</span>
                   </>
                 ) : (
-                  <span className="muted">no events</span>
+                  <span className="muted">{t.noEvents}</span>
                 )}
               </span>
             </div>
             <div className="worker-card__powers">
               <div>
-                <div className="worker-card__k">Capabilities</div>
+                <div className="worker-card__k">{t.capabilities}</div>
                 <div className="chips">
                   {worker.capabilities.length === 0 ? (
-                    <span className="muted small">none</span>
+                    <span className="muted small">{m.common.none}</span>
                   ) : (
                     worker.capabilities.map((c) => (
                       <span key={c.id} className="chip chip--cap">
@@ -165,19 +172,15 @@ export function WorkerCard({
                 </div>
               </div>
               <div>
-                <div className="worker-card__k">Authority</div>
+                <div className="worker-card__k">{t.authority}</div>
                 <div className="chips">
                   {worker.authority.length === 0 ? (
                     <span className="chip chip--noauth">
-                      <Icon name="lock" size={11} /> None granted
+                      <Icon name="lock" size={11} /> {t.noneGranted}
                     </span>
                   ) : (
                     worker.authority.map((a) => (
-                      <span
-                        key={a.id}
-                        className="chip chip--auth"
-                        title={`Granted by ${a.grantedBy}`}
-                      >
+                      <span key={a.id} className="chip chip--auth" title={t.grantedBy(a.grantedBy)}>
                         {a.label}
                       </span>
                     ))

@@ -60,7 +60,11 @@ export function useRoute(): Route {
   useEffect(() => {
     const onChange = () => setRoute(parseRoute(window.location.hash));
     window.addEventListener('hashchange', onChange);
-    return () => window.removeEventListener('hashchange', onChange);
+    window.addEventListener('popstate', onChange);
+    return () => {
+      window.removeEventListener('hashchange', onChange);
+      window.removeEventListener('popstate', onChange);
+    };
   }, []);
   return route;
 }
@@ -99,9 +103,14 @@ export function routeKey(r: Route): string {
   return 'id' in r ? `${r.name}:${r.id}` : r.name;
 }
 
+// Back/forward across pushState entries fires popstate; listen to both.
 const subscribeHash = (cb: () => void) => {
   window.addEventListener('hashchange', cb);
-  return () => window.removeEventListener('hashchange', cb);
+  window.addEventListener('popstate', cb);
+  return () => {
+    window.removeEventListener('hashchange', cb);
+    window.removeEventListener('popstate', cb);
+  };
 };
 
 /** Reactive view of the current hash query string. */

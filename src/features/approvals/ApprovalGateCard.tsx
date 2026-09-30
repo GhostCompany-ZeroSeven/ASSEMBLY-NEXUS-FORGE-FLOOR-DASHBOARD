@@ -6,17 +6,15 @@ import { SimulatedTag, StatusBadge } from '@/components/ui';
 import { checkDecision, isOpenForDecision } from '@/domain/governance';
 import { findWorker } from '@/domain/selectors';
 import { APPROVAL_STATUS_META, RISK_TONE } from '@/domain/status';
-import { formatRelative } from '@/domain/time';
 import type { ApprovalDecision, ApprovalRequest } from '@/domain/types';
+import { refusalText } from '@/i18n/refusal';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
 
-const DECISION_COPY: Record<
-  ApprovalDecision,
-  { label: string; verb: string; icon: 'check' | 'x' | 'hold' }
-> = {
-  APPROVE: { label: 'Approve', verb: 'approve', icon: 'check' },
-  DENY: { label: 'Deny', verb: 'deny', icon: 'x' },
-  HOLD: { label: 'Hold / Review', verb: 'place on hold', icon: 'hold' },
+const DECISION_ICON: Record<ApprovalDecision, 'check' | 'x' | 'hold'> = {
+  APPROVE: 'check',
+  DENY: 'x',
+  HOLD: 'hold',
 };
 
 /**
@@ -36,6 +34,10 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const noteId = useId();
+  const { m, rel } = useI18n();
+  const t = m.gate;
+  // Display text for a decision. The decision itself is always the enum value `d`.
+  const decisionLabel = (d: ApprovalDecision) => m.decision.label[d];
 
   const requester = findWorker(snapshot, request.requestedBy);
   const meta = APPROVAL_STATUS_META[request.status];
@@ -47,7 +49,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
 
   const submit = async (decision: ApprovalDecision) => {
     if (governance.noteRequiredFor.includes(decision) && !note.trim()) {
-      setError('A note is required for this decision.');
+      setError(t.noteRequired);
       return;
     }
     setBusy(true);
@@ -92,7 +94,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           )}
         </div>
         <StatusBadge tone={meta.tone} pulse={request.status === 'PENDING'}>
-          {meta.label}
+          {m.status.approval[request.status]}
         </StatusBadge>
       </header>
 
@@ -102,32 +104,32 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
 
       <div className="gate__body">
         <div className="gate__action">
-          <div className="gate__label">If approved, this will happen</div>
+          <div className="gate__label">{t.ifApproved}</div>
           <p>{request.action}</p>
-          <div className="gate__label">Rationale</div>
+          <div className="gate__label">{t.rationale}</div>
           <p>{request.rationale}</p>
         </div>
         <dl className="gate__facts">
           <div>
-            <dt>Risk</dt>
+            <dt>{t.risk}</dt>
             <dd>
               <StatusBadge tone={RISK_TONE[request.risk]} size="sm">
-                {request.risk.toUpperCase()}
+                {m.status.risk[request.risk].toUpperCase()}
               </StatusBadge>
             </dd>
           </div>
           <div>
-            <dt>Reversible</dt>
+            <dt>{t.reversible}</dt>
             <dd className={request.reversible ? '' : 'text-danger'}>
-              {request.reversible ? 'Yes' : 'No — irreversible'}
+              {request.reversible ? m.common.yes : t.irreversible}
             </dd>
           </div>
           <div>
-            <dt>Requested</dt>
-            <dd>{formatRelative(request.requestedAt, now)}</dd>
+            <dt>{t.requested}</dt>
+            <dd>{rel(request.requestedAt, now)}</dd>
           </div>
           <div>
-            <dt>Decision authority</dt>
+            <dt>{t.authority}</dt>
             <dd>
               <strong>{request.requiredAuthority}</strong>
             </dd>
@@ -141,7 +143,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
         )}
         <div>
           <div>
-            Requested by{' '}
+            {t.requestedBy}{' '}
             {requester ? (
               <a href={href.worker(requester.id)}>{requester.name}</a>
             ) : (
@@ -150,21 +152,18 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
             {requester && <span className="muted"> · {requester.role}</span>}
           </div>
           <div className="gate__authority-note">
-            <Icon name="shield" size={12} /> Capabilities:{' '}
-            {requester?.capabilities.map((c) => c.label).join(', ') || 'none reported'} ·{' '}
-            <strong>Authority grants: {requester?.authority.length ?? 0}</strong>. Requesting
-            approval grants no authority.
+            <Icon name="shield" size={12} /> {t.capabilities}{' '}
+            {requester?.capabilities.map((c) => c.label).join(', ') || t.noneReported} ·{' '}
+            <strong>{t.grants(requester?.authority.length ?? 0)}</strong>. {t.grantsNothing}
           </div>
         </div>
       </div>
 
       {request.decision && (
         <div className="gate__decision" data-decision={request.decision.decision}>
-          <strong>{DECISION_COPY[request.decision.decision].label}</strong> by{' '}
-          {request.decision.decidedBy} · {formatRelative(request.decision.decidedAt, now)}
-          {request.decision.delivery === 'simulated' && (
-            <SimulatedTag>Simulated — no backend received this decision</SimulatedTag>
-          )}
+          <strong>{decisionLabel(request.decision.decision)}</strong>
+          {t.decidedBy(request.decision.decidedBy)} · {rel(request.decision.decidedAt, now)}
+          {request.decision.delivery === 'simulated' && <SimulatedTag>{t.simulated}</SimulatedTag>}
           {request.decision.note && (
             <p className="gate__decision-note">“{request.decision.note}”</p>
           )}
@@ -172,7 +171,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
       )}
 
       {canDecide && pending === null && (
-        <div className="gate__buttons" role="group" aria-label={`Decide ${request.id}`}>
+        <div className="gate__buttons" role="group" aria-label={t.decide(request.id)}>
           {(['APPROVE', 'DENY', 'HOLD'] as const)
             .filter((d) => !(d === 'HOLD' && request.status === 'HELD'))
             .map((d) => (
@@ -183,8 +182,8 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
                 onClick={() => choose(d)}
                 disabled={busy}
               >
-                <Icon name={DECISION_COPY[d].icon} size={20} />
-                {DECISION_COPY[d].label}
+                <Icon name={DECISION_ICON[d]} size={20} />
+                {decisionLabel(d)}
               </button>
             ))}
         </div>
@@ -195,17 +194,17 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           className="gate__confirm"
           data-decision={pending}
           role="group"
-          aria-label="Confirm decision"
+          aria-label={t.confirmGroup}
         >
           <p>
-            Confirm: <strong>{governance.humanAuthority}</strong> will{' '}
-            <strong>{DECISION_COPY[pending].verb}</strong> “{request.title}”.
+            {t.confirm} <strong>{governance.humanAuthority}</strong> {t.will}{' '}
+            <strong>{m.decision.verb[pending]}</strong> “{request.title}”.
             {!request.reversible && pending === 'APPROVE' && (
-              <strong className="text-danger"> This action cannot be undone.</strong>
+              <strong className="text-danger">{t.cannotUndo}</strong>
             )}
           </p>
           <label htmlFor={noteId} className="gate__label">
-            Note {noteRequired ? '(required)' : '(optional)'}
+            {t.note} {noteRequired ? t.required : t.optional}
           </label>
           <textarea
             id={noteId}
@@ -221,7 +220,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
               onClick={() => void submit(pending)}
               disabled={busy}
             >
-              Confirm {DECISION_COPY[pending].label}
+              {t.confirmButton(decisionLabel(pending))}
             </button>
             <button
               type="button"
@@ -229,33 +228,29 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
               onClick={() => setPending(null)}
               disabled={busy}
             >
-              Cancel
+              {m.common.cancel}
             </button>
           </div>
-          {snapshot.provenance.mode === 'demo' && (
-            <p className="muted small">
-              Demo mode: the decision is recorded locally and marked simulated. Nothing outside this
-              browser is affected.
-            </p>
-          )}
+          {snapshot.provenance.mode === 'demo' && <p className="muted small">{t.demoNote}</p>}
         </div>
       )}
 
       {open && !adapter.capabilities.approvals && (
         <p className="gate__blocked" role="note">
-          <Icon name="lock" size={14} /> Unsupported: the connected adapter cannot deliver
-          decisions. Decide in the source system.
+          <Icon name="lock" size={14} /> {t.unsupported}
         </p>
       )}
       {open && adapter.capabilities.approvals && !authorityCheck.ok && (
         <p className="gate__blocked" role="note">
-          <Icon name="lock" size={14} /> Decision unavailable here: {authorityCheck.reason}
+          <Icon name="lock" size={14} />{' '}
+          {t.unavailable(
+            refusalText(m, authorityCheck, request, m.status.approval[request.status]),
+          )}
         </p>
       )}
       {request.status === 'UNKNOWN' && (
         <p className="gate__blocked" role="note">
-          <Icon name="lock" size={14} /> The data source reported an unrecognised status. This
-          request cannot be decided until its status is known.
+          <Icon name="lock" size={14} /> {t.unknownStatus}
         </p>
       )}
 

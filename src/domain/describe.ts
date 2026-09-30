@@ -1,6 +1,6 @@
+import { en, type Messages } from '@/i18n/en';
 import type { DashboardEvent } from './events';
 import type { DashboardSnapshot } from './snapshot';
-import { WORKER_STATE_META } from './status';
 
 export interface EventDescription {
   /** Short verb phrase, e.g. "Review passed". */
@@ -10,69 +10,76 @@ export interface EventDescription {
 }
 
 /**
- * Human readable rendering of a structured event. Names are resolved from the
- * snapshot at render time so the event log itself stays pure data.
+ * Human readable rendering of a structured event, in the given UI language.
+ * Names are resolved from the snapshot at render time so the event log itself
+ * stays language-free data. Backend-provided text (titles, summaries, message
+ * bodies, decidedBy) is shown verbatim, never translated.
  */
-export function describeEvent(e: DashboardEvent, s: DashboardSnapshot): EventDescription {
+export function describeEvent(
+  e: DashboardEvent,
+  s: DashboardSnapshot,
+  m: Messages = en,
+): EventDescription {
+  const t = m.events;
   const worker = e.workerId ? (s.workers.find((w) => w.id === e.workerId)?.name ?? e.workerId) : '';
   switch (e.kind) {
     case 'mission.created':
-      return { title: 'Mission created', detail: e.payload.mission.title };
+      return { title: t.missionCreated, detail: e.payload.mission.title };
     case 'worker.assigned':
-      return { title: 'Worker assigned', detail: worker };
+      return { title: t.workerAssigned, detail: worker };
     case 'work.started':
-      return { title: 'Work started', detail: e.payload.activity };
+      return { title: t.workStarted, detail: e.payload.activity };
     case 'worker.state_changed':
       return {
-        title: `${worker} → ${WORKER_STATE_META[e.payload.state].label}`,
+        title: t.stateChanged(worker, m.status.worker[e.payload.state]),
         detail: e.payload.activity,
       };
     case 'task.progress':
-      return { title: 'Progress update', detail: `${Math.round(e.payload.progress * 100)}%` };
+      return { title: t.progress, detail: `${Math.round(e.payload.progress * 100)}%` };
     case 'task.completed':
-      return { title: 'Task completed', detail: e.payload.taskId };
+      return { title: t.taskCompleted, detail: e.payload.taskId };
     case 'artifact.produced':
-      return { title: 'Artifact produced', detail: e.payload.artifact.title };
+      return { title: t.artifactProduced, detail: e.payload.artifact.title };
     case 'review.requested':
-      return { title: 'Review requested' };
+      return { title: t.reviewRequested };
     case 'review.passed':
-      return { title: 'Review passed', detail: e.payload.summary };
+      return { title: t.reviewPassed, detail: e.payload.summary };
     case 'review.failed':
-      return { title: 'Review failed', detail: e.payload.summary };
+      return { title: t.reviewFailed, detail: e.payload.summary };
     case 'certification.updated':
-      return { title: 'Certification updated', detail: e.payload.status.replace('_', ' ') };
+      return { title: t.certificationUpdated, detail: m.status.certification[e.payload.status] };
     case 'approval.requested':
-      return { title: 'Approval requested', detail: e.payload.request.title };
-    case 'approval.decided': {
-      const verb = { APPROVE: 'granted', DENY: 'denied', HOLD: 'placed on hold' }[
-        e.payload.record.decision
-      ];
-      const simulated = e.payload.record.delivery === 'simulated' ? ' (simulated)' : '';
+      return { title: t.approvalRequested, detail: e.payload.request.title };
+    case 'approval.decided':
       return {
-        title: `Approval ${verb}${simulated}`,
-        detail: `by ${e.payload.record.decidedBy}`,
+        title: t.approvalDecided(
+          m.decision.past[e.payload.record.decision],
+          e.payload.record.delivery === 'simulated',
+        ),
+        detail: m.common.by(e.payload.record.decidedBy),
       };
-    }
     case 'mission.completed':
-      return { title: 'Mission complete', detail: e.payload.result.summary };
+      return { title: t.missionComplete, detail: e.payload.result.summary };
     case 'mission.failed':
-      return { title: 'Mission failed', detail: e.payload.result.summary };
+      return { title: t.missionFailed, detail: e.payload.result.summary };
     case 'worker.blocked':
-      return { title: `${worker} blocked`, detail: e.payload.blocker.description };
+      return { title: t.blocked(worker), detail: e.payload.blocker.description };
     case 'worker.unblocked':
-      return { title: `${worker} unblocked` };
+      return { title: t.unblocked(worker) };
     case 'alert.raised':
-      return { title: `${e.payload.alert.severity}: ${e.payload.alert.title}` };
+      return {
+        title: t.alertRaised(m.status.severity[e.payload.alert.severity], e.payload.alert.title),
+      };
     case 'alert.acknowledged':
-      return { title: 'Alert acknowledged', detail: `by ${e.payload.by}` };
+      return { title: t.alertAcknowledged, detail: m.common.by(e.payload.by) };
     case 'alert.resolved':
-      return { title: 'Alert resolved' };
+      return { title: t.alertResolved };
     case 'health.updated':
-      return { title: 'System health updated', detail: e.payload.health.status };
+      return { title: t.healthUpdated, detail: m.status.health[e.payload.health.status] };
     case 'message.posted':
       return {
         title:
-          e.payload.message.direction === 'to-worker' ? `Message to ${worker}` : `${worker} says`,
+          e.payload.message.direction === 'to-worker' ? t.messageTo(worker) : t.workerSays(worker),
         detail: e.payload.message.body,
       };
   }

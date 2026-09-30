@@ -2,6 +2,7 @@ import type { DashboardAdapter } from '@/adapters/types';
 import type { DashboardConfig } from '@/config/types';
 import { ConfigProvider } from '@/store/ConfigProvider';
 import { DashboardProvider } from '@/store/DashboardProvider';
+import { I18nProvider } from '@/i18n/I18nProvider';
 import { PreferencesProvider } from '@/store/PreferencesProvider';
 import { Shell } from './Shell';
 
@@ -13,9 +14,11 @@ export function App({ config, adapter }: { config: DashboardConfig; adapter: Das
   return (
     <ConfigProvider config={config}>
       <PreferencesProvider defaultThemeId={config.defaultThemeId}>
-        <DashboardProvider adapter={adapter}>
-          <Shell />
-        </DashboardProvider>
+        <I18nProvider>
+          <DashboardProvider adapter={adapter}>
+            <Shell />
+          </DashboardProvider>
+        </I18nProvider>
       </PreferencesProvider>
     </ConfigProvider>
   );

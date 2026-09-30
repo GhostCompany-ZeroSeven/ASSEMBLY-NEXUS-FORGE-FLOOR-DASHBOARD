@@ -1,29 +1,29 @@
-import { useState } from 'react';
+import { useUrlState } from '@/app/urlState';
 import { EmptyState, Panel } from '@/components/ui';
 import { openAlerts, resourceUnavailable } from '@/domain/selectors';
 import { ALERT_SEVERITIES } from '@/domain/types';
 import { FilterBar, FilteredEmpty, SelectFilter } from '@/features/filters/FilterBar';
-import {
-  activeFilterCount,
-  DEFAULT_ALERT_FILTER,
-  filterAlerts,
-  type AlertFilter,
-} from '@/features/filters/filters';
+import { activeFilterCount, DEFAULT_ALERT_FILTER, filterAlerts } from '@/features/filters/filters';
+import { ALERT_SCHEMA } from '@/features/filters/urlSchemas';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { useI18n } from '@/i18n/useI18n';
 import { useSnapshot } from '@/store/hooks';
 import { AlertCard } from './AlertCard';
 
 export function AlertsPage() {
   const snapshot = useSnapshot();
-  const [f, setF] = useState<AlertFilter>(DEFAULT_ALERT_FILTER);
-  const set = (patch: Partial<AlertFilter>) => setF((cur) => ({ ...cur, ...patch }));
+  const { m } = useI18n();
+  const t = m.alerts;
+  // Filters, sorting and search text live in the URL (?severity=&human=1&sort=&q=).
+  const [f, set] = useUrlState(DEFAULT_ALERT_FILTER, ALERT_SCHEMA);
   useFocusTarget();
-  const open = filterAlerts(openAlerts(snapshot), f);
+  const open = filterAlerts(openAlerts(snapshot), f, m);
   const resolved = filterAlerts(
     snapshot.alerts
       .filter((a) => a.resolvedAt)
       .sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? '')),
     f,
+    m,
   );
   const reset = () => set(DEFAULT_ALERT_FILTER);
 
@@ -31,18 +31,17 @@ export function AlertsPage() {
     <div className="page">
       <header className="page__header">
         <div>
-          <div className="page__eyebrow">Operational alerts</div>
-          <h1 className="page__title">Alerts</h1>
+          <div className="page__eyebrow">{t.eyebrow}</div>
+          <h1 className="page__title">{t.title}</h1>
         </div>
       </header>
       <FilterBar
-        label="Filter alerts"
-        noun="alerts"
+        resource="alerts"
         query={f.q}
-        onQuery={(q) => set({ q })}
+        onQuery={(q) => set({ q }, 'replace')}
         quick={(['ALL', ...ALERT_SEVERITIES] as const).map((s) => ({
           value: s,
-          label: s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase(),
+          label: s === 'ALL' ? t.all : m.status.severity[s],
           count:
             s === 'ALL'
               ? snapshot.alerts.length
@@ -57,14 +56,13 @@ export function AlertsPage() {
         more={
           <>
             <SelectFilter
-              label="Sort"
+              label={m.filters.sort}
               value={f.sort}
               onChange={(sort) => set({ sort })}
-              options={[
-                { value: 'severity', label: 'Most severe first' },
-                { value: 'newest', label: 'Newest first' },
-                { value: 'oldest', label: 'Oldest first' },
-              ]}
+              options={(['severity', 'newest', 'oldest'] as const).map((s) => ({
+                value: s,
+                label: t.sort[s],
+              }))}
             />
             <label className="check">
               <input
@@ -72,7 +70,7 @@ export function AlertsPage() {
                 checked={f.humanOnly}
                 onChange={(e) => set({ humanOnly: e.target.checked })}
               />
-              Only alerts that require human action
+              {t.humanOnly}
             </label>
           </>
         }
@@ -81,18 +79,17 @@ export function AlertsPage() {
       {open.length + resolved.length === 0 ? (
         <Panel>
           <FilteredEmpty
+            resource="alerts"
             total={snapshot.alerts.length}
             unavailable={resourceUnavailable(snapshot, 'alerts')}
-            noun="alerts"
             onReset={reset}
-            sourceEmptyText="No alerts have been raised."
           />
         </Panel>
       ) : (
         <>
-          <Panel title={`Open (${open.length})`}>
+          <Panel title={t.open(open.length)}>
             {open.length === 0 ? (
-              <EmptyState title="No open alerts match">Everything shown is resolved.</EmptyState>
+              <EmptyState title={t.noOpenMatch}>{t.allResolved}</EmptyState>
             ) : (
               <div className="stack">
                 {open.map((a) => (
@@ -101,9 +98,9 @@ export function AlertsPage() {
               </div>
             )}
           </Panel>
-          <Panel title={`Resolved (${resolved.length})`}>
+          <Panel title={t.resolved(resolved.length)}>
             {resolved.length === 0 ? (
-              <EmptyState title="Nothing resolved yet" />
+              <EmptyState title={t.nothingResolved} />
             ) : (
               <div className="stack">
                 {resolved.map((a) => (

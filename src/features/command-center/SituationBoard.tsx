@@ -2,15 +2,15 @@ import type { ReactNode } from 'react';
 import { href, withQuery } from '@/app/router';
 import { Icon, type IconName } from '@/components/Icon';
 import { HEALTH_STATUS_META, type Tone } from '@/domain/status';
-import { formatRelative } from '@/domain/time';
+import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
 import { selectSituation, type SituationResource } from './situation';
 
-const DATA_ANSWER: Record<string, { answer: string; tone: Tone; detail: string }> = {
-  demo: { answer: 'Simulated', tone: 'warning', detail: 'Local demo data. No backend connected.' },
-  live: { answer: 'Live', tone: 'success', detail: 'Verified backend connection.' },
-  disconnected: { answer: 'Not live', tone: 'danger', detail: 'Backend not verified right now.' },
-  replay: { answer: 'Replay', tone: 'progress', detail: 'Recorded data, not live.' },
+const DATA_TONE: Record<string, Tone> = {
+  demo: 'warning',
+  live: 'success',
+  disconnected: 'danger',
+  replay: 'progress',
 };
 
 /**
@@ -22,15 +22,18 @@ export function SituationBoard() {
   const { status } = useDashboard();
   const { governance } = useConfig();
   const now = useNow(5000);
+  const { m, rel } = useI18n();
+  const t = m.situation;
   const s = selectSituation(snapshot, status, now);
   const founderCount = s.founder.approvals + s.founder.humanAlerts;
   const missing = (...rs: SituationResource[]) => rs.filter((r) => s.unavailable[r]);
-  const unknown = (rs: SituationResource[]) =>
-    `${rs.join(' and ')} could not be loaded, so this cannot be answered. See the data warnings.`;
+  const names = (rs: SituationResource[]) => rs.map((r) => t.resource[r]).join(t.and);
+  const unknown = (rs: SituationResource[]) => t.unknownBecause(names(rs));
   const founderMissing = missing('approvals', 'alerts');
   const workMissing = missing('missions', 'workers');
   const missionsMissing = missing('missions');
-  const data = DATA_ANSWER[s.data.display]!;
+  const display = s.data.display as keyof typeof t.data;
+  const data = t.data[display];
   const health = HEALTH_STATUS_META[s.backend.health];
   const backendTone: Tone =
     s.backend.connection === 'error' || s.backend.health === 'CRITICAL'
@@ -41,22 +44,23 @@ export function SituationBoard() {
           s.backend.connection === 'reconnecting'
         ? 'warning'
         : health.tone;
+  const blockedAny = s.blocked.workers + s.blocked.missions > 0;
 
   return (
     <section className="situation" aria-labelledby="situation-title">
       <h2 id="situation-title" className="visually-hidden">
-        Situation summary
+        {t.heading}
       </h2>
       <Cell
-        q={`Needs ${governance.humanAuthority}?`}
+        q={t.needs(governance.humanAuthority)}
         icon="gate"
         tone={founderCount > 0 || founderMissing.length ? 'warning' : 'success'}
         answer={
           founderCount > 0
-            ? `${founderCount} item${founderCount === 1 ? '' : 's'}${founderMissing.length ? ' or more' : ''}`
+            ? t.items(founderCount, founderMissing.length > 0)
             : founderMissing.length
-              ? 'Unknown'
-              : 'Nothing'
+              ? t.unknown
+              : t.nothing
         }
         detail={
           founderCount === 0 && founderMissing.length
@@ -64,14 +68,16 @@ export function SituationBoard() {
             : founderCount > 0
               ? [
                   s.founder.approvals &&
-                    `${s.founder.approvals} approval${s.founder.approvals === 1 ? '' : 's'} waiting${s.founder.oldestRequestAt ? ` (oldest ${formatRelative(s.founder.oldestRequestAt, now)})` : ''}`,
-                  s.founder.humanAlerts &&
-                    `${s.founder.humanAlerts} alert${s.founder.humanAlerts === 1 ? ' needs' : 's need'} action`,
-                  founderMissing.length && `${founderMissing.join(' and ')} unavailable`,
+                    t.approvalsWaiting(
+                      s.founder.approvals,
+                      s.founder.oldestRequestAt ? rel(s.founder.oldestRequestAt, now) : undefined,
+                    ),
+                  s.founder.humanAlerts && t.alertsNeedAction(s.founder.humanAlerts),
+                  founderMissing.length && t.resourcesUnavailable(names(founderMissing)),
                 ]
                   .filter(Boolean)
                   .join(' · ')
-              : 'No decisions or actions are waiting on you.'
+              : t.nothingWaiting
         }
         href={
           s.founder.approvals ? href.approvals() : s.founder.humanAlerts ? href.alerts() : undefined
@@ -79,73 +85,66 @@ export function SituationBoard() {
         primary={founderCount > 0}
       />
       <Cell
-        q="Live or simulated?"
+        q={t.liveQ}
         icon="activity"
-        tone={data.tone}
+        tone={DATA_TONE[display] ?? 'muted'}
         answer={data.answer}
-        detail={`${data.detail}${s.data.transport && s.data.display !== 'demo' ? ` Updates: ${s.data.transport.replace('-', ' ')}.` : ''}`}
-        href={href.settings()}
+        detail={`${data.detail}${s.data.transport && display !== 'demo' ? t.updates(t.transportWords[s.data.transport]) : ''}`}
+        href={withQuery(href.settings(), { focus: 'transport' })}
       />
       <Cell
-        q="Backend healthy?"
+        q={t.healthQ}
         icon="health"
         tone={backendTone}
-        answer={s.backend.connection === 'error' ? 'Unavailable' : health.label}
+        answer={
+          s.backend.connection === 'error' ? t.unavailable : m.status.health[s.backend.health]
+        }
         detail={
           [
-            s.backend.connection !== 'connected' && `connection ${s.backend.connection}`,
-            s.backend.stale && 'data is stale',
-            s.backend.partial && 'data is partial',
+            s.backend.connection !== 'connected' &&
+              t.connectionWord(m.connection[s.backend.connection] ?? s.backend.connection),
+            s.backend.stale && t.stale,
+            s.backend.partial && t.partial,
           ]
             .filter(Boolean)
-            .join(' · ') || 'All reported components checked.'
+            .join(' · ') || t.allChecked
         }
         href={withQuery(href.command(), { focus: 'health' })}
       />
       <Cell
-        q="What is running?"
+        q={t.runningQ}
         icon="mission"
         tone={workMissing.length ? 'warning' : 'active'}
-        answer={
-          missionsMissing.length
-            ? 'Unknown'
-            : `${s.running.missions} mission${s.running.missions === 1 ? '' : 's'}`
-        }
+        answer={missionsMissing.length ? t.unknown : t.missionsN(s.running.missions)}
         detail={
           workMissing.length
             ? unknown(workMissing)
-            : `${s.running.workersBusy} of ${s.running.workersTotal} workers busy`
+            : t.busy(s.running.workersBusy, s.running.workersTotal)
         }
         href={href.missions()}
       />
       <Cell
-        q="What is blocked?"
+        q={t.blockedQ}
         icon="alert"
-        tone={
-          s.blocked.workers + s.blocked.missions > 0
-            ? 'danger'
-            : workMissing.length
-              ? 'warning'
-              : 'muted'
-        }
+        tone={blockedAny ? 'danger' : workMissing.length ? 'warning' : 'muted'}
         answer={
-          workMissing.length && s.blocked.workers + s.blocked.missions === 0
-            ? 'Unknown'
-            : s.blocked.workers + s.blocked.missions > 0
-              ? `${s.blocked.workers} worker${s.blocked.workers === 1 ? '' : 's'}`
-              : 'Nothing'
+          workMissing.length && !blockedAny
+            ? t.unknown
+            : blockedAny
+              ? t.workersN(s.blocked.workers)
+              : t.nothing
         }
         detail={
           workMissing.length
             ? unknown(workMissing)
-            : s.blocked.workers + s.blocked.missions > 0
-              ? `${s.blocked.missions} mission${s.blocked.missions === 1 ? '' : 's'} blocked. Founder-gated waits are counted above.`
-              : 'No blockers besides Founder gates.'
+            : blockedAny
+              ? t.blockedDetail(s.blocked.missions)
+              : t.noBlockers
         }
         href={withQuery(href.floor(), { show: 'blocked' })}
       />
       <Cell
-        q="What failed?"
+        q={t.failedQ}
         icon="x"
         tone={
           s.failed.missions + s.failed.workers > 0
@@ -156,37 +155,47 @@ export function SituationBoard() {
         }
         answer={
           missionsMissing.length && s.failed.missions === 0
-            ? 'Unknown'
+            ? t.unknown
             : s.failed.missions > 0
-              ? `${s.failed.missions} mission${s.failed.missions === 1 ? '' : 's'}`
-              : 'Nothing'
+              ? t.missionsN(s.failed.missions)
+              : t.nothing
         }
         detail={
           missionsMissing.length
             ? unknown(missionsMissing)
             : s.failed.latest
-              ? `Latest: ${s.failed.latest.id} ${s.failed.latest.title}${s.failed.latest.completedAt ? ` · ${formatRelative(s.failed.latest.completedAt, now)}` : ''}`
-              : 'No failed missions.'
+              ? t.latest(
+                  s.failed.latest.id,
+                  s.failed.latest.title,
+                  s.failed.latest.completedAt ? rel(s.failed.latest.completedAt, now) : undefined,
+                )
+              : t.noFailed
         }
         href={s.failed.latest ? href.mission(s.failed.latest.id) : undefined}
       />
       <Cell
-        q="Just completed?"
+        q={t.completedQ}
         icon="check"
         tone={s.completed.latest ? 'success' : missionsMissing.length ? 'warning' : 'muted'}
         answer={
           s.completed.latest
             ? s.completed.latest.id
             : missionsMissing.length
-              ? 'Unknown'
-              : 'Nothing yet'
+              ? t.unknown
+              : t.nothingYet
         }
         detail={
           missionsMissing.length
             ? unknown(missionsMissing)
             : s.completed.latest
-              ? `${s.completed.latest.title}${s.completed.latest.completedAt ? ` · ${formatRelative(s.completed.latest.completedAt, now)}` : ''} · ${s.completed.count} complete in total`
-              : 'No missions have completed.'
+              ? t.completedDetail(
+                  s.completed.latest.title,
+                  s.completed.latest.completedAt
+                    ? rel(s.completed.latest.completedAt, now)
+                    : undefined,
+                  s.completed.count,
+                )
+              : t.noneCompleted
         }
         href={s.completed.latest ? href.mission(s.completed.latest.id) : undefined}
       />

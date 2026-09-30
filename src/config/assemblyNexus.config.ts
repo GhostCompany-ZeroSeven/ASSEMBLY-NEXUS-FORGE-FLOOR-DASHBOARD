@@ -32,11 +32,23 @@ export const assemblyNexusConfig: DashboardConfig = {
       id: 'forge',
       label: 'Forge',
       description: 'Dark command floor with ember and cyan instrumentation.',
+      i18n: {
+        es: {
+          label: 'Forja',
+          description: 'Sala de mando oscura con instrumentación ámbar y cian.',
+        },
+      },
     },
     {
       id: 'snow-wolf',
       label: 'Snow Wolf',
       description: 'Cold-steel variant with ice-blue illumination.',
+      i18n: {
+        es: {
+          label: 'Lobo de las Nieves',
+          description: 'Variante de acero frío con iluminación azul hielo.',
+        },
+      },
     },
   ],
   defaultThemeId: 'forge',
@@ -49,6 +61,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 0, y: 0, w: 24, h: 32 },
         equipment: ['whiteboard', 'terminal'],
         description: 'Missions are broken down into tasks here.',
+        i18n: {
+          es: {
+            label: 'Bahía de planificación',
+            description: 'Aquí las misiones se desglosan en tareas.',
+          },
+        },
       },
       {
         id: 'research',
@@ -57,6 +75,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 24, y: 0, w: 24, h: 32 },
         equipment: ['microscope', 'terminal'],
         description: 'Investigations, benchmarks and experiments.',
+        i18n: {
+          es: {
+            label: 'Laboratorio de investigación',
+            description: 'Investigaciones, pruebas comparativas y experimentos.',
+          },
+        },
       },
       {
         id: 'build',
@@ -65,6 +89,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 48, y: 0, w: 52, h: 32 },
         equipment: ['forge', 'workbench', 'workbench', 'server-rack'],
         description: 'Where code, artifacts and builds are hammered out.',
+        i18n: {
+          es: {
+            label: 'Forja de compilación',
+            description: 'Donde se forjan el código, los artefactos y las compilaciones.',
+          },
+        },
       },
       {
         id: 'security',
@@ -73,6 +103,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 0, y: 32, w: 24, h: 34 },
         equipment: ['vault', 'scanner'],
         description: 'Secrets handling, audits and threat review.',
+        i18n: {
+          es: {
+            label: 'Cámara de seguridad',
+            description: 'Gestión de secretos, auditorías y revisión de amenazas.',
+          },
+        },
       },
       {
         id: 'review',
@@ -81,6 +117,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 24, y: 32, w: 24, h: 34 },
         equipment: ['console', 'terminal'],
         description: 'Independent review of produced work.',
+        i18n: {
+          es: {
+            label: 'Sala de revisión',
+            description: 'Revisión independiente del trabajo producido.',
+          },
+        },
       },
       {
         id: 'certification',
@@ -89,6 +131,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 48, y: 32, w: 26, h: 34 },
         equipment: ['scanner', 'stamp-press'],
         description: 'Release candidates are verified and certified.',
+        i18n: {
+          es: {
+            label: 'Laboratorio de certificación',
+            description: 'Las versiones candidatas se verifican y certifican.',
+          },
+        },
       },
       {
         id: 'operations',
@@ -97,6 +145,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 74, y: 32, w: 26, h: 34 },
         equipment: ['console', 'server-rack'],
         description: 'Runtime operations, incidents and infrastructure.',
+        i18n: {
+          es: {
+            label: 'Cubierta de operaciones',
+            description: 'Operaciones en ejecución, incidentes e infraestructura.',
+          },
+        },
       },
       {
         id: 'founder-gate',
@@ -106,6 +160,13 @@ export const assemblyNexusConfig: DashboardConfig = {
         equipment: ['gate', 'console'],
         description:
           'Workers wait here for human approval. Only the human authority opens the gate.',
+        i18n: {
+          es: {
+            label: 'Puerta del Founder',
+            description:
+              'Los trabajadores esperan aquí una aprobación humana. Solo la autoridad humana abre la puerta.',
+          },
+        },
       },
       {
         id: 'snow-wolf-den',
@@ -114,6 +175,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 36, y: 66, w: 32, h: 34 },
         equipment: ['snow-banner', 'terminal'],
         description: 'Reserved quarters for the Snow Wolf crew.',
+        i18n: {
+          es: {
+            label: 'Guarida del Lobo de las Nieves',
+            description: 'Cuartel reservado para el equipo Lobo de las Nieves.',
+          },
+        },
         crewId: 'snow-wolf',
       },
       {
@@ -123,6 +190,12 @@ export const assemblyNexusConfig: DashboardConfig = {
         area: { x: 68, y: 66, w: 32, h: 34 },
         equipment: ['coffee', 'couch'],
         description: 'Idle workers recharge here.',
+        i18n: {
+          es: {
+            label: 'Sala de descanso',
+            description: 'Los trabajadores inactivos recargan energía aquí.',
+          },
+        },
       },
     ],
     stateRoutes: {
@@ -145,6 +218,9 @@ export const assemblyNexusConfig: DashboardConfig = {
       id: 'forge',
       label: 'The Forge Crew',
       motto: 'The Forge took their hair as payment.',
+      i18n: {
+        es: { label: 'El equipo de la Forja', motto: 'La Forja se cobró su pelo como pago.' },
+      },
       status: 'active',
       emblem: 'forge',
     },
@@ -152,6 +228,12 @@ export const assemblyNexusConfig: DashboardConfig = {
       id: 'snow-wolf',
       label: 'Snow Wolf Crew',
       motto: 'Reserved — identity and assets pending.',
+      i18n: {
+        es: {
+          label: 'Equipo Lobo de las Nieves',
+          motto: 'Reservado: identidad y recursos pendientes.',
+        },
+      },
       status: 'reserved',
       emblem: 'snow-wolf',
     },
