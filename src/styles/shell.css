@@ -491,6 +491,8 @@
   .provenance {
     gap: 4px;
     padding-right: 4px;
+    /* Source, environment, qualifiers and transport wrap rather than clip. */
+    flex-wrap: wrap;
   }
   .provenance__mode {
     overflow-wrap: anywhere;

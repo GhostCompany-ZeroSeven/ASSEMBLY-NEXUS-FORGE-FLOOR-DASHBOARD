@@ -92,7 +92,11 @@ export function DataStatusBanners() {
           <ul className="data-banner__issues">
             {quality.issues.slice(0, 50).map((i) => (
               <li key={i.id} data-severity={i.severity}>
-                <span className="mono">{i.source}</span> {i.message}
+                <span className="mono" translate="no">
+                  {i.source}
+                </span>{' '}
+                {/* Adapter text, shown as reported (as in the data-quality inspector). */}
+                <span translate="no">{i.message}</span>
               </li>
             ))}
             {quality.issues.length > 50 && <li>{b.andMore(quality.issues.length - 50)}</li>}

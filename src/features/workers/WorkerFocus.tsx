@@ -71,6 +71,11 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
   const mission = findMission(snapshot, worker.currentMissionId);
   const crew = crews.find((c) => c.id === worker.crewId);
   const events = eventsForWorker(snapshot, worker.id);
+  // Latest by EVENT time (the log is in arrival order; a late event is not "last").
+  const lastEventAt = events.reduce<string | undefined>(
+    (max, e) => (max === undefined || e.at > max ? e.at : max),
+    undefined,
+  );
   const artifacts = snapshot.missions
     .flatMap((m) => m.artifacts)
     .filter((a) => a.producedBy === worker.id);
@@ -137,7 +142,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
             items={[
               [t.events, events.length],
               [t.artifacts, artifacts.length],
-              [t.lastEvent, events.length ? rel(events[events.length - 1]!.at, now) : '—'],
+              [t.lastEvent, lastEventAt ? rel(lastEventAt, now) : '—'],
               [t.workerId, <span className="mono">{worker.id}</span>],
             ]}
           />

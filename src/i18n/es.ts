@@ -962,6 +962,8 @@ export const es: Messages = {
         'unavailable-then': 'no se cargó en tu última visita',
         'unavailable-now': 'no se puede cargar ahora',
         'history-truncated': 'el historial conservado no llega tan atrás',
+        'history-gap':
+          'el historial de eventos tiene un hueco desde entonces: pueden faltar eventos',
         'baseline-truncated': 'la última visita era demasiado grande para registrarla entera',
       },
       eventsLowerBound: (n) => `al menos ${n} observados`,
@@ -1051,6 +1053,8 @@ export const es: Messages = {
       'unavailable-now': 'no se puede cargar ahora',
       'mission-not-reported': 'la misión no figuraba entonces o ahora',
       'history-not-covered': 'el historial conservado no llega hasta tu última visita',
+      'history-gap':
+        'el historial de eventos tiene un hueco desde tu última visita: pueden faltar eventos',
     },
     change: {
       missionNoLongerReported:
@@ -1166,6 +1170,7 @@ export const es: Messages = {
     lede: 'Cada dimensión se muestra por separado. No hay una puntuación única de salud: un solo número ocultaría qué parte es incierta.',
     source: 'Fuente',
     adapter: 'Adaptador',
+    adapterNote: 'Nota del adaptador (tal como la informa el adaptador)',
     environment: 'Entorno',
     transport: 'Transporte',
     connection: 'Conexión',
@@ -1185,7 +1190,11 @@ export const es: Messages = {
     retained: (n, cap) => `${n} de un máximo de ${cap} eventos conservados`,
     oldest: 'Evento conservado más antiguo (hora de la fuente)',
     newest: 'Evento conservado más reciente (hora de la fuente)',
-    atCapacity: 'En su límite: los eventos más antiguos se descartan al llegar otros nuevos',
+    atCapacity:
+      'En su límite: los eventos recibidos primero se descartan antes al llegar otros nuevos',
+    continuity: 'Continuidad del historial',
+    noGap: 'no se detectó ninguna interrupción desde que se conectó el panel',
+    gapDetected: 'interrupción detectada: pueden faltar eventos intermedios. Última interrupción:',
     noEvents: 'No hay eventos conservados',
     coverageSinceView: 'Cobertura de eventos desde tu última visita',
     lastEvent: 'Evento más reciente (por hora de la fuente)',
@@ -1201,6 +1210,10 @@ export const es: Messages = {
       'record-dropped': 'Registro descartado por no válido',
       'record-repaired': 'Valor mostrado como DESCONOCIDO o con un valor seguro',
       transport: 'Transporte',
+      'event-conflict':
+        'Evento informado de forma contradictoria (se conserva la primera observación)',
+      'history-gap': 'Hueco en el historial de eventos (pueden faltar eventos)',
+      'duplicate-delivery': 'Entrega duplicada ignorada (se cuenta una vez)',
       other: 'Otro',
     },
     storage: 'Memoria local de visitas (solo este navegador)',
@@ -1372,6 +1385,7 @@ export const es: Messages = {
       REPLAY: 'REPETICIÓN',
       DISCONNECTED: 'ÚLTIMO CONOCIDO',
       STALE: 'DESACTUALIZADO',
+      PARTIAL: 'DATOS PARCIALES',
     },
     type: {
       mission: 'Misión',

@@ -52,6 +52,12 @@ export function QualityPage() {
           <KeyValue
             items={[
               [t.adapter, <span translate="no">{r.adapterLabel}</span>],
+              ...(r.adapterNote
+                ? ([[t.adapterNote, <span translate="no">{r.adapterNote}</span>]] as [
+                    ReactNode,
+                    ReactNode,
+                  ][])
+                : []),
               ...(r.environment
                 ? ([[t.environment, <span translate="no">{r.environment}</span>]] as [
                     ReactNode,
@@ -107,6 +113,16 @@ export function QualityPage() {
               [t.history, t.retained(num(r.history.retained), num(r.history.capacity))],
               [t.oldest, time(r.history.oldestAt, t.noEvents)],
               [t.newest, time(r.history.newestAt, t.noEvents)],
+              [
+                t.continuity,
+                r.history.gapAt ? (
+                  <span data-history-gap="true">
+                    {t.gapDetected} {time(r.history.gapAt, m.common.unknown)}
+                  </span>
+                ) : (
+                  <span data-history-gap="false">{t.noGap}</span>
+                ),
+              ],
               [
                 t.coverageSinceView,
                 <span data-coverage={digest.eventCoverage}>

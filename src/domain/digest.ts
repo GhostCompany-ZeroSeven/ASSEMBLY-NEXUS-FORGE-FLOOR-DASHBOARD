@@ -1,6 +1,6 @@
 import { href, withQuery } from '@/app/router';
 import { alertPhase, type Checkpoint } from './checkpoint';
-import { eventCoverage, type CoverageState } from './eventCoverage';
+import { eventCoverage, historyGapSince, type CoverageState } from './eventCoverage';
 import { resourceUnavailable } from './selectors';
 import type { DashboardSnapshot } from './snapshot';
 import type { ApprovalStatus, MissionStatus } from './types';
@@ -54,6 +54,7 @@ export type UnknownReason =
   | 'unavailable-then'
   | 'unavailable-now'
   | 'history-truncated'
+  | 'history-gap'
   | 'baseline-truncated';
 
 export type DigestEntity = 'mission' | 'worker' | 'approval' | 'alert' | 'artifact';
@@ -356,7 +357,13 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
   /* Events not observed at the checkpoint (identity), with coverage proven only
      from source times (see eventCoverage.ts). Never compares the source clock
      with the browser clock. */
-  const cov = eventCoverage(s.events, cp.events, !resourceUnavailable(s, 'events'));
+  const cov = eventCoverage(
+    s.events,
+    cp.events,
+    !resourceUnavailable(s, 'events'),
+    true,
+    historyGapSince(s.quality, cp.at),
+  );
   const eventsObserved = cov.observedNew;
   if (cov.state === 'exact') counts.events = cov.count;
   else
@@ -366,7 +373,9 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
         ? 'unavailable-now'
         : cov.reason === 'events-unavailable-then'
           ? 'unavailable-then'
-          : 'history-truncated',
+          : cov.reason === 'history-gap'
+            ? 'history-gap'
+            : 'history-truncated',
     );
 
   // Newest-meaningful first: Founder-relevant categories lead.

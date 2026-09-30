@@ -29,7 +29,8 @@ export type CoverageReason =
   | 'events-unavailable-now'
   | 'events-unavailable-then'
   | 'history-starts-after-checkpoint'
-  | 'no-history-at-checkpoint';
+  | 'no-history-at-checkpoint'
+  | 'history-gap';
 
 export interface EventWatermark {
   /** Ids of the events retained at the checkpoint (bounded). */
@@ -76,12 +77,16 @@ export function createWatermark(events: readonly DashboardEvent[]): EventWaterma
  *
  * @param availableNow  the events resource loaded in the latest sync
  * @param watermark     undefined when events were unavailable at the checkpoint
+ * @param gapSinceCheckpoint  a break in event-history continuity was detected
+ *   after the checkpoint (see `historyGapSince`): events may have been missed
+ *   even though the checkpoint's newest event is still retained.
  */
 export function eventCoverage(
   events: readonly DashboardEvent[],
   watermark: EventWatermark | undefined,
   availableNow: boolean,
   hasBaseline = true,
+  gapSinceCheckpoint = false,
 ): EventCoverage {
   const empty = new Set<string>();
   if (!hasBaseline)
@@ -131,11 +136,30 @@ export function eventCoverage(
   } else {
     proven = events.some((e) => e.id === watermark.newestId) && !watermark.truncated;
     if (!proven) reason = 'history-starts-after-checkpoint';
+    else if (gapSinceCheckpoint) {
+      proven = false;
+      reason = 'history-gap';
+    }
   }
   if (proven) return { state: 'exact', count: observedNew, observedNew, newIds, retainedFrom };
   if (observedNew > 0)
     return { state: 'lower-bound', count: observedNew, observedNew, newIds, reason, retainedFrom };
   return { state: 'unknown', count: null, observedNew, newIds, reason, retainedFrom };
+}
+
+/**
+ * Whether the adapter detected an event-history gap after a checkpoint. Both
+ * times are THIS dashboard's clock (the checkpoint's recording time and the
+ * adapter's detection time); no source time is involved.
+ */
+export function historyGapSince(
+  quality: { eventHistoryGapAt?: string },
+  checkpointAt: string,
+): boolean {
+  const gap = quality.eventHistoryGapAt ? Date.parse(quality.eventHistoryGapAt) : NaN;
+  const cp = Date.parse(checkpointAt);
+  // An unreadable checkpoint time cannot rule a gap out.
+  return !Number.isNaN(gap) && (Number.isNaN(cp) || gap >= cp);
 }
 
 /** Validate an untrusted stored watermark. Throws on any malformed field. */

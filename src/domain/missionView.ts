@@ -9,6 +9,7 @@ import {
 import {
   createWatermark,
   eventCoverage,
+  historyGapSince,
   parseWatermark,
   type EventCoverage,
   type EventWatermark,
@@ -276,7 +277,11 @@ export interface MissionChange {
 }
 
 export type MissionUnknownReason =
-  'unavailable-then' | 'unavailable-now' | 'mission-not-reported' | 'history-not-covered';
+  | 'unavailable-then'
+  | 'unavailable-now'
+  | 'mission-not-reported'
+  | 'history-not-covered'
+  | 'history-gap';
 
 export interface MissionDigest {
   baseline: 'none' | 'different-source' | 'ok';
@@ -417,14 +422,22 @@ export function computeMissionDigest(
         changes.push({ kind: 'alertNoLongerReported', id, from: own(cp.alerts, id) });
   }
 
-  const cov = eventCoverage(events, cp.events, !down.has('events'));
+  const cov = eventCoverage(
+    events,
+    cp.events,
+    !down.has('events'),
+    true,
+    historyGapSince(s.quality, cp.at),
+  );
   if (cov.state !== 'exact')
     unknown.events =
       cov.reason === 'events-unavailable-now'
         ? 'unavailable-now'
         : cov.reason === 'events-unavailable-then'
           ? 'unavailable-then'
-          : 'history-not-covered';
+          : cov.reason === 'history-gap'
+            ? 'history-gap'
+            : 'history-not-covered';
 
   const recordChanges = changes.length > 0;
   const newEvents = cov.observedNew > 0;

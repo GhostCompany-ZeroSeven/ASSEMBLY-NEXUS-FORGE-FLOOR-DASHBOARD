@@ -105,6 +105,10 @@ export class RestAdapter implements DashboardAdapter {
   private lastStreamEventAt: string | undefined;
   private rejectedStreamMessages = 0;
   private streamFailedAt: number | null = null;
+  /** Ids in the previous successful events listing (continuity check). */
+  private lastListedIds: Set<string> | null = null;
+  /** Ids dropped from the bounded log: re-deliveries are not new observations. */
+  private readonly evicted = new BoundedIdSet(MAX_EVICTED_IDS);
 
   constructor(config: RestAdapterConfig, deps: RestAdapterDeps = {}) {
     this.config = resolveRestConfig(config);
@@ -367,6 +371,7 @@ export class RestAdapter implements DashboardAdapter {
     const next: DashboardSnapshot = { ...prev, generatedAt: at };
     const failed = new Set<Resource>();
     let healthOk = false;
+    let gapAt: string | undefined;
 
     for (const [name, r] of results) {
       if ('skipped' in r) continue;
@@ -433,16 +438,41 @@ export class RestAdapter implements DashboardAdapter {
         case 'events': {
           const list = listFrom(data, 'events', log);
           if (!list) failed.add(name);
-          else
-            next.events = mergeObserved(
-              dedupe(
-                list.map((x, i) => normalizeEvent(x, i, log)),
-                log,
-                'events',
-              ),
-              prev.events,
-              at,
+          else {
+            const listed = dedupeEvents(
+              list.map((x, i) => normalizeEvent(x, i, log)),
+              log,
             );
+            const merged = mergeObserved(listed, prev.events, at, this.evicted);
+            next.events = merged.events;
+            for (const id of merged.dropped) this.evicted.add(id);
+            for (const id of merged.conflicts)
+              log.add(
+                'warning',
+                'events',
+                `Conflicting content for event id "${id}": kept the first observation`,
+                'event-conflict',
+              );
+            // Continuity: a listing sharing no event with the previous one may
+            // have skipped events in between (the source window moved past them).
+            const ids = new Set(listed.map((e) => e.id));
+            const prevIds = this.lastListedIds;
+            if (
+              prevIds &&
+              prevIds.size > 0 &&
+              ids.size > 0 &&
+              ![...ids].some((id) => prevIds.has(id))
+            ) {
+              gapAt = at;
+              log.add(
+                'warning',
+                'events',
+                'Event history gap: this listing shares no event with the previous one, so events in between may be missing',
+                'history-gap',
+              );
+            }
+            this.lastListedIds = ids;
+          }
           break;
         }
       }
@@ -479,6 +509,7 @@ export class RestAdapter implements DashboardAdapter {
       lastSuccessfulSyncAt: requiredOk ? at : prev.quality.lastSuccessfulSyncAt,
       partial: failed.size > 0 || log.dropped,
       issues: [...log.issues, ...this.recentStreamIssues()],
+      eventHistoryGapAt: gapAt ?? prev.quality.eventHistoryGapAt,
     };
     next.provenance = this.provenance();
     this.snapshot = next;
@@ -574,9 +605,27 @@ export class RestAdapter implements DashboardAdapter {
     }
     this.lastStreamEventAt = at;
     event.receivedAt = at;
-    this.snapshot = applyEvent(this.snapshot, event);
+    if (this.evicted.has(event.id)) {
+      // Observed before and dropped from the bounded log: a re-delivery, not new.
+      this.publish();
+      return;
+    }
+    const known = this.snapshot.events.find((e) => e.id === event.id);
+    const full = this.snapshot.events.length >= MAX_EVENTS;
+    if (!known && full) this.evicted.add(this.snapshot.events[0]!.id);
+    if (known && fingerprint(known) !== fingerprint(event))
+      this.addStreamIssue(
+        'warning',
+        `events: Conflicting content for event id "${event.id}": kept the first observation`,
+        false,
+        'event-conflict',
+      );
+    // Duplicates are ignored by id (applyEvent is idempotent). The snapshot time
+    // is the ARRIVAL time: a source's claimed event time (possibly skewed or
+    // late) never becomes the time this data was generated.
+    this.snapshot = { ...applyEvent(this.snapshot, event), generatedAt: at };
     this.touchFreshness(at);
-    this.publish([event]);
+    this.publish(known ? undefined : [event]);
   }
 
   /** Stream traffic proves freshness only when the last full re-sync was complete. */
@@ -588,11 +637,23 @@ export class RestAdapter implements DashboardAdapter {
     };
   }
 
-  private addStreamIssue(severity: DataIssue['severity'], message: string, publish = false): void {
+  private addStreamIssue(
+    severity: DataIssue['severity'],
+    message: string,
+    publish = false,
+    code?: DataIssue['code'],
+  ): void {
     const at = this.iso();
     this.streamIssues = [
       ...this.streamIssues,
-      { id: `stream#${at}#${this.streamIssues.length}`, severity, source: 'stream', message, at },
+      {
+        id: `stream#${at}#${this.streamIssues.length}`,
+        severity,
+        source: 'stream',
+        message,
+        at,
+        ...(code ? { code } : {}),
+      },
     ].slice(-20); // bounded
     const issues = [
       ...this.snapshot.quality.issues.filter((i) => i.source !== 'stream'),
@@ -639,27 +700,103 @@ export class RestAdapter implements DashboardAdapter {
  * - Ingest facts (how and when THIS dashboard first received an event) belong
  *   to the first arrival: a re-sync listing an event already received over the
  *   stream must not relabel it as polled or move its arrival time.
+ * - The first observation of an event id is kept. A listing that reports the
+ *   same id with different identity facts (kind, event time, mission, worker)
+ *   is not allowed to rewrite it; the conflict is returned for data quality.
  * - An event already OBSERVED (e.g. over the stream) that the listing omits is
  *   kept: a backend window that does not list it is not evidence it did not
  *   happen. Nothing is invented; only observed events are retained.
- * - The log stays bounded (MAX_EVENTS), dropping the oldest event times first,
- *   which is what event coverage relies on (see domain/eventCoverage.ts).
+ * - The log is kept in first-observation order and bounded (MAX_EVENTS) by
+ *   dropping the EARLIEST OBSERVED first; dropped ids are returned and are not
+ *   re-admitted later (`evicted`). Newly listed events are appended in
+ *   event-time order. A late event (old event time, new arrival) is therefore
+ *   never the first to go, and every event observed after a retained one is
+ *   retained too, which is what event coverage relies on (eventCoverage.ts).
  */
-function mergeObserved(
+export function mergeObserved(
   listed: DashboardSnapshot['events'],
   prev: DashboardSnapshot['events'],
   at: string,
+  evicted: { has(id: string): boolean } = new Set<string>(),
+): { events: DashboardSnapshot['events']; conflicts: string[]; dropped: string[] } {
+  const listedById = new Map(listed.map((e) => [e.id, e]));
+  const conflicts: string[] = [];
+  const kept = prev.map((p) => {
+    const l = listedById.get(p.id);
+    if (l && fingerprint(l) !== fingerprint(p)) conflicts.push(p.id);
+    return p;
+  });
+  const known = new Set(prev.map((e) => e.id));
+  // An id dropped earlier to keep the log bounded was already observed: a
+  // listing that still contains it must not re-admit it as a new arrival.
+  const fresh = listed
+    .filter((e) => !known.has(e.id) && !evicted.has(e.id))
+    .sort((a, b) => a.at.localeCompare(b.at))
+    .map((e) => ({ ...e, receivedAt: at }));
+  const events = [...kept, ...fresh];
+  const cut = Math.max(0, events.length - MAX_EVENTS);
+  return {
+    events: cut ? events.slice(cut) : events,
+    conflicts,
+    dropped: events.slice(0, cut).map((e) => e.id),
+  };
+}
+
+/** Remembered evicted ids (bounded; the oldest are forgotten first). */
+export const MAX_EVICTED_IDS = 5000;
+
+class BoundedIdSet {
+  private readonly ids = new Set<string>();
+  constructor(private readonly max: number) {}
+  add(id: string): void {
+    this.ids.delete(id);
+    this.ids.add(id);
+    if (this.ids.size > this.max) this.ids.delete(this.ids.values().next().value!);
+  }
+  has(id: string): boolean {
+    return this.ids.has(id);
+  }
+}
+
+/** The identity facts of an event (payload shapes differ between ingest paths). */
+function fingerprint(e: DashboardSnapshot['events'][number]): string {
+  return JSON.stringify([e.kind, e.at, e.missionId ?? null, e.workerId ?? null]);
+}
+
+/**
+ * Event ids are unique in the mock contract, and a repeated id is a duplicate
+ * delivery. It is dropped at RECORD level (`events <id>`): one duplicate does
+ * not make the whole events resource unavailable. A repeat with different
+ * identity facts is also reported as a conflict (the first entry is kept).
+ * Other resources keep the stricter rule in `dedupe`: an ambiguous record
+ * there (e.g. two gates with one id) makes the resource's answers UNKNOWN.
+ */
+function dedupeEvents(
+  items: (DashboardSnapshot['events'][number] | null)[],
+  log: IssueLog,
 ): DashboardSnapshot['events'] {
-  const first = new Map(prev.map((e) => [e.id, e]));
-  const listedIds = new Set(listed.map((e) => e.id));
-  const merged = [
-    ...listed.map((e) => {
-      const p = first.get(e.id);
-      return { ...e, via: p?.via ?? e.via, receivedAt: p?.receivedAt ?? at };
-    }),
-    ...prev.filter((e) => !listedIds.has(e.id)),
-  ];
-  return merged.sort((a, b) => a.at.localeCompare(b.at)).slice(-MAX_EVENTS);
+  const seen = new Map<string, string>();
+  const out: DashboardSnapshot['events'] = [];
+  for (const item of items) {
+    if (!item) continue;
+    const fp = fingerprint(item);
+    const first = seen.get(item.id);
+    if (first !== undefined) {
+      if (first === fp)
+        log.add('warning', `events ${item.id}`, 'Dropped duplicate delivery', 'duplicate-delivery');
+      else
+        log.add(
+          'warning',
+          `events ${item.id}`,
+          'Dropped a second entry with the same id and different facts; kept the first',
+          'event-conflict',
+        );
+      continue;
+    }
+    seen.set(item.id, fp);
+    out.push(item);
+  }
+  return out;
 }
 
 function dedupe<T extends { id: string }>(items: (T | null)[], log: IssueLog, source: string): T[] {

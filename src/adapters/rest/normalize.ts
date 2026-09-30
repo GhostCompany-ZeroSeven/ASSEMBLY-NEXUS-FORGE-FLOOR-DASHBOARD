@@ -41,7 +41,12 @@ import type {
 export class IssueLog {
   readonly issues: DataIssue[] = [];
   constructor(private readonly at: string) {}
-  add(severity: DataIssue['severity'], source: string, message: string): void {
+  add(
+    severity: DataIssue['severity'],
+    source: string,
+    message: string,
+    code?: DataIssue['code'],
+  ): void {
     if (this.issues.length >= 200) return; // bound the log
     this.issues.push({
       id: `${source}#${this.issues.length}`,
@@ -49,6 +54,7 @@ export class IssueLog {
       source,
       message,
       at: this.at,
+      ...(code ? { code } : {}),
     });
   }
   get dropped(): boolean {

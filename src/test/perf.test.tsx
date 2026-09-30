@@ -5,6 +5,8 @@ import { buildStressSnapshot } from '@/adapters/demo/stress';
 import { App } from '@/app/App';
 import { assemblyNexusConfig } from '@/config/assemblyNexus.config';
 import { MAX_EVENTS } from '@/domain/snapshot';
+import { mergeObserved } from '@/adapters/rest/RestAdapter';
+import { createFakeBackend } from './fakeBackend';
 import { waitForSurface } from './render';
 
 const NOW = Date.parse('2026-09-30T12:00:00Z');
@@ -230,5 +232,48 @@ describe('Phase 6 computations stay bounded on the stress dataset', () => {
   it('all 50 mission checkpoints serialize under 1MB (the storage cap)', () => {
     const json = JSON.stringify({ v: 1, missions: Object.fromEntries(views) });
     expect(json.length).toBeLessThan(1_000_000);
+  });
+});
+
+describe('Phase 7 event reconciliation stays bounded', () => {
+  const timeIt = (fn: () => void, runs = 20) => {
+    fn();
+    const t0 = performance.now();
+    for (let i = 0; i < runs; i++) fn();
+    return (performance.now() - t0) / runs;
+  };
+  const s = buildStressSnapshot(NOW);
+  const at = new Date(NOW).toISOString();
+
+  it('REST merge of a full log with a 600-event listing (500 known, 100 new) < 10ms', () => {
+    const fresh = Array.from({ length: 100 }, (_, i) => ({
+      ...s.events[0]!,
+      id: `new-${i}`,
+      at: new Date(NOW - i * 1000).toISOString(),
+    }));
+    const listed = [...s.events, ...fresh];
+    const evicted = new Set(Array.from({ length: 5000 }, (_, i) => `gone-${i}`));
+    const ms = timeIt(() => mergeObserved(listed, s.events, at, evicted));
+    expect(ms).toBeLessThan(10);
+    expect(mergeObserved(listed, s.events, at, evicted).events).toHaveLength(MAX_EVENTS);
+  });
+
+  it('REST sync with 1000 listed events incl. 500 duplicates stays < 40ms', async () => {
+    const backend = createFakeBackend();
+    const wire = (backend.data.events as { events: unknown[] }).events;
+    const many = Array.from({ length: 500 }, (_, i) => ({
+      id: `dup-${i}`,
+      kind: 'task.completed',
+      at: new Date(NOW - i * 1000).toISOString(),
+      missionId: 'AN-0142',
+      payload: { taskId: 't' },
+    }));
+    wire.push(...many, ...many);
+    const { adapter } = restTestAdapter(backend);
+    await adapter.connect();
+    const t0 = performance.now();
+    for (let i = 0; i < 10; i++) await adapter.refresh();
+    expect((performance.now() - t0) / 10).toBeLessThan(40);
+    expect(adapter.getSnapshot().events.length).toBeLessThanOrEqual(MAX_EVENTS);
   });
 });

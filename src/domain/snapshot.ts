@@ -20,7 +20,11 @@ export interface DashboardSnapshot {
   missions: Mission[];
   approvals: ApprovalRequest[];
   alerts: Alert[];
-  /** Newest last. Bounded by `MAX_EVENTS`. */
+  /**
+   * In the order this dashboard first OBSERVED them (arrival order; for a
+   * history load, by event time). Bounded by `MAX_EVENTS`: the earliest
+   * observed are dropped first. Consumers needing event-time order sort by `at`.
+   */
   events: DashboardEvent[];
   messages: WorkerMessage[];
   health: SystemHealth;
@@ -36,6 +40,11 @@ export interface DataIssue {
   source: string;
   message: string;
   at: string;
+  /**
+   * Machine-readable kind for issues that are not about one resource or record
+   * (set by the adapter; display text never drives classification).
+   */
+  code?: 'event-conflict' | 'history-gap' | 'duplicate-delivery';
 }
 
 export interface DataQuality {
@@ -46,6 +55,13 @@ export interface DataQuality {
   /** True when some resources failed or some records were dropped as malformed. */
   partial: boolean;
   issues: DataIssue[];
+  /**
+   * Dashboard-clock time of the latest detected break in event-history
+   * continuity since the adapter connected: a listing that shares no event
+   * with the previous listing, so events in between may never have been
+   * observed. Event coverage is never exact across it. Adapter-set only.
+   */
+  eventHistoryGapAt?: string;
 }
 
 export const MAX_EVENTS = 500;

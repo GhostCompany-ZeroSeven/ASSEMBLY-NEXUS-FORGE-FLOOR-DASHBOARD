@@ -25,24 +25,29 @@ export function ProvenanceBadge({
   const freshness = selectFreshness(useSnapshot(), connection, now);
   const qualifiers = freshness.qualifiers.filter((q) => q !== 'UNKNOWN');
   const qText = qualifiers.map((q) => m.provenance.qualifier[q]).join(', ');
+  // Localized. The adapter's own (English) note is shown as adapter text in
+  // the data-quality inspector, not as this badge's tooltip.
+  const label = `${m.provenance.aria(
+    MODE_LABEL[mode],
+    provenance.adapterLabel,
+    provenance.environment,
+    mode !== 'demo' && provenance.transport ? TRANSPORT_LABEL[provenance.transport] : undefined,
+  )}${qText ? m.provenance.qualifiersAria(qText) : ''}`;
   return (
     <div
       className="provenance"
       data-mode={mode}
-      title={provenance.note}
+      title={label}
       role="status"
       data-transport-mode={provenance.transport}
       data-qualifiers={qualifiers.join(' ') || undefined}
-      aria-label={`${m.provenance.aria(
-        MODE_LABEL[mode],
-        provenance.adapterLabel,
-        provenance.environment,
-        mode !== 'demo' && provenance.transport ? TRANSPORT_LABEL[provenance.transport] : undefined,
-      )}${qText ? m.provenance.qualifiersAria(qText) : ''}`}
+      aria-label={label}
     >
       <span className="provenance__mode">{MODE_LABEL[mode]}</span>
       {mode === 'live' && provenance.environment && (
-        <span className="provenance__env">{provenance.environment.toUpperCase()}</span>
+        <span className="provenance__env" translate="no">
+          {provenance.environment.toUpperCase()}
+        </span>
       )}
       {qualifiers.map((q) => (
         <span key={q} className="provenance__qualifier" data-qualifier={q}>
@@ -55,7 +60,7 @@ export function ProvenanceBadge({
         </span>
       )}
       <span className="provenance__source" aria-hidden="true">
-        {provenance.adapterLabel}
+        <span translate="no">{provenance.adapterLabel}</span>
         {mode === 'demo' && m.provenance.demoSuffix}
         {connection !== 'connected' && ` (${m.connection[connection] ?? connection})`}
       </span>

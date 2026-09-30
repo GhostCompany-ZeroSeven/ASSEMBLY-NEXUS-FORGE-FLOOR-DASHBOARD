@@ -101,7 +101,10 @@ export function Shell() {
       ? m.search.provenance[f.source]
       : f.qualifiers.includes('STALE')
         ? m.search.provenance.STALE
-        : undefined;
+        : // Some resources failed: their results are last known, not current.
+          f.qualifiers.includes('PARTIAL') || f.qualifiers.includes('UNKNOWN')
+          ? m.search.provenance.PARTIAL
+          : undefined;
 
   // One index per palette opening (rebuilt only when the data or language changes).
   const search = useMemo(() => {

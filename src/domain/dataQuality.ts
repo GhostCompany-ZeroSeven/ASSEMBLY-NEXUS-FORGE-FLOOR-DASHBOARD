@@ -18,6 +18,9 @@ export type IssueClass =
   | 'record-dropped' // one record was invalid and left out
   | 'record-repaired' // one field was unknown/invalid and shown as UNKNOWN or a safe default
   | 'transport' // the event stream or polling transport
+  | 'event-conflict' // one event id reported with different facts; the first observation is kept
+  | 'history-gap' // event history continuity broke: events in between may be missing
+  | 'duplicate-delivery' // the same event delivered again; counted once
   | 'other';
 
 export interface ClassifiedIssue {
@@ -34,6 +37,8 @@ export interface DataQualityReport {
   source: Freshness['source'];
   qualifiers: Freshness['qualifiers'];
   adapterLabel: string;
+  /** The adapter's own description of its state (adapter text, not localized). */
+  adapterNote?: string;
   environment?: string;
   transport?: DataProvenance['transport'];
   connection: ConnectionStatus;
@@ -54,6 +59,8 @@ export interface DataQualityReport {
     /** Oldest/newest retained event time (SOURCE clock). */
     oldestAt?: string;
     newestAt?: string;
+    /** Latest detected continuity break (dashboard clock); absent = none detected. */
+    gapAt?: string;
   };
   /** Newest event by source time, with how and when it arrived. */
   lastEvent?: { id: string; at: string; receivedAt?: string; via?: EventVia };
@@ -68,6 +75,7 @@ export interface DataQualityReport {
 export const MAX_LISTED_ISSUES = 50;
 
 export function classifyIssue(i: DataIssue): IssueClass {
+  if (i.code) return i.code;
   if ((QUALITY_RESOURCES as readonly string[]).includes(i.source) || i.source === 'health')
     return i.severity === 'error' ? 'resource-unavailable' : 'record-repaired';
   if (/^(stream|transport)\b/.test(i.source)) return 'transport';
@@ -116,6 +124,7 @@ export function selectDataQuality(
     source: freshness.source,
     qualifiers: freshness.qualifiers,
     adapterLabel: s.provenance.adapterLabel,
+    adapterNote: s.provenance.note,
     environment: s.provenance.environment,
     transport: s.provenance.transport,
     connection,
@@ -137,6 +146,7 @@ export function selectDataQuality(
       atCapacity: s.events.length >= MAX_EVENTS,
       oldestAt: oldest,
       newestAt: newest?.at,
+      gapAt: s.quality.eventHistoryGapAt,
     },
     lastEvent: newest
       ? { id: newest.id, at: newest.at, receivedAt: newest.receivedAt, via: newest.via }
