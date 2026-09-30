@@ -1,5 +1,6 @@
 import { href, withQuery } from '@/app/router';
 import { alertPhase, type Checkpoint } from './checkpoint';
+import { eventCoverage, type CoverageState } from './eventCoverage';
 import { resourceUnavailable } from './selectors';
 import type { DashboardSnapshot } from './snapshot';
 import type { ApprovalStatus, MissionStatus } from './types';
@@ -82,6 +83,8 @@ export interface Digest {
    * when that is known; otherwise a LOWER BOUND (never presented as a total).
    */
   eventsObserved: number;
+  /** How far the event count can be trusted (see eventCoverage.ts). */
+  eventCoverage: CoverageState;
   items: DigestItem[];
   /** Items beyond the display cap (counts stay exact). */
   moreItems: number;
@@ -115,6 +118,7 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
       baseline: 'none',
       sourceNow,
       eventsObserved: 0,
+      eventCoverage: 'not-applicable',
       items: [],
       moreItems: 0,
       ...allUnknown('no-baseline'),
@@ -127,6 +131,7 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
       sourceThen: cp.mode,
       sourceNow,
       eventsObserved: 0,
+      eventCoverage: 'not-applicable',
       items: [],
       moreItems: 0,
       ...allUnknown('different-source'),
@@ -348,27 +353,21 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
       }
   }
 
-  /* Events whose event time is after the checkpoint. The retained log is
-     bounded and a backend may return only a recent window, so the count is
-     exact ONLY when the log provably reaches back to the checkpoint (its oldest
-     retained event is at or before it). Otherwise it is UNKNOWN, and the number
-     actually retained is reported separately as a lower bound, never as the
-     total. Arrival time is NOT used here: an old event received late did not
-     happen "since". */
-  let eventsObserved = 0;
-  if (resourceUnavailable(s, 'events')) {
-    mark('events', 'unavailable-now');
-  } else {
-    const ids = new Set<string>();
-    for (const e of s.events) if (e.at > cp.at) ids.add(e.id);
-    eventsObserved = ids.size;
-    const oldest = s.events.reduce<string | undefined>(
-      (min, e) => (min === undefined || e.at < min ? e.at : min),
-      undefined,
+  /* Events not observed at the checkpoint (identity), with coverage proven only
+     from source times (see eventCoverage.ts). Never compares the source clock
+     with the browser clock. */
+  const cov = eventCoverage(s.events, cp.events, !resourceUnavailable(s, 'events'));
+  const eventsObserved = cov.observedNew;
+  if (cov.state === 'exact') counts.events = cov.count;
+  else
+    mark(
+      'events',
+      cov.reason === 'events-unavailable-now'
+        ? 'unavailable-now'
+        : cov.reason === 'events-unavailable-then'
+          ? 'unavailable-then'
+          : 'history-truncated',
     );
-    if (oldest !== undefined && oldest <= cp.at) counts.events = eventsObserved;
-    else mark('events', 'history-truncated');
-  }
 
   // Newest-meaningful first: Founder-relevant categories lead.
   const ORDER: DigestCategory[] = [
@@ -394,6 +393,7 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
     counts,
     unknown,
     eventsObserved,
+    eventCoverage: cov.state,
     items: items.slice(0, MAX_DIGEST_ITEMS),
     moreItems: Math.max(0, items.length - MAX_DIGEST_ITEMS),
   };

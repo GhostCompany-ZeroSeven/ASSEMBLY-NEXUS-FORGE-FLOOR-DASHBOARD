@@ -1,3 +1,4 @@
+import { createWatermark, parseWatermark, type EventWatermark } from './eventCoverage';
 import { resourceUnavailable } from './selectors';
 import type { DashboardSnapshot } from './snapshot';
 import { WORKER_STATES, type ApprovalStatus, type MissionStatus, type WorkerState } from './types';
@@ -10,7 +11,12 @@ import { WORKER_STATES, type ApprovalStatus, type MissionStatus, type WorkerStat
  * decisions. A resource that could not be loaded is stored as ABSENT
  * (undefined), so "we did not know" is never mistaken for "there was nothing".
  */
-export const CHECKPOINT_VERSION = 1;
+/**
+ * v2 (Phase 6): the event watermark (ids + newest SOURCE time) replaced v1's
+ * `lastEventAt`, so event coverage never compares the source clock with the
+ * browser clock. v1 records are discarded, not migrated (derived local state).
+ */
+export const CHECKPOINT_VERSION = 2;
 /** Per-resource cap; beyond it the fingerprint is marked truncated (UNKNOWN comparisons). */
 export const MAX_CHECKPOINT_ENTRIES = 2000;
 
@@ -32,12 +38,12 @@ export interface Checkpoint {
   alerts?: Record<string, AlertPhase>;
   /** Artifact ids known at the time (bounded). */
   artifacts?: string[];
-  /** Newest event time in the log at the time (for event coverage). */
-  lastEventAt?: string;
+  /** Events retained at the time (absent when the events resource was unavailable). */
+  events?: EventWatermark;
   truncated?: boolean;
 }
 
-const MISSION_STATUSES: readonly MissionStatus[] = [
+export const MISSION_STATUSES: readonly MissionStatus[] = [
   'QUEUED',
   'ACTIVE',
   'WAITING_REVIEW',
@@ -48,7 +54,7 @@ const MISSION_STATUSES: readonly MissionStatus[] = [
   'CANCELLED',
   'UNKNOWN',
 ];
-const APPROVAL_STATUSES: readonly ApprovalStatus[] = [
+export const APPROVAL_STATUSES: readonly ApprovalStatus[] = [
   'PENDING',
   'HELD',
   'APPROVED',
@@ -57,8 +63,8 @@ const APPROVAL_STATUSES: readonly ApprovalStatus[] = [
   'WITHDRAWN',
   'UNKNOWN',
 ];
-const ALERT_PHASES: readonly AlertPhase[] = ['open', 'acknowledged', 'resolved'];
-const MODES = ['demo', 'live', 'disconnected', 'replay'] as const;
+export const ALERT_PHASES: readonly AlertPhase[] = ['open', 'acknowledged', 'resolved'];
+export const MODES = ['demo', 'live', 'disconnected', 'replay'] as const;
 
 export function alertPhase(a: { acknowledgedAt?: string; resolvedAt?: string }): AlertPhase {
   return a.resolvedAt ? 'resolved' : a.acknowledgedAt ? 'acknowledged' : 'open';
@@ -107,7 +113,7 @@ export function createCheckpoint(s: DashboardSnapshot, atIso: string): Checkpoin
     artifacts: resourceUnavailable(s, 'missions')
       ? undefined
       : artifacts.slice(0, MAX_CHECKPOINT_ENTRIES),
-    lastEventAt: s.events.at(-1)?.at,
+    events: resourceUnavailable(s, 'events') ? undefined : createWatermark(s.events),
     truncated: truncated || undefined,
   };
 }
@@ -158,7 +164,6 @@ export function parseCheckpoint(raw: unknown, nowMs?: number): Checkpoint | null
         return null;
       artifacts = raw.artifacts as string[];
     }
-    if (raw.lastEventAt !== undefined && !isIso(raw.lastEventAt)) return null;
     return {
       v: CHECKPOINT_VERSION,
       at: raw.at,
@@ -169,10 +174,15 @@ export function parseCheckpoint(raw: unknown, nowMs?: number): Checkpoint | null
       approvals: enumMap(raw.approvals, APPROVAL_STATUSES),
       alerts: enumMap(raw.alerts, ALERT_PHASES),
       artifacts,
-      lastEventAt: raw.lastEventAt as string | undefined,
+      events: parseWatermark(raw.events),
       truncated: raw.truncated === true || undefined,
     };
   } catch {
     return null;
   }
+}
+
+/** The schema version a stored record claims, if any (to report "outdated", not "corrupt"). */
+export function storedVersion(raw: unknown): number | undefined {
+  return isObj(raw) && typeof raw.v === 'number' ? raw.v : undefined;
 }

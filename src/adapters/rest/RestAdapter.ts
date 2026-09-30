@@ -434,14 +434,12 @@ export class RestAdapter implements DashboardAdapter {
           const list = listFrom(data, 'events', log);
           if (!list) failed.add(name);
           else
-            next.events = keepFirstIngest(
+            next.events = mergeObserved(
               dedupe(
                 list.map((x, i) => normalizeEvent(x, i, log)),
                 log,
                 'events',
-              )
-                .sort((a, b) => a.at.localeCompare(b.at))
-                .slice(-MAX_EVENTS),
+              ),
               prev.events,
               at,
             );
@@ -636,20 +634,32 @@ export class RestAdapter implements DashboardAdapter {
 }
 
 /**
- * Ingest facts (how and when THIS dashboard first received an event) belong to
- * the first arrival. A re-sync that lists an event already received over the
- * stream must not relabel it as polled or move its arrival time.
+ * Merge a REST listing into the retained event log.
+ *
+ * - Ingest facts (how and when THIS dashboard first received an event) belong
+ *   to the first arrival: a re-sync listing an event already received over the
+ *   stream must not relabel it as polled or move its arrival time.
+ * - An event already OBSERVED (e.g. over the stream) that the listing omits is
+ *   kept: a backend window that does not list it is not evidence it did not
+ *   happen. Nothing is invented; only observed events are retained.
+ * - The log stays bounded (MAX_EVENTS), dropping the oldest event times first,
+ *   which is what event coverage relies on (see domain/eventCoverage.ts).
  */
-function keepFirstIngest(
-  events: DashboardSnapshot['events'],
+function mergeObserved(
+  listed: DashboardSnapshot['events'],
   prev: DashboardSnapshot['events'],
   at: string,
 ): DashboardSnapshot['events'] {
   const first = new Map(prev.map((e) => [e.id, e]));
-  return events.map((e) => {
-    const p = first.get(e.id);
-    return { ...e, via: p?.via ?? e.via, receivedAt: p?.receivedAt ?? at };
-  });
+  const listedIds = new Set(listed.map((e) => e.id));
+  const merged = [
+    ...listed.map((e) => {
+      const p = first.get(e.id);
+      return { ...e, via: p?.via ?? e.via, receivedAt: p?.receivedAt ?? at };
+    }),
+    ...prev.filter((e) => !listedIds.has(e.id)),
+  ];
+  return merged.sort((a, b) => a.at.localeCompare(b.at)).slice(-MAX_EVENTS);
 }
 
 function dedupe<T extends { id: string }>(items: (T | null)[], log: IssueLog, source: string): T[] {

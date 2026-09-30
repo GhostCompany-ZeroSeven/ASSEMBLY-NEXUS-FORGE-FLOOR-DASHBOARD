@@ -57,7 +57,8 @@ describe('checkpoint', () => {
   it.each([
     ['null', null],
     ['array', []],
-    ['wrong version', { ...baseline(), v: 2 }],
+    ['older version (v1)', { ...baseline(), v: 1 }],
+    ['newer version', { ...baseline(), v: 99 }],
     ['bad time', { ...baseline(), at: 'yesterday' }],
     ['future time', { ...baseline(), at: iso(10 * 60_000) }],
     ['unknown mode', { ...baseline(), mode: 'godmode' }],
@@ -179,7 +180,7 @@ describe('change digest', () => {
     expect(d.unknown.missionsNew).toBe('baseline-truncated');
   });
 
-  it('events: exact only when retained history reaches back to the checkpoint', () => {
+  it('events: newly observed by identity; exact only while the checkpoint newest event is retained', () => {
     const s = seed();
     const ev = (id: string, at: string): DashboardEvent => ({
       id,
@@ -187,21 +188,43 @@ describe('change digest', () => {
       at,
       payload: { taskId: 't' },
     });
-    // History reaches back before the checkpoint → exact.
-    s.events = [ev('a', iso(-2 * 3600_000)), ev('b', iso(-10_000)), ev('b', iso(-10_000))];
+    s.events = [ev('a', iso(-2 * 3600_000)), ev('b', iso(-10_000))];
     const cp = createCheckpoint(s, iso(-60_000));
-    expect(computeDigest(s, cp).counts.events).toBe(1);
-    // Everything retained is newer than the checkpoint → UNKNOWN, with a lower bound.
+    // Retained history still holds `b` (the newest seen) → exact; duplicates count once.
+    const now = { ...s, events: [...s.events, ev('c', iso(-5_000)), ev('c', iso(-5_000))] };
+    const d0 = computeDigest(now, cp);
+    expect(d0.counts.events).toBe(1);
+    expect(d0.eventCoverage).toBe('exact');
+    // `b` has been dropped from the retained window → at least 2, never "exactly 2".
     const t = { ...s, events: [ev('c', iso(-30_000)), ev('d', iso(-20_000))] };
     const d = computeDigest(t, cp);
     expect(d.counts.events).toBeNull();
+    expect(d.eventCoverage).toBe('lower-bound');
     expect(d.unknown.events).toBe('history-truncated');
     expect(d.eventsObserved).toBe(2);
     // Empty history proves nothing either.
-    expect(computeDigest({ ...s, events: [] }, cp).counts.events).toBeNull();
+    const e = computeDigest({ ...s, events: [] }, cp);
+    expect(e.counts.events).toBeNull();
+    expect(e.eventCoverage).toBe('unknown');
   });
 
-  it('an old event that ARRIVED late is not counted as happening since', () => {
+  it('event coverage never compares the source clock with the browser clock', () => {
+    // Source clock 3 hours BEHIND the browser: every event looks older than the
+    // checkpoint's browser time. Phase 5 counted 0 new events (falsely exact).
+    const s = seed();
+    const ev = (id: string, at: string): DashboardEvent => ({
+      id,
+      kind: 'task.completed',
+      at,
+      payload: { taskId: 't' },
+    });
+    s.events = [ev('a', iso(-4 * 3600_000))];
+    const cp = createCheckpoint(s, iso(0));
+    const now = { ...s, events: [...s.events, ev('b', iso(-3 * 3600_000))] };
+    expect(computeDigest(now, cp).counts.events).toBe(1);
+  });
+
+  it('an old event that ARRIVED late is newly observed (counted once, timeline marks it late)', () => {
     const s = seed();
     const cp = createCheckpoint(s, iso(-60_000));
     const late: DashboardEvent = {
@@ -211,8 +234,8 @@ describe('change digest', () => {
       receivedAt: iso(0),
       payload: { taskId: 't' },
     };
-    const d = computeDigest({ ...s, events: [...s.events, late] }, cp);
-    expect(d.counts.events).toBe(0);
+    const d = computeDigest({ ...s, events: [...s.events, late, late] }, cp);
+    expect(d.counts.events).toBe(1);
   });
 
   it('record ids that collide with Object.prototype are compared as data', () => {
