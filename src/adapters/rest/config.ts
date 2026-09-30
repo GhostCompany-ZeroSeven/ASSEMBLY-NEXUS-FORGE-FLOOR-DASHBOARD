@@ -30,6 +30,24 @@ export interface RestAdapterConfig {
    * requests (`include`) are intentionally not supported.
    */
   credentials?: 'omit' | 'same-origin';
+  /**
+   * Optional Server-Sent Events stream for push updates. REST polling remains the
+   * source of full state and LIVE verification; while the stream is healthy the
+   * adapter only re-syncs every `resyncIntervalMs`. If the stream fails
+   * `maxRetries` times in a row the adapter falls back to polling and says so.
+   */
+  stream?: RestStreamConfig;
+}
+
+export interface RestStreamConfig {
+  /** Path relative to `baseUrl`, e.g. `/stream`. */
+  path: string;
+  /** No message or heartbeat for this long → stream is stale. Default 20000, clamped 2s..120s. */
+  heartbeatTimeoutMs?: number;
+  /** Consecutive failures before falling back to polling. Default 5, clamped 0..20. */
+  maxRetries?: number;
+  /** Full REST re-sync interval while the stream is healthy. Default 60000, clamped ≥ pollIntervalMs. */
+  resyncIntervalMs?: number;
 }
 
 export interface RestEndpoints {
@@ -65,6 +83,7 @@ export interface ResolvedRestConfig {
   staleAfterMs: number;
   statusMapping?: WorkerStateMapping;
   credentials: 'omit' | 'same-origin';
+  stream?: Required<RestStreamConfig>;
 }
 
 export class RestConfigError extends Error {
@@ -129,7 +148,25 @@ export function resolveRestConfig(config: RestAdapterConfig): ResolvedRestConfig
   const requestTimeoutMs = clamp(config.requestTimeoutMs ?? 8000, 500, 60_000);
   const staleAfterMs = Math.max(pollIntervalMs, config.staleAfterMs ?? pollIntervalMs * 3);
 
+  let stream: Required<RestStreamConfig> | undefined;
+  if (config.stream) {
+    const path = config.stream.path;
+    if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
+      throw new RestConfigError('stream.path must be a path starting with "/".');
+    }
+    if (SECRET_PARAM.test(path)) {
+      throw new RestConfigError('stream.path must not contain secret-looking query parameters.');
+    }
+    stream = {
+      path,
+      heartbeatTimeoutMs: clamp(config.stream.heartbeatTimeoutMs ?? 20_000, 2000, 120_000),
+      maxRetries: clamp(Math.floor(config.stream.maxRetries ?? 5), 0, 20),
+      resyncIntervalMs: Math.max(pollIntervalMs, config.stream.resyncIntervalMs ?? 60_000),
+    };
+  }
+
   return {
+    stream,
     baseUrl,
     label: config.label?.trim() || 'Generic REST backend',
     endpoints,

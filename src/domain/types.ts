@@ -41,6 +41,11 @@ export interface DataProvenance {
    * Shown next to the provenance badge so test backends are not mistaken for production.
    */
   environment?: string;
+  /**
+   * How updates arrive: `polling`, `sse` (push stream healthy), or
+   * `polling-fallback` (a configured stream failed; polling explicitly took over).
+   */
+  transport?: 'polling' | 'sse' | 'polling-fallback';
 }
 
 /* ------------------------------------------------------------------------- */

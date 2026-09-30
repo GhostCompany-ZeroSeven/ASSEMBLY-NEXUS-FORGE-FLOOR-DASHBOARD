@@ -4,6 +4,7 @@ import type { AdapterConfig, DashboardConfig } from './types';
  * Optional build-time override for local development and testing:
  *
  *   VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://localhost:8787 npm run dev
+ *   (+ VITE_FORGE_REST_STREAM=/stream to enable the optional SSE stream)
  *
  * Vite inlines `VITE_*` variables into the client bundle, so they must NEVER
  * contain secrets. Only the adapter kind and a base URL are read here.
@@ -25,6 +26,7 @@ export function withEnvOverrides(
         decide: '/approvals/:id/decision',
         acknowledge: '/alerts/:id/acknowledge',
       },
+      ...(env.VITE_FORGE_REST_STREAM ? { stream: { path: env.VITE_FORGE_REST_STREAM } } : {}),
     },
   };
   return { ...config, adapter };

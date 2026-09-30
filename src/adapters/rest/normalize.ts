@@ -250,6 +250,29 @@ function safeUri(v: unknown): string | undefined {
   }
 }
 
+/** Artifact record. Only http(s) links survive. */
+export function normalizeArtifact(
+  a: unknown,
+  missionId: string,
+  log: IssueLog,
+  source: string,
+): Artifact | null {
+  if (!isObj(a) || !str(a.id) || !str(a.title)) {
+    log.add('warning', source, 'Dropped artifact without id/title');
+    return null;
+  }
+  return {
+    id: str(a.id)!,
+    missionId,
+    producedBy: str(a.producedBy),
+    kind: oneOf(a.kind, ARTIFACT_KINDS, 'other', log, source, 'artifact kind'),
+    title: str(a.title)!,
+    uri: safeUri(a.uri),
+    summary: str(a.summary),
+    createdAt: iso(a.createdAt) ?? '',
+  };
+}
+
 export function normalizeMission(raw: unknown, i: number, log: IssueLog): Mission | null {
   const src = `missions[${i}]`;
   if (!isObj(raw)) return (log.add('error', src, 'Dropped: not an object'), null);
@@ -282,20 +305,7 @@ export function normalizeMission(raw: unknown, i: number, log: IssueLog): Missio
     .filter((t): t is Task => t !== null);
 
   const artifacts: Artifact[] = (Array.isArray(raw.artifacts) ? raw.artifacts : [])
-    .map((a): Artifact | null =>
-      isObj(a) && str(a.id) && str(a.title)
-        ? {
-            id: str(a.id)!,
-            missionId: id,
-            producedBy: str(a.producedBy),
-            kind: oneOf(a.kind, ARTIFACT_KINDS, 'other', log, `${s}.artifact`, 'artifact kind'),
-            title: str(a.title)!,
-            uri: safeUri(a.uri),
-            summary: str(a.summary),
-            createdAt: iso(a.createdAt) ?? '',
-          }
-        : null,
-    )
+    .map((a) => normalizeArtifact(a, id, log, `${s}.artifact`))
     .filter((a): a is Artifact => a !== null);
 
   const rv = isObj(raw.review) ? raw.review : {};

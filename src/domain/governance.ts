@@ -130,3 +130,52 @@ export function assertHumanDecisionAllowed(
   }
   return request;
 }
+
+export interface AuthorityClaimProblem {
+  source: string;
+  message: string;
+}
+
+/**
+ * BACKEND CLAIM ≠ VERIFIED AUTHORITY.
+ *
+ * Cross-checks authority claims in backend data against the governance rules:
+ * - a decision record must be made by the request's named human authority, and never
+ *   by a worker (including the requester); otherwise the request becomes UNKNOWN and
+ *   its decision is discarded;
+ * - an authority grant attributed to a worker (a worker granting authority) is dropped.
+ *
+ * Pure: returns corrected copies plus a problem list for data-quality reporting.
+ */
+export function verifyBackendAuthorityClaims(
+  approvals: readonly ApprovalRequest[],
+  workers: readonly Worker[],
+): { approvals: ApprovalRequest[]; workers: Worker[]; problems: AuthorityClaimProblem[] } {
+  const problems: AuthorityClaimProblem[] = [];
+  const checked = approvals.map((a) => {
+    if (!a.decision) return a;
+    const required = typeof a.requiredAuthority === 'string' ? a.requiredAuthority.trim() : '';
+    const by = a.decision.decidedBy;
+    const valid =
+      required !== '' &&
+      !isWorkerIdentity(required, workers, a.requestedBy) &&
+      !isWorkerIdentity(by, workers, a.requestedBy) &&
+      norm(by) === norm(required);
+    if (valid) return a;
+    problems.push({
+      source: `approval ${a.id}`,
+      message: `Decision attributed to "${by}" is not by the required authority "${required || '(none)'}". Status shown as UNKNOWN`,
+    });
+    return { ...a, status: 'UNKNOWN' as const, decision: undefined };
+  });
+  const cleanWorkers = workers.map((w) => {
+    const grants = w.authority.filter((g) => !isWorkerIdentity(g.grantedBy, workers));
+    if (grants.length === w.authority.length) return w;
+    problems.push({
+      source: `worker ${w.id}.authority`,
+      message: 'Dropped authority grant attributed to a worker. Workers cannot grant authority',
+    });
+    return { ...w, authority: grants };
+  });
+  return { approvals: checked, workers: cleanWorkers, problems };
+}

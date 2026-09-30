@@ -24,3 +24,36 @@ export function restTestAdapter(
   );
   return { adapter, backend, clock };
 }
+
+import { createSseTransport } from '@/adapters/transport/sse';
+import { FakeEventSource } from './fakeEventSource';
+import { manualTimers } from './manualTimers';
+
+/** RestAdapter with an SSE stream backed by FakeEventSource and manual timers. */
+export function restStreamTestAdapter(backend: FakeBackend = createFakeBackend(), maxRetries = 2) {
+  const timers = manualTimers();
+  const clock = { now: FIXED };
+  const adapter = new RestAdapter(
+    {
+      baseUrl: BASE,
+      label: 'Test REST+SSE backend',
+      pollIntervalMs: 5000,
+      requestTimeoutMs: 500,
+      endpoints: { decide: '/approvals/:id/decision', acknowledge: '/alerts/:id/acknowledge' },
+      stream: { path: '/stream', heartbeatTimeoutMs: 10_000, maxRetries, resyncIntervalMs: 60_000 },
+    },
+    {
+      fetch: backend.fetch,
+      now: () => clock.now,
+      createTransport: () => ({ start: () => undefined, stop: () => undefined }),
+      createStream: (opts) =>
+        createSseTransport({
+          ...opts,
+          createEventSource: (url) => new FakeEventSource(url),
+          setTimer: timers.setTimer,
+          clearTimer: timers.clearTimer,
+        }),
+    },
+  );
+  return { adapter, backend, clock, timers };
+}

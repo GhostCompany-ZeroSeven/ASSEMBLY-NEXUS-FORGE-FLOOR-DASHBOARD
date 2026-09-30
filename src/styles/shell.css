@@ -733,3 +733,16 @@ kbd {
     font-size: 15px;
   }
 }
+.provenance__transport {
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--line-strong);
+  color: var(--text-dim);
+}
+.provenance__transport[data-transport='polling-fallback'] {
+  border-color: var(--tone-warning);
+  color: var(--tone-warning);
+}

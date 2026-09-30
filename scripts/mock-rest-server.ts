@@ -7,6 +7,8 @@
  *   VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://127.0.0.1:8787 npm run dev
  *
  * Failure injection for manual testing: GET /__fail?resource=workers&mode=down|http500|malformed|slow|off
+ * SSE stream at /stream (heartbeat every 5s, pushes decisions and a periodic progress event).
+ * Stream faults: /__fail?resource=stream&mode=down|silent|malformed|off
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { buildSeedSnapshot } from '../src/adapters/demo/seed.ts';
@@ -22,6 +24,37 @@ const state = {
   events: { events: seed.events },
 } as Record<string, unknown>;
 const failures = new Map<string, string>();
+const streams = new Set<ServerResponse>();
+let eventSeq = 0;
+
+function push(kind: string, payload: unknown, extra: Record<string, unknown> = {}) {
+  const mode = failures.get('stream');
+  const id = `mock-${++eventSeq}`;
+  const data =
+    mode === 'malformed'
+      ? '{"kind": "broken'
+      : JSON.stringify({ id, kind, at: new Date().toISOString(), ...extra, payload });
+  for (const res of streams) {
+    if (mode === 'silent') continue;
+    res.write(`id: ${id}\nevent: forge\ndata: ${data}\n\n`);
+  }
+}
+
+setInterval(() => {
+  if (failures.get('stream') === 'silent') return;
+  for (const res of streams) res.write('event: heartbeat\ndata: {}\n\n');
+}, 5000);
+
+// Periodic progress so the stream is visibly alive.
+let tick = 0;
+setInterval(() => {
+  tick = (tick + 1) % 10;
+  push(
+    'task.progress',
+    { taskId: 'AN-0142-T2', progress: 0.5 + tick / 25 },
+    { missionId: 'AN-0142', workerId: 'w-ada' },
+  );
+}, 7000);
 
 function send(res: ServerResponse, status: number, body: unknown, origin?: string) {
   res.writeHead(status, {
@@ -58,6 +91,21 @@ createServer(async (req, res) => {
     return send(res, 200, { failures: Object.fromEntries(failures) }, origin);
   }
 
+  if (url.pathname === '/stream' && req.method === 'GET') {
+    if (failures.get('stream') === 'down') return send(res, 503, { error: 'stream down' }, origin);
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-store',
+      Connection: 'keep-alive',
+      'Access-Control-Allow-Origin':
+        origin && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin) ? origin : 'null',
+    });
+    res.write('retry: 60000\n\n');
+    streams.add(res);
+    req.on('close', () => streams.delete(res));
+    return;
+  }
+
   const decide = url.pathname.match(/^\/approvals\/([^/]+)\/decision$/);
   if (decide && req.method === 'POST') {
     const body = await readJson(req).catch(() => null);
@@ -78,6 +126,7 @@ createServer(async (req, res) => {
     };
     a.status = { APPROVE: 'APPROVED', DENY: 'DENIED', HOLD: 'HELD' }[decision];
     a.decision = record;
+    push('approval.decided', { approvalId: id, record }, { missionId: a.missionId });
     return send(res, 200, { record }, origin);
   }
   const ack = url.pathname.match(/^\/alerts\/([^/]+)\/acknowledge$/);

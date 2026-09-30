@@ -1,7 +1,15 @@
-import { assertHumanDecisionAllowed } from '@/domain/governance';
+import { assertHumanDecisionAllowed, verifyBackendAuthorityClaims } from '@/domain/governance';
+import { applyEvent } from '@/domain/reducer';
 import { MAX_EVENTS, type DashboardSnapshot, type DataIssue } from '@/domain/snapshot';
 import type { ApprovalDecisionRecord, DataProvenance } from '@/domain/types';
 import { createPollingTransport } from '../transport/polling';
+import {
+  createSseTransport,
+  type SseMessage,
+  type SseTransport,
+  type SseTransportOptions,
+  type StreamState,
+} from '../transport/sse';
 import type { EventTransport } from '../transport/types';
 import type {
   AdapterCapabilities,
@@ -29,12 +37,15 @@ import {
   normalizeMission,
   normalizeWorker,
 } from './normalize';
+import { normalizeStreamEvent } from './stream';
 
 export interface RestAdapterDeps {
   fetch?: FetchLike;
   now?: () => number;
   /** Injected transport factory (tests). Defaults to the polling transport. */
   createTransport?: (poll: () => Promise<void>, intervalMs: number) => EventTransport<void>;
+  /** Injected SSE transport factory (tests). Defaults to `createSseTransport`. */
+  createStream?: (opts: SseTransportOptions) => SseTransport;
 }
 
 type Resource = 'health' | 'workers' | 'missions' | 'approvals' | 'alerts' | 'events';
@@ -73,11 +84,18 @@ export class RestAdapter implements DashboardAdapter {
   private abort = new AbortController();
   private cycle: Promise<boolean> | null = null;
   private closed = false;
+  private readonly createStream: NonNullable<RestAdapterDeps['createStream']>;
+  private stream: SseTransport | null = null;
+  private streamState: StreamState | 'disabled' = 'disabled';
+  private streamIssues: DataIssue[] = [];
+  private lastCycleAt = 0;
+  private lastFullSyncOk = false;
 
   constructor(config: RestAdapterConfig, deps: RestAdapterDeps = {}) {
     this.config = resolveRestConfig(config);
     this.label = this.config.label;
     this.fetchImpl = deps.fetch ?? ((input, init) => fetch(input, init));
+    this.createStream = deps.createStream ?? createSseTransport;
     this.now = deps.now ?? (() => Date.now());
     this.createTransport =
       deps.createTransport ??
@@ -112,10 +130,33 @@ export class RestAdapter implements DashboardAdapter {
       adapterLabel: this.label,
       verifiedBackend: this.verified,
       environment: this.environment,
-      note: this.verified
-        ? `Polling ${this.config.baseUrl} every ${Math.round(this.config.pollIntervalMs / 1000)}s.`
-        : `Not verified: ${this.config.baseUrl} has not returned a valid health payload in the latest cycle.`,
+      transport: this.transportMode(),
+      note: !this.verified
+        ? `Not verified: ${this.config.baseUrl} has not returned a valid health payload in the latest cycle.`
+        : this.transportMode() === 'sse'
+          ? `Live stream from ${this.config.baseUrl}; full re-sync every ${Math.round((this.config.stream?.resyncIntervalMs ?? 0) / 1000)}s.`
+          : this.transportMode() === 'polling-fallback'
+            ? `Live stream unavailable; polling ${this.config.baseUrl} every ${Math.round(this.config.pollIntervalMs / 1000)}s instead.`
+            : `Polling ${this.config.baseUrl} every ${Math.round(this.config.pollIntervalMs / 1000)}s.`,
     };
+  }
+
+  /** Current update mechanism (explicit fallback when a configured stream is not healthy). */
+  transportMode(): 'polling' | 'sse' | 'polling-fallback' {
+    if (!this.config.stream) return 'polling';
+    if (this.streamState === 'open') return 'sse';
+    const failedBefore =
+      this.streamState === 'stale' ||
+      this.streamState === 'retrying' ||
+      this.streamState === 'failed' ||
+      (this.stream?.attempts() ?? 0) > 0;
+    // Before the first open we are simply polling; "fallback" means the stream actually failed.
+    return failedBefore ? 'polling-fallback' : 'polling';
+  }
+
+  /** Stream lifecycle state, or `disabled` when no stream is configured. */
+  getStreamState(): StreamState | 'disabled' {
+    return this.streamState;
   }
 
   /**
@@ -136,6 +177,14 @@ export class RestAdapter implements DashboardAdapter {
           skipFirst = false;
           return;
         }
+        // While the push stream is healthy, only re-sync occasionally.
+        if (
+          this.streamState === 'open' &&
+          this.config.stream &&
+          this.now() - this.lastCycleAt < this.config.stream.resyncIntervalMs
+        ) {
+          return;
+        }
         const ok = await this.runCycle();
         if (!ok) throw new Error('sync failed'); // lets the transport back off
       }, this.config.pollIntervalMs);
@@ -144,6 +193,7 @@ export class RestAdapter implements DashboardAdapter {
         () => undefined,
       );
     }
+    if (this.config.stream && !this.stream && !this.closed) this.startStream();
     return this.snapshot;
   }
 
@@ -156,6 +206,8 @@ export class RestAdapter implements DashboardAdapter {
     this.closed = true;
     this.transport?.stop();
     this.transport = null;
+    this.stream?.stop();
+    this.stream = null;
     this.abort.abort();
     this.listeners.clear();
     this.status = 'closed';
@@ -351,7 +403,15 @@ export class RestAdapter implements DashboardAdapter {
       };
     }
 
+    // BACKEND CLAIM ≠ VERIFIED AUTHORITY: cross-check decisions and grants.
+    const claims = verifyBackendAuthorityClaims(next.approvals, next.workers);
+    next.approvals = claims.approvals;
+    next.workers = claims.workers;
+    for (const pr of claims.problems) log.add('error', pr.source, pr.message);
+
     const requiredOk = REQUIRED.every((r) => !failed.has(r));
+    this.lastCycleAt = this.now();
+    this.lastFullSyncOk = requiredOk;
     this.verified = healthOk;
     if (healthOk || REQUIRED.some((r) => !failed.has(r))) this.everSynced = true;
 
@@ -359,7 +419,7 @@ export class RestAdapter implements DashboardAdapter {
       staleAfterMs: this.config.staleAfterMs,
       lastSuccessfulSyncAt: requiredOk ? at : prev.quality.lastSuccessfulSyncAt,
       partial: failed.size > 0 || log.dropped,
-      issues: log.issues,
+      issues: [...log.issues, ...this.recentStreamIssues()],
     };
     next.provenance = this.provenance();
     this.snapshot = next;
@@ -377,6 +437,107 @@ export class RestAdapter implements DashboardAdapter {
     );
     for (const l of this.listeners) l({ type: 'snapshot', snapshot: next });
     return requiredOk;
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Server-Sent Events                                                      */
+  /* ---------------------------------------------------------------------- */
+
+  private startStream(): void {
+    const cfg = this.config.stream;
+    if (!cfg) return;
+    this.stream = this.createStream({
+      url: endpointUrl(this.config, cfg.path),
+      heartbeatTimeoutMs: cfg.heartbeatTimeoutMs,
+      maxRetries: cfg.maxRetries,
+      onState: (state, detail) => this.onStreamState(state, detail),
+    });
+    this.stream.start(
+      (m) => this.onStreamMessage(m),
+      () => undefined, // failures surface through onState
+    );
+  }
+
+  private onStreamState(state: StreamState, detail?: string): void {
+    if (this.closed) return;
+    const was = this.streamState;
+    this.streamState = state;
+    if (state === 'failed') {
+      this.addStreamIssue(
+        'error',
+        `Live stream unavailable (${detail ?? 'failed'}). Falling back to polling.`,
+      );
+    } else if (state === 'stale') {
+      this.addStreamIssue('warning', detail ?? 'Live stream went quiet');
+    }
+    if (was !== state) {
+      // Leaving 'open' means we must not rely on the stream: re-sync now.
+      if (was === 'open' && state !== 'open') void this.runCycle();
+      this.publish();
+    }
+  }
+
+  private onStreamMessage(m: SseMessage): void {
+    if (this.closed) return;
+    const at = this.iso();
+    if (m.type === 'heartbeat') {
+      this.touchFreshness(at);
+      this.publish();
+      return;
+    }
+    const log = new IssueLog(at);
+    const event = normalizeStreamEvent(m.data, this.snapshot, log, this.config.statusMapping);
+    for (const i of log.issues) this.addStreamIssue(i.severity, `${i.source}: ${i.message}`, false);
+    if (!event) {
+      this.publish();
+      return;
+    }
+    this.snapshot = applyEvent(this.snapshot, event);
+    this.touchFreshness(at);
+    this.publish([event]);
+  }
+
+  /** Stream traffic proves freshness only when the last full re-sync was complete. */
+  private touchFreshness(at: string): void {
+    if (!this.lastFullSyncOk || this.streamState !== 'open') return;
+    this.snapshot = {
+      ...this.snapshot,
+      quality: { ...this.snapshot.quality, lastSuccessfulSyncAt: at },
+    };
+  }
+
+  private addStreamIssue(severity: DataIssue['severity'], message: string, publish = false): void {
+    const at = this.iso();
+    this.streamIssues = [
+      ...this.streamIssues,
+      { id: `stream#${at}#${this.streamIssues.length}`, severity, source: 'stream', message, at },
+    ].slice(-20); // bounded
+    const issues = [
+      ...this.snapshot.quality.issues.filter((i) => i.source !== 'stream'),
+      ...this.streamIssues,
+    ];
+    this.snapshot = {
+      ...this.snapshot,
+      quality: {
+        ...this.snapshot.quality,
+        issues,
+        partial: this.snapshot.quality.partial || severity === 'error',
+      },
+    };
+    if (publish) this.publish();
+  }
+
+  /** Stream issues age out after 5 minutes so a past glitch does not stick forever. */
+  private recentStreamIssues(): DataIssue[] {
+    const cutoff = this.now() - 5 * 60_000;
+    this.streamIssues = this.streamIssues.filter((i) => Date.parse(i.at) >= cutoff);
+    return this.streamIssues;
+  }
+
+  private publish(events?: DashboardSnapshot['events']): void {
+    this.snapshot = { ...this.snapshot, provenance: this.provenance() };
+    const snapshot = this.snapshot;
+    for (const l of this.listeners) l({ type: 'snapshot', snapshot, events });
   }
 
   private setStatus(status: ConnectionStatus, message?: string): void {

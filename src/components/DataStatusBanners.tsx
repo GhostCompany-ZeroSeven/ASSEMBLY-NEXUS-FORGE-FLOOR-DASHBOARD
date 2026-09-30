@@ -22,7 +22,8 @@ export function DataStatusBanners() {
   const { quality } = snapshot;
   const errors = quality.issues.filter((i) => i.severity === 'error');
   const warnings = quality.issues.filter((i) => i.severity === 'warning');
-  if (!conn && !stale && !quality.partial && quality.issues.length === 0) return null;
+  const fallback = snapshot.provenance.transport === 'polling-fallback';
+  if (!conn && !stale && !fallback && !quality.partial && quality.issues.length === 0) return null;
 
   return (
     <div className="data-banners">
@@ -45,6 +46,18 @@ export function DataStatusBanners() {
               Retry now
             </button>
           )}
+        </div>
+      )}
+      {!conn && fallback && (
+        <div className="data-banner" data-tone="warning" role="status">
+          <Icon name="activity" size={16} />
+          <div className="data-banner__text">
+            <strong>STREAM FALLBACK</strong>
+            <span>
+              The live event stream is not available. Updates now arrive by polling, so changes may
+              appear a few seconds later.
+            </span>
+          </div>
         </div>
       )}
       {!conn && stale && (
