@@ -1,10 +1,10 @@
 import { href } from '@/app/router';
+import { SEARCH_TYPE_LABEL, type SearchResult } from '@/features/search/search';
 import type { DashboardConfig } from '@/config/types';
 import type { SimulationControls } from '@/adapters/types';
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import { MISSION_STATUS_META, WORKER_STATE_META } from '@/domain/status';
 
-export type CommandGroup = 'Navigate' | 'Workers' | 'Missions' | 'Simulation' | 'Display' | 'Help';
+export type CommandGroup = 'Navigate' | 'Simulation' | 'Display' | 'Help' | 'Result';
 
 export interface Command {
   id: string;
@@ -15,6 +15,8 @@ export interface Command {
   keywords?: string;
   /** Human readable shortcut, e.g. "G then F". */
   shortcut?: string;
+  /** Present on search results: what the item is, its status and where it opens. */
+  result?: { type: string; status: string; surface: string; context?: string };
   run: () => void;
 }
 
@@ -45,7 +47,7 @@ export interface CommandContext {
 }
 
 export function buildCommands(ctx: CommandContext): Command[] {
-  const { snapshot, config, navigate } = ctx;
+  const { config, navigate } = ctx;
   const cmds: Command[] = GO_KEYS.filter((g) => !g.flag || config.features[g.flag]).map((g) => ({
     id: `nav:${g.key}`,
     title: `Open ${g.label}`,
@@ -54,26 +56,6 @@ export function buildCommands(ctx: CommandContext): Command[] {
     run: () => navigate(g.target()),
   }));
 
-  for (const w of snapshot.workers) {
-    cmds.push({
-      id: `worker:${w.id}`,
-      title: w.name,
-      group: 'Workers',
-      hint: `${w.role} · ${WORKER_STATE_META[w.state].label}`,
-      keywords: `${w.id} ${w.role} ${w.state} worker`,
-      run: () => navigate(href.worker(w.id)),
-    });
-  }
-  for (const m of snapshot.missions) {
-    cmds.push({
-      id: `mission:${m.id}`,
-      title: `${m.id} ${m.title}`,
-      group: 'Missions',
-      hint: MISSION_STATUS_META[m.status].label,
-      keywords: `${m.status} mission`,
-      run: () => navigate(href.mission(m.id)),
-    });
-  }
   if (ctx.sim) {
     const { controls, running } = ctx.sim;
     cmds.push(
@@ -125,8 +107,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
 /** Every whitespace-separated term must match; title-prefix matches rank first. */
 export function filterCommands(cmds: readonly Command[], query: string, limit = 50): Command[] {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0)
-    return cmds.filter((c) => c.group !== 'Missions' && c.group !== 'Workers').slice(0, limit);
+  if (terms.length === 0) return cmds.slice(0, limit);
   const scored = cmds
     .map((c) => {
       const title = c.title.toLowerCase();
@@ -149,4 +130,20 @@ export function isTypingTarget(target: EventTarget | null): boolean {
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement
   );
+}
+
+/** Turn a search result into a palette entry that navigates to its surface. */
+export function resultToCommand(r: SearchResult, navigate: (hash: string) => void): Command {
+  return {
+    id: `result:${r.type}:${r.id}`,
+    title: r.title,
+    group: 'Result',
+    result: {
+      type: SEARCH_TYPE_LABEL[r.type],
+      status: r.status,
+      surface: r.surface,
+      context: r.context,
+    },
+    run: () => navigate(r.href),
+  };
 }

@@ -570,3 +570,166 @@
 .token[data-state='UNKNOWN'] .token__plate {
   border-style: dashed;
 }
+
+/* ======================================================================== */
+/* Floor UX pass (phase 3)                                                  */
+/* ======================================================================== */
+
+/* Scale characters with the floor so 2560px screens are not full of tiny people. */
+.floor {
+  container-type: inline-size;
+}
+.floor:not(.floor--compact) .token__figure svg,
+.floor:not(.floor--compact) .token__figure img {
+  width: clamp(40px, 4.1cqi, 92px);
+  height: auto;
+}
+.floor--compact .token__figure svg,
+.floor--compact .token__figure img {
+  width: clamp(26px, 3.1cqi, 60px);
+  height: auto;
+}
+
+/* State as text, not colour alone. */
+.token__state {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tone);
+  background: rgba(3, 6, 10, 0.8);
+  padding: 0 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.token[data-founder] .token__state {
+  color: #1a1200;
+  background: var(--tone-warning);
+}
+.token[data-founder] .token__plate {
+  border-color: var(--tone-warning);
+}
+
+/* Every state has a glyph bubble now; keep it compact. */
+.token__bubble {
+  font-size: 10px;
+}
+
+/* Filter highlight: non-matching workers stay visible but recede. */
+.token[data-dimmed] {
+  opacity: 0.28;
+  filter: grayscale(0.7);
+}
+.token[data-dimmed]:hover,
+.token[data-dimmed]:focus-visible {
+  opacity: 0.8;
+}
+/* Mission association: ring workers that share the selected worker's mission. */
+.token[data-related] .token__figure {
+  filter: drop-shadow(0 0 0 transparent);
+}
+.token[data-related] .token__plate {
+  outline: 2px dashed var(--accent-2);
+  outline-offset: 2px;
+}
+
+/* Walking pose (procedural art); static art simply swaps image via data-pose. */
+.token[data-pose='moving'] .token__figure {
+  animation: walk 0.45s ease-in-out infinite;
+}
+@keyframes walk {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+.token[data-pose='waiting-founder'] .token__figure {
+  animation: none;
+}
+
+/* Rooms: selectable headers, selected state, overflow marker. */
+.room__label--button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-decoration: underline dotted color-mix(in srgb, var(--text-dim) 50%, transparent);
+  text-underline-offset: 3px;
+}
+.room__label--button:hover,
+.room__label--button[aria-pressed='true'] {
+  color: var(--text);
+}
+.room[data-selected]::before {
+  border-color: var(--accent-2);
+  box-shadow:
+    inset 0 0 0 1px var(--accent-2),
+    inset 0 0 40px color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+.room__overflow {
+  position: absolute;
+  z-index: 6;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.room[data-kind='founder-gate'] .room__label,
+.room[data-kind='founder-gate'] .room__label--button {
+  color: var(--tone-warning);
+}
+
+.floor__movement {
+  margin: 8px 2px 0;
+  min-height: 1.4em;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.floor__movement-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-right: 6px;
+}
+.floor-aside__hint {
+  margin-top: 8px;
+  color: var(--text-dim);
+}
+
+.legend-box summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--accent-2);
+  text-align: right;
+}
+.legend-box .legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.legend__glyph {
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 12px;
+  text-align: center;
+}
+.floor-filter .select-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}

@@ -11,6 +11,7 @@ export function Panel({
   className = '',
   tone,
   id,
+  focusId,
 }: {
   title?: ReactNode;
   eyebrow?: ReactNode;
@@ -19,6 +20,8 @@ export function Panel({
   className?: string;
   tone?: Tone;
   id?: string;
+  /** Deep-link target id (see useFocusTarget). */
+  focusId?: string;
 }) {
   const headingId = id ? `${id}-title` : undefined;
   return (
@@ -27,6 +30,7 @@ export function Panel({
       data-tone={tone}
       aria-labelledby={title ? headingId : undefined}
       id={id}
+      data-focus-id={focusId}
     >
       {(title || actions || eyebrow) && (
         <header className="panel__header">

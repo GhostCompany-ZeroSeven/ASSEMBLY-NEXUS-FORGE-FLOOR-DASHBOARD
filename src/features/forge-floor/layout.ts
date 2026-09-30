@@ -37,6 +37,18 @@ export interface Placement {
   /** Percent coordinates of the token's foot position on the floor. */
   x: number;
   y: number;
+  /** Room is full: the worker is counted in "+N more" instead of drawn. */
+  hidden?: boolean;
+}
+
+const COL_WIDTH = 7.5; // percent of floor width per token column
+const ROW_HEIGHT = 13; // percent of floor height per token row
+
+/** Maximum tokens a room can draw without overlap. */
+export function roomCapacity(r: RoomDefinition): number {
+  const perRow = Math.max(1, Math.floor(r.area.w / COL_WIDTH));
+  const rows = Math.max(1, Math.floor((r.area.h - 22) / ROW_HEIGHT) + 1);
+  return perRow * rows;
 }
 
 /** Deterministic slot layout: occupants spread across the room's floor strip. */
@@ -54,8 +66,16 @@ export function layoutFloor(
   const out = new Map<string, Placement>();
   for (const room of floor.rooms) {
     const occupants = (byRoom.get(room.id) ?? []).sort((a, b) => a.id.localeCompare(b.id));
+    const cap = roomCapacity(room);
+    // If the room overflows, keep the last slot free for the "+N more" marker.
+    const drawn = occupants.length > cap ? cap - 1 : occupants.length;
     occupants.forEach((w, i) =>
-      out.set(w.id, { roomId: room.id, ...slot(room, i, occupants.length) }),
+      out.set(
+        w.id,
+        i < drawn
+          ? { roomId: room.id, ...slot(room, i, drawn) }
+          : { roomId: room.id, x: 0, y: 0, hidden: true },
+      ),
     );
   }
   return out;
@@ -63,13 +83,13 @@ export function layoutFloor(
 
 function slot(r: RoomDefinition, index: number, count: number): { x: number; y: number } {
   const room = r.area;
-  const perRow = Math.max(1, Math.floor(room.w / 7.5));
+  const perRow = Math.max(1, Math.floor(room.w / COL_WIDTH));
   const cols = Math.min(perRow, count);
   const row = Math.floor(index / perRow);
   const col = index % perRow;
   const colsInRow = row === Math.floor((count - 1) / perRow) ? count - row * perRow : cols;
   const x = room.x + ((col + 0.5) / colsInRow) * room.w;
-  const y = room.y + room.h - 6 - row * 13;
+  const y = room.y + room.h - 6 - row * ROW_HEIGHT;
   return {
     x: clamp(x, room.x + 3, room.x + room.w - 3),
     y: clamp(y, room.y + 16, room.y + room.h - 4),

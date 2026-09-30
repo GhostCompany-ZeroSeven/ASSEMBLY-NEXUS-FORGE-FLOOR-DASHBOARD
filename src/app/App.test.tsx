@@ -91,7 +91,9 @@ describe('App', () => {
     const user = userEvent.setup();
     const adapter = await renderAt('#/floor');
     const floor = screen.getByRole('group', { name: 'Forge Floor plan' });
-    const tokens = within(floor).getAllByRole('button');
+    const tokens = within(floor)
+      .getAllByRole('button')
+      .filter((b) => b.classList.contains('token'));
     expect(tokens).toHaveLength(adapter.getSnapshot().workers.length);
     await user.click(within(floor).getByRole('button', { name: /^Cyrus Anvil/ }));
     expect(screen.getByRole('heading', { name: 'Cyrus Anvil' })).toBeInTheDocument();

@@ -16,3 +16,21 @@ describe('parseRoute', () => {
     expect(parseRoute('#/nope')).toEqual({ name: 'not-found', path: '/nope' });
   });
 });
+
+import { parseHashQuery, withQuery } from './router';
+
+describe('hash query', () => {
+  it('parses routes with queries and extracts the query', () => {
+    expect(parseRoute('#/floor?room=build')).toEqual({ name: 'floor' });
+    expect(parseRoute('#/missions/AN-1?focus=art-1')).toEqual({ name: 'mission', id: 'AN-1' });
+    expect(parseHashQuery('#/floor?room=build&worker=w-a')).toEqual({
+      room: 'build',
+      worker: 'w-a',
+    });
+    expect(parseHashQuery('#/floor')).toEqual({});
+  });
+  it('builds queries and drops empty values', () => {
+    expect(withQuery('#/alerts', { focus: 'ALR 7' })).toBe('#/alerts?focus=ALR+7');
+    expect(withQuery('#/floor?room=x', { room: undefined })).toBe('#/floor');
+  });
+});

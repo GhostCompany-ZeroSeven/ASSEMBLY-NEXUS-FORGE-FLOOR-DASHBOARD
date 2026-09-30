@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { href } from '@/app/router';
+import { href, withQuery } from '@/app/router';
+import { AlertCard } from '@/features/alerts/AlertCard';
+import { useWorkerRoom } from '@/hooks/useWorkerRoom';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import {
@@ -30,6 +32,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
   const { crews, floor } = useConfig();
   const now = useNow(1000);
   const worker = findWorker(snapshot, workerId);
+  const roomOf = useWorkerRoom();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -68,8 +71,13 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
     .flatMap((m) => m.artifacts)
     .filter((a) => a.producedBy === worker.id);
   const approvals = snapshot.approvals.filter((a) => a.requestedBy === worker.id);
+  // Only alerts that explicitly list this worker as affected.
+  const alerts = snapshot.alerts.filter((al) =>
+    al.affected.some((x) => x.kind === 'worker' && x.id === worker.id),
+  );
   const since = toMs(worker.stateSince);
   const home = floor.rooms.find((r) => r.id === worker.homeRoomId);
+  const current = roomOf(worker.id);
 
   return (
     <div className="focus" data-tone={meta.tone}>
@@ -97,6 +105,12 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           <div className="focus__role">
             {worker.role}
             {home && <span className="muted"> · Station: {home.label}</span>}
+            {current && (
+              <>
+                {' · '}
+                <a href={withQuery(href.floor(), { worker: worker.id })}>Now at {current.label}</a>
+              </>
+            )}
           </div>
           <div className="focus__state">
             <StatusBadge tone={meta.tone} size="lg" pulse={worker.state === 'WORKING'}>
@@ -195,13 +209,28 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
             <ul className="plain-list">
               {artifacts.map((a) => (
                 <li key={a.id}>
-                  <Icon name="artifact" size={13} /> {a.title}{' '}
-                  <span className="chip">{a.kind}</span>
+                  <Icon name="artifact" size={13} />{' '}
+                  <a href={withQuery(href.mission(a.missionId), { focus: a.id })}>{a.title}</a>{' '}
+                  <span className="chip">{a.kind}</span>{' '}
+                  <span className="small muted mono">{a.missionId}</span>
                 </li>
               ))}
             </ul>
           )}
         </Panel>
+
+        {alerts.length > 0 && (
+          <Panel
+            title={`Alerts affecting ${worker.name.split(' ')[0]} (${alerts.length})`}
+            className="span-3"
+          >
+            <div className="stack">
+              {alerts.map((al) => (
+                <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
+              ))}
+            </div>
+          </Panel>
+        )}
 
         {approvals.length > 0 && (
           <Panel title="Approvals requested" className="span-3">

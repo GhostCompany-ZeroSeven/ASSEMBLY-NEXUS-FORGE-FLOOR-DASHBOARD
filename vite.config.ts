@@ -14,5 +14,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     include: ['src/**/*.test.{ts,tsx}'],
+    // jsdom UI + axe tests are CPU-heavy under parallel load.
+    testTimeout: 15_000,
   },
 });

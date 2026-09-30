@@ -490,3 +490,88 @@ a.stat:hover {
   margin-bottom: 8px;
   margin-right: 16px;
 }
+
+/* Deep-link landing highlight (see useFocusTarget). Static outline: no motion needed. */
+[data-targeted='true'] {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus) 18%, transparent);
+}
+.palette__status {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ---- Filter bar --------------------------------------------------------- */
+.filterbar {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.filterbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.filterbar__search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 220px;
+  min-width: 0;
+  color: var(--text-faint);
+}
+.filterbar__search input {
+  flex: 1;
+  min-width: 0;
+}
+.filterbar__row--meta {
+  font-size: 12px;
+}
+.filterbar__count {
+  color: var(--text-dim);
+  margin-left: auto;
+}
+.filterbar__more summary {
+  cursor: pointer;
+  color: var(--accent-2);
+}
+.filterbar__more-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  padding-top: 8px;
+}
+.filterbar .segmented {
+  flex-wrap: wrap;
+}
+.segmented__count {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.show-more {
+  margin-top: 10px;
+  width: 100%;
+  justify-content: center;
+}
+@media (max-width: 560px) {
+  .filterbar .segmented {
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+  .segmented__item {
+    white-space: nowrap;
+  }
+  .filterbar__count {
+    margin-left: 0;
+  }
+}

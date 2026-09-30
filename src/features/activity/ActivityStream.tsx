@@ -26,7 +26,13 @@ export function ActivityStream({
         const d = describeEvent(e, snapshot);
         const category = EVENT_CATEGORY[e.kind];
         return (
-          <li key={e.id} className="stream__item" data-category={category} data-kind={e.kind}>
+          <li
+            key={e.id}
+            className="stream__item"
+            data-category={category}
+            data-kind={e.kind}
+            data-focus-id={e.id}
+          >
             <time className="stream__time mono" dateTime={e.at}>
               {formatTimeOfDay(e.at)}
             </time>
@@ -37,6 +43,12 @@ export function ActivityStream({
             </div>
             {showLinks && (
               <div className="stream__refs">
+                {e.workerId && (
+                  <a href={href.worker(e.workerId)}>
+                    {snapshot.workers.find((w) => w.id === e.workerId)?.name.split(' ')[0] ??
+                      e.workerId}
+                  </a>
+                )}
                 {e.missionId && (
                   <a className="mono" href={href.mission(e.missionId)}>
                     {e.missionId}

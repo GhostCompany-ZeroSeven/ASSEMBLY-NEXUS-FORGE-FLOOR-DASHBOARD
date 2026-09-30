@@ -1,4 +1,4 @@
-import { href } from '@/app/router';
+import { href, withQuery } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import { EmptyState, KeyValue, Panel, ProgressBar, StatusBadge } from '@/components/ui';
@@ -17,6 +17,9 @@ import { ApprovalGateCard } from '@/features/approvals/ApprovalGateCard';
 import { useNow, useSnapshot } from '@/store/hooks';
 import { MissionInstrument } from './MissionInstrument';
 import { MissionResultPanel } from './MissionResultPanel';
+import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { useWorkerRoom } from '@/hooks/useWorkerRoom';
+import { AlertCard } from '@/features/alerts/AlertCard';
 
 const TASK_TONE: Record<TaskStatus, Tone> = {
   PENDING: 'muted',
@@ -31,6 +34,8 @@ export function MissionDetail({ missionId }: { missionId: string }) {
   const snapshot = useSnapshot();
   const now = useNow(5000);
   const mission = findMission(snapshot, missionId);
+  useFocusTarget(mission !== undefined);
+  const roomOf = useWorkerRoom();
 
   if (!mission) {
     return (
@@ -48,6 +53,10 @@ export function MissionDetail({ missionId }: { missionId: string }) {
     .map((id) => snapshot.workers.find((w) => w.id === id))
     .filter((w) => w !== undefined);
   const approvals = snapshot.approvals.filter((a) => mission.approvalIds.includes(a.id));
+  // Only alerts that explicitly list this mission as affected.
+  const alerts = snapshot.alerts.filter((al) =>
+    al.affected.some((x) => x.kind === 'mission' && x.id === mission.id),
+  );
   const deps = mission.dependsOn.map((id) => ({ id, mission: findMission(snapshot, id) }));
 
   return (
@@ -109,7 +118,10 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                     <CharacterAvatar characterId={w.characterId} state={w.state} size={36} />
                     <span>
                       <strong>{w.name}</strong>
-                      <span className="muted small">{w.role}</span>
+                      <span className="muted small">
+                        {w.role}
+                        {roomOf(w.id) && ` · at ${roomOf(w.id)!.label}`}
+                      </span>
                     </span>
                     <StatusBadge tone={WORKER_STATE_META[w.state].tone} size="sm">
                       {WORKER_STATE_META[w.state].label}
@@ -118,6 +130,13 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                 </li>
               ))}
             </ul>
+          )}
+          {workers.length > 0 && (
+            <p className="small">
+              <a href={withQuery(href.floor(), { mission: mission.id })}>
+                Show this crew on the Forge Floor
+              </a>
+            </p>
           )}
         </Panel>
 
@@ -176,7 +195,7 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           ) : (
             <ul className="artifact-list">
               {mission.artifacts.map((a) => (
-                <li key={a.id} className="artifact">
+                <li key={a.id} className="artifact" data-focus-id={a.id}>
                   <Icon name={a.uri ? 'link' : 'artifact'} size={16} />
                   <div>
                     <div className="artifact__title">
@@ -189,6 +208,15 @@ export function MissionDetail({ missionId }: { missionId: string }) {
                       )}
                     </div>
                     {a.summary && <div className="small muted">{a.summary}</div>}
+                    {a.producedBy && (
+                      <div className="small muted">
+                        by{' '}
+                        <a href={href.worker(a.producedBy)}>
+                          {snapshot.workers.find((w) => w.id === a.producedBy)?.name ??
+                            a.producedBy}
+                        </a>
+                      </div>
+                    )}
                   </div>
                   <span className="chip">{a.kind}</span>
                   <span className="small muted">{formatRelative(a.createdAt, now)}</span>
@@ -225,6 +253,16 @@ export function MissionDetail({ missionId }: { missionId: string }) {
             <div className="gate-list">
               {approvals.map((a) => (
                 <ApprovalGateCard key={a.id} request={a} />
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        {alerts.length > 0 && (
+          <Panel title={`Alerts affecting this mission (${alerts.length})`} className="span-3">
+            <div className="stack">
+              {alerts.map((al) => (
+                <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
               ))}
             </div>
           </Panel>

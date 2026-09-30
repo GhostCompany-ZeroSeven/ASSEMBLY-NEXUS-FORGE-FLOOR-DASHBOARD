@@ -1050,3 +1050,85 @@
   font-size: 12px;
   color: var(--text-dim);
 }
+
+/* ======================================================================== */
+/* Situation board (Command Center)                                         */
+/* ======================================================================== */
+.situation {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+.situation__cell {
+  --tone: var(--tone-neutral);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--tone);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+a.situation__cell:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  border-top-color: var(--tone);
+}
+.situation__cell[data-primary] {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--tone) 14%, transparent), transparent 70%),
+    var(--surface);
+  border-color: color-mix(in srgb, var(--tone) 55%, var(--line));
+  border-top-width: 4px;
+}
+.situation__q {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.situation__q svg {
+  color: var(--tone);
+  flex-shrink: 0;
+}
+.situation__a {
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--tone) 50%, white);
+  overflow-wrap: anywhere;
+}
+.situation__d {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+@media (max-width: 1500px) {
+  .situation {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .situation__cell[data-primary] {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 900px) {
+  .situation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .situation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .situation__cell[data-primary] {
+    grid-column: auto;
+  }
+}

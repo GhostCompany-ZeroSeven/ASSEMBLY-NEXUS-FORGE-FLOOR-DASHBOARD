@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { href } from '@/app/router';
+import { href, withQuery } from '@/app/router';
 import { Icon } from '@/components/Icon';
 import { StatusBadge } from '@/components/ui';
 import { ALERT_SEVERITY_META } from '@/domain/status';
@@ -14,9 +14,10 @@ function affectedHref(a: Alert['affected'][number]): string | undefined {
     case 'worker':
       return href.worker(a.id);
     case 'approval':
-      return href.approvals();
+      return withQuery(href.approvals(), { focus: a.id });
     case 'system':
-      return undefined;
+      // System components are shown in the Command Center health panel.
+      return withQuery(href.command(), { focus: 'health' });
   }
 }
 
@@ -46,12 +47,20 @@ export function AlertCard({ alert, compact = false }: { alert: Alert; compact?: 
   };
 
   return (
-    <article className="alert-card" data-severity={alert.severity} data-state={state}>
+    <article
+      className="alert-card"
+      data-severity={alert.severity}
+      data-state={state}
+      data-focus-id={alert.id}
+      aria-labelledby={`alert-title-${alert.id}`}
+    >
       <header className="alert-card__head">
         <StatusBadge tone={meta.tone} pulse={state === 'open' && alert.severity === 'CRITICAL'}>
           {meta.label}
         </StatusBadge>
-        <h3 className="alert-card__title">{alert.title}</h3>
+        <h3 className="alert-card__title" id={`alert-title-${alert.id}`}>
+          {alert.title}
+        </h3>
         <span className="alert-card__time">
           <span className="mono">{alert.id}</span> · {formatRelative(alert.raisedAt, now)}
         </span>

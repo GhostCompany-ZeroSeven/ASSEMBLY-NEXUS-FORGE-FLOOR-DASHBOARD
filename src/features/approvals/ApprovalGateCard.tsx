@@ -75,7 +75,13 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   };
 
   return (
-    <article className="gate" data-status={request.status} data-risk={request.risk}>
+    <article
+      className="gate"
+      data-status={request.status}
+      data-risk={request.risk}
+      data-focus-id={request.id}
+      aria-labelledby={`gate-title-${request.id}`}
+    >
       <header className="gate__head">
         <div className="gate__ids">
           <span className="mono">{request.id}</span>
@@ -90,7 +96,9 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
         </StatusBadge>
       </header>
 
-      <h3 className="gate__title">{request.title}</h3>
+      <h3 className="gate__title" id={`gate-title-${request.id}`}>
+        {request.title}
+      </h3>
 
       <div className="gate__body">
         <div className="gate__action">

@@ -8,9 +8,12 @@ import { filterCommands, type Command } from './commands';
  */
 export function CommandPalette({
   commands,
+  search,
   onClose,
 }: {
   commands: Command[];
+  /** Entity search (missions, workers, rooms, alerts, gates, artifacts, events). */
+  search?: (query: string) => Command[];
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
@@ -18,7 +21,10 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const statusId = useId();
-  const results = useMemo(() => filterCommands(commands, query), [commands, query]);
+  const results = useMemo(() => {
+    const cmds = filterCommands(commands, query, query.trim() ? 6 : 50);
+    return query.trim() && search ? [...cmds, ...search(query)] : cmds;
+  }, [commands, search, query]);
   const current = Math.min(active, Math.max(0, results.length - 1));
 
   const run = (cmd: Command | undefined) => {
@@ -73,12 +79,12 @@ export function CommandPalette({
         className="palette__input"
         type="text"
         role="combobox"
-        aria-label="Search commands, workers and missions"
+        aria-label="Search commands, missions, workers, rooms, alerts, gates, artifacts and events"
         aria-expanded="true"
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={results.length ? optionId(current) : undefined}
-        placeholder="Type a command, worker or mission…"
+        placeholder="Search missions, workers, rooms, alerts, gates… or type a command"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -102,9 +108,17 @@ export function CommandPalette({
             onMouseMove={() => setActive(i)}
             onClick={() => run(c)}
           >
-            <span className="palette__group">{c.group}</span>
+            <span className="palette__group">{c.result ? c.result.type : c.group}</span>
             <span className="palette__title">{c.title}</span>
-            {c.hint && <span className="palette__hint">{c.hint}</span>}
+            {c.result ? (
+              <span className="palette__hint">
+                <span className="palette__status">{c.result.status}</span> · opens{' '}
+                {c.result.surface}
+                {c.result.context && <> · {c.result.context}</>}
+              </span>
+            ) : (
+              c.hint && <span className="palette__hint">{c.hint}</span>
+            )}
             {c.shortcut && <kbd className="palette__kbd">{c.shortcut}</kbd>}
           </li>
         ))}

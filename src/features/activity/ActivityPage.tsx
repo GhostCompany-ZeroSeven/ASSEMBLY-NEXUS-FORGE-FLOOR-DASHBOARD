@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { parseHashQuery } from '@/app/router';
 import { Panel } from '@/components/ui';
 import type { EventCategory } from '@/domain/events';
 import { ActivityStream } from './ActivityStream';
@@ -7,7 +9,11 @@ const CATEGORIES: EventCategory[] = ['mission', 'worker', 'review', 'approval', 
 
 export function ActivityPage() {
   const [active, setActive] = useState<EventCategory[]>(CATEGORIES);
-  const [lowSignal, setLowSignal] = useState(false);
+  // A deep link to a specific event shows everything so the target is present.
+  const [lowSignal, setLowSignal] = useState(() =>
+    Boolean(parseHashQuery(window.location.hash).focus),
+  );
+  useFocusTarget();
 
   const toggle = (c: EventCategory) =>
     setActive((cur) => (cur.includes(c) ? cur.filter((x) => x !== c) : [...cur, c]));

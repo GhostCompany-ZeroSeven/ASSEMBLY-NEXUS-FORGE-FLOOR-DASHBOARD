@@ -18,13 +18,14 @@ import { MissionsPage } from '@/features/missions/MissionsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { WorkerFocus } from '@/features/workers/WorkerFocus';
 import { WorkersPage } from '@/features/workers/WorkersPage';
-import { buildCommands } from '@/features/command/commands';
+import { buildCommands, resultToCommand } from '@/features/command/commands';
+import { buildSearchIndex, searchIndex } from '@/features/search/search';
 import { CommandPalette } from '@/features/command/CommandPalette';
 import { ShortcutsDialog } from '@/features/command/ShortcutsDialog';
 import { useGlobalShortcuts } from '@/features/command/useGlobalShortcuts';
 import { useSimulation } from '@/hooks/useSimulation';
 import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
-import { href, navigate, useRoute, type Route } from './router';
+import { href, navigate, parseHashQuery, routeKey, useRoute, type Route } from './router';
 
 interface NavItem {
   route: Route['name'];
@@ -53,9 +54,12 @@ export function Shell() {
       firstRoute.current = false;
       return;
     }
+    // Deep links (?focus=…) move focus to their target themselves.
+    if (parseHashQuery(window.location.hash).focus) return;
     mainRef.current?.focus({ preventScroll: true });
     window.scrollTo?.({ top: 0 });
-  }, [route]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeKey(route)]);
 
   useGlobalShortcuts({
     enabled: snapshot !== null,
@@ -84,6 +88,12 @@ export function Shell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [dialog, snapshot, config, simState?.running, prefs.setThemeId],
   );
+
+  const search = useMemo(() => {
+    if (!snapshot || dialog !== 'palette') return undefined;
+    const index = buildSearchIndex(snapshot, config.floor);
+    return (q: string) => searchIndex(index, q).map((r) => resultToCommand(r, navigate));
+  }, [dialog, snapshot, config.floor]);
 
   if (!snapshot) {
     return (
@@ -279,7 +289,7 @@ export function Shell() {
         </div>
       </div>
       {dialog === 'palette' && (
-        <CommandPalette commands={commands} onClose={() => setDialog(null)} />
+        <CommandPalette commands={commands} search={search} onClose={() => setDialog(null)} />
       )}
       {dialog === 'shortcuts' && (
         <ShortcutsDialog onClose={() => setDialog(null)} hasSimulation={simState !== null} />

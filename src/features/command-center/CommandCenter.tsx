@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
-import { EmptyState, Panel, StatTile, StatusBadge } from '@/components/ui';
+import { EmptyState, Panel, StatusBadge } from '@/components/ui';
+import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { SituationBoard } from './SituationBoard';
 import {
   isMissionInFlight,
   openAlerts,
   pendingApprovals,
-  selectOverview,
   sortMissions,
   resourceUnavailable,
 } from '@/domain/selectors';
@@ -34,7 +35,6 @@ export function CommandCenter() {
   const snapshot = useSnapshot();
   const config = useConfig();
   const now = useNow(5000);
-  const stats = selectOverview(snapshot);
   const featured = featuredMission(snapshot.missions);
   const gates = pendingApprovals(snapshot);
   const alerts = openAlerts(snapshot).slice(0, 3);
@@ -45,6 +45,7 @@ export function CommandCenter() {
     .slice(0, 3);
   const [selected, setSelected] = useState<string | null>(null);
   const health = HEALTH_STATUS_META[snapshot.health.status];
+  useFocusTarget();
 
   return (
     <div className="page page--wide">
@@ -65,65 +66,7 @@ export function CommandCenter() {
         </div>
       )}
 
-      <div className="stat-row">
-        <StatTile
-          label="Active missions"
-          value={stats.activeMissions}
-          tone="active"
-          icon="mission"
-          href={href.missions()}
-        />
-        <StatTile
-          label="Queued"
-          value={stats.queuedMissions}
-          tone="muted"
-          icon="clock"
-          href={href.missions()}
-        />
-        <StatTile
-          label="Workers busy"
-          value={
-            <>
-              {stats.workersBusy}
-              <span className="stat__of">/{stats.workersTotal}</span>
-            </>
-          }
-          tone="info"
-          icon="workers"
-          href={href.workers()}
-        />
-        <StatTile
-          label="Blocked / failed"
-          value={stats.workersBlocked}
-          tone={stats.workersBlocked ? 'danger' : 'muted'}
-          icon="alert"
-          href={href.workers()}
-        />
-        <StatTile label="Reviews open" value={stats.reviewsOpen} tone="progress" icon="check" />
-        <StatTile
-          label="Approval gates"
-          value={stats.approvalsPending}
-          tone={stats.approvalsPending ? 'warning' : 'muted'}
-          icon="gate"
-          href={href.approvals()}
-          hint={stats.approvalsPending ? 'Decision needed' : 'Clear'}
-        />
-        <StatTile
-          label="Alerts"
-          value={stats.alertsOpen}
-          tone={stats.alertsCritical ? 'danger' : stats.alertsOpen ? 'warning' : 'muted'}
-          icon="alert"
-          href={href.alerts()}
-          hint={stats.alertsCritical ? `${stats.alertsCritical} critical` : undefined}
-        />
-        <StatTile
-          label="Completed"
-          value={stats.completedMissions}
-          tone="success"
-          icon="check"
-          hint={stats.failedMissions ? `${stats.failedMissions} failed` : undefined}
-        />
-      </div>
+      <SituationBoard />
 
       <div className="grid grid--command">
         <Panel
@@ -230,7 +173,7 @@ export function CommandCenter() {
         </Panel>
 
         <div className="stack">
-          <Panel title="System health" id="health" tone={health.tone}>
+          <Panel title="System health" id="health" tone={health.tone} focusId="health">
             <div className="health">
               <StatusBadge tone={health.tone} size="lg">
                 {health.label}

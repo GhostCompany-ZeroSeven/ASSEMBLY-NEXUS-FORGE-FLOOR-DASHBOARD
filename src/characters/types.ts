@@ -1,22 +1,48 @@
 /**
  * Character definitions. The UI renders a character through
- * `<CharacterAvatar characterId=… />`, which resolves one of these.
+ * `<CharacterAvatar characterId=… pose=… />`, which resolves one of these.
  *
  * Swapping temporary procedural art for production assets is a config change:
- * replace a `procedural-scientist` definition with an `image` definition (per
- * state if desired). No application logic depends on how a character is drawn.
+ * replace a `procedural-*` definition with an `image` definition, optionally with
+ * per-pose and per-room artwork. No application logic depends on how a character
+ * is drawn.
+ *
+ * CHARACTER ≠ IDENTITY AUTHORITY. Characters are presentation only. They carry
+ * no identity, capability or authority, and governance never reads them.
  */
 export type CharacterDefinition =
   | { kind: 'procedural-scientist'; appearance: ScientistAppearance }
   | { kind: 'procedural-wolf'; appearance: WolfAppearance }
-  | {
-      kind: 'image';
-      /** Default image URL. */
-      src: string;
-      /** Optional per-state overrides keyed by WorkerState. */
-      stateSrc?: Partial<Record<string, string>>;
-      alt: string;
-    };
+  | ImageCharacter;
+
+/**
+ * Visual poses a character may need. Derived from worker state plus floor context
+ * (see `resolvePose`). Asset packs can provide any subset; missing poses fall back.
+ */
+export const CHARACTER_POSES = [
+  'idle',
+  'working',
+  'moving',
+  'blocked',
+  'waiting-founder',
+  'complete',
+  'failed',
+  'default',
+] as const;
+export type CharacterPose = (typeof CHARACTER_POSES)[number];
+
+export interface ImageCharacter {
+  kind: 'image';
+  /** Default image URL (served from `public/` or any same-origin path). */
+  src: string;
+  /** Per-pose artwork. */
+  poses?: Partial<Record<CharacterPose, string>>;
+  /** Per-room artwork, e.g. a lab-bench variant in the Build Forge. Wins over `poses`. */
+  rooms?: Record<string, string | Partial<Record<CharacterPose, string>>>;
+  /** @deprecated Use `poses`. Per-WorkerState overrides kept for compatibility. */
+  stateSrc?: Partial<Record<string, string>>;
+  alt: string;
+}
 
 export type HairStyle = 'sides' | 'tufts' | 'wild' | 'bun' | 'swoop';
 export type Eyewear = 'none' | 'glasses' | 'goggles' | 'monocle' | 'visor';

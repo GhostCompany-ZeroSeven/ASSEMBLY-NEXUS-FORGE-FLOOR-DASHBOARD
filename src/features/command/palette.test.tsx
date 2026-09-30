@@ -24,10 +24,8 @@ describe('filterCommands', () => {
     openShortcuts: () => {},
     setTheme: () => {},
   });
-  it('finds workers and missions by any term', () => {
-    expect(filterCommands(cmds, 'cyrus')[0]!.id).toBe('worker:w-cyrus');
-    expect(filterCommands(cmds, 'AN-0142')[0]!.id).toBe('mission:AN-0142');
-    expect(filterCommands(cmds, 'security warden')[0]!.id).toBe('worker:w-cyrus');
+  it('finds navigation commands', () => {
+    expect(filterCommands(cmds, 'approval')[0]!.id).toBe('nav:a');
     expect(filterCommands(cmds, 'zzzz')).toHaveLength(0);
   });
   it('omits simulation commands when there is no simulation', () => {

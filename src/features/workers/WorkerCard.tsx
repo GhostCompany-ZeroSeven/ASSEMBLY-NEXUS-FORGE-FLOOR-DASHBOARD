@@ -1,4 +1,5 @@
-import { href } from '@/app/router';
+import { href, withQuery } from '@/app/router';
+import { useWorkerRoom } from '@/hooks/useWorkerRoom';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import { ProgressBar, StatusBadge } from '@/components/ui';
@@ -32,9 +33,11 @@ export function WorkerCard({
     : [...snapshot.events].reverse().find((e) => e.workerId === worker.id);
   const since = toMs(worker.stateSince);
   const crew = crews.find((c) => c.id === worker.crewId);
+  const room = useWorkerRoom()(worker.id);
 
   return (
     <article
+      data-focus-id={`worker:${worker.id}`}
       className="worker-card"
       data-tone={meta.tone}
       data-state={worker.state}
@@ -89,6 +92,14 @@ export function WorkerCard({
             )}
           </span>
         </div>
+        {room && (
+          <div className="worker-card__row">
+            <span className="worker-card__k">Room</span>
+            <span>
+              <a href={withQuery(href.floor(), { worker: worker.id })}>{room.label}</a>
+            </span>
+          </div>
+        )}
         <div className="worker-card__row">
           <span className="worker-card__k">Task</span>
           <span>{task?.title ?? worker.currentActivity ?? <span className="muted">—</span>}</span>
