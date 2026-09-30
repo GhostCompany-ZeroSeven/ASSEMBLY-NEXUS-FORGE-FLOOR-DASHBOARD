@@ -12,7 +12,12 @@ import type { AdapterConfig, DashboardConfig } from './types';
 export function withEnvOverrides(
   config: DashboardConfig,
   env: Record<string, string | undefined>,
+  search = '',
 ): DashboardConfig {
+  // `?demo=stress` loads the large deterministic demo dataset (demo adapter only).
+  if (config.adapter.kind === 'demo' && new URLSearchParams(search).get('demo') === 'stress') {
+    config = { ...config, adapter: { ...config.adapter, scale: 'stress' } };
+  }
   if (env.VITE_FORGE_ADAPTER !== 'rest') return config;
   const baseUrl = env.VITE_FORGE_REST_BASE_URL;
   if (!baseUrl) return config;

@@ -9,7 +9,7 @@ import './styles/index.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
-const config = withEnvOverrides(assemblyNexusConfig, import.meta.env);
+const config = withEnvOverrides(assemblyNexusConfig, import.meta.env, window.location.search);
 
 loadAdapter(config.adapter)
   .then((adapter) =>

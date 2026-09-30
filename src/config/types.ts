@@ -123,7 +123,7 @@ export interface FeatureFlags {
 }
 
 export type AdapterConfig =
-  | { kind: 'demo'; tickMs: number; seed: number }
+  | { kind: 'demo'; tickMs: number; seed: number; scale?: 'standard' | 'stress' }
   /** Generic REST backend. Never put credentials here; see docs/ADAPTERS.md. */
   | { kind: 'rest'; rest: RestAdapterConfig }
   | { kind: 'custom'; id: string };

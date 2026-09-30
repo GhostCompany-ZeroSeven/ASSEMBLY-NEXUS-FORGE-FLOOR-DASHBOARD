@@ -10,7 +10,7 @@ export async function loadAdapter(config: AdapterConfig): Promise<DashboardAdapt
   switch (config.kind) {
     case 'demo': {
       const { DemoAdapter } = await import('./demo/DemoAdapter');
-      return new DemoAdapter({ tickMs: config.tickMs, seed: config.seed });
+      return new DemoAdapter({ tickMs: config.tickMs, seed: config.seed, scale: config.scale });
     }
     case 'rest': {
       const { RestAdapter } = await import('./rest/RestAdapter');

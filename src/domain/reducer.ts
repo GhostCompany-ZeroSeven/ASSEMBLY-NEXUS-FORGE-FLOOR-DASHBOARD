@@ -1,5 +1,5 @@
 import type { DashboardEvent } from './events';
-import { MAX_EVENTS, type DashboardSnapshot } from './snapshot';
+import { MAX_EVENTS, MAX_MESSAGES, type DashboardSnapshot } from './snapshot';
 import type { ApprovalDecision, ApprovalStatus, Mission, Worker } from './types';
 
 /**
@@ -272,7 +272,7 @@ function reduceDomain(s: DashboardSnapshot, e: DashboardEvent): DashboardSnapsho
 
     case 'message.posted':
       if (s.messages.some((m) => m.id === e.payload.message.id)) return s;
-      return { ...s, messages: [...s.messages, e.payload.message] };
+      return { ...s, messages: [...s.messages, e.payload.message].slice(-MAX_MESSAGES) };
   }
 }
 

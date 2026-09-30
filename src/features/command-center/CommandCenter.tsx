@@ -3,12 +3,12 @@ import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { EmptyState, Panel, StatusBadge } from '@/components/ui';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
+import { DEFAULT_MISSION_FILTER, filterMissions } from '@/features/filters/filters';
 import { SituationBoard } from './SituationBoard';
 import {
   isMissionInFlight,
   openAlerts,
   pendingApprovals,
-  sortMissions,
   resourceUnavailable,
 } from '@/domain/selectors';
 import { HEALTH_STATUS_META, RISK_TONE, WORKER_STATE_META } from '@/domain/status';
@@ -38,7 +38,9 @@ export function CommandCenter() {
   const featured = featuredMission(snapshot.missions);
   const gates = pendingApprovals(snapshot);
   const alerts = openAlerts(snapshot).slice(0, 3);
-  const inFlight = sortMissions(snapshot.missions).filter(isMissionInFlight);
+  const allInFlight = filterMissions(snapshot, { ...DEFAULT_MISSION_FILTER, group: 'in-flight' });
+  // The overview shows the most pressing few; Mission Control has the full list.
+  const inFlight = allInFlight.slice(0, 8);
   const recentlyDone = snapshot.missions
     .filter((m) => m.status === 'COMPLETE' || m.status === 'FAILED')
     .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
@@ -147,9 +149,15 @@ export function CommandCenter() {
         </Panel>
 
         <Panel
-          title={`Missions in flight (${inFlight.length})`}
+          title={`Missions in flight (${allInFlight.length})`}
           className="span-2"
-          actions={<a href={href.missions()}>Mission control →</a>}
+          actions={
+            <a href={href.missions()}>
+              {allInFlight.length > inFlight.length
+                ? `All ${allInFlight.length} in Mission Control →`
+                : 'Mission control →'}
+            </a>
+          }
         >
           {inFlight.length === 0 ? (
             <EmptyState title="Nothing in flight" />

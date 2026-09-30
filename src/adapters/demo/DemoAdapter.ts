@@ -19,6 +19,7 @@ import {
   type EventDraft,
 } from './script';
 import { buildSeedSnapshot, DEMO_PROVENANCE } from './seed';
+import { buildStressSnapshot } from './stress';
 
 export interface DemoAdapterOptions {
   /** Milliseconds between simulation steps at 1× speed. */
@@ -26,6 +27,8 @@ export interface DemoAdapterOptions {
   seed?: number;
   /** Start ticking automatically after connect. Default true. */
   autoRun?: boolean;
+  /** `stress` loads a large deterministic dataset for performance testing. */
+  scale?: 'standard' | 'stress';
   /** Injected clock for deterministic tests. */
   now?: () => number;
   /** Injected timer functions for tests. */
@@ -70,6 +73,7 @@ export class DemoAdapter implements DashboardAdapter {
       tickMs: options.tickMs ?? 3500,
       seed: options.seed ?? 7,
       autoRun: options.autoRun ?? true,
+      scale: options.scale ?? 'standard',
       now: options.now ?? (() => Date.now()),
       setInterval: options.setInterval,
       clearInterval: options.clearInterval,
@@ -206,8 +210,8 @@ export class DemoAdapter implements DashboardAdapter {
       snap = applyEvent(snap, event);
       events.push(event);
     }
-    this.snapshot = snap;
-    for (const l of this.listeners) l({ type: 'snapshot', snapshot: snap, events });
+    this.snapshot = pruneFinishedMissions(snap);
+    for (const l of this.listeners) l({ type: 'snapshot', snapshot: this.snapshot, events });
   }
 
   private notifySim(): void {
@@ -237,7 +241,7 @@ export class DemoAdapter implements DashboardAdapter {
     this.idCounter = 0;
     this.missionCounter = 150;
     this.queue = [...OPENING_SCRIPT];
-    this.snapshot = buildSeedSnapshot(this.opts.now());
+    this.snapshot = this.initialSnapshot();
     if (notify) {
       const snap = this.snapshot;
       for (const l of this.listeners) l({ type: 'snapshot', snapshot: snap });
@@ -245,8 +249,14 @@ export class DemoAdapter implements DashboardAdapter {
   }
 
   private current(): DashboardSnapshot {
-    if (!this.snapshot) this.snapshot = buildSeedSnapshot(this.opts.now());
+    if (!this.snapshot) this.snapshot = this.initialSnapshot();
     return this.snapshot;
+  }
+
+  private initialSnapshot(): DashboardSnapshot {
+    return this.opts.scale === 'stress'
+      ? buildStressSnapshot(this.opts.now())
+      : buildSeedSnapshot(this.opts.now());
   }
 
   private nextId(prefix: string): string {
@@ -257,4 +267,19 @@ export class DemoAdapter implements DashboardAdapter {
   private nowIso(): string {
     return new Date(this.opts.now()).toISOString();
   }
+}
+
+/** A long-running demo keeps generating missions; retain at most this many finished ones. */
+export const MAX_FINISHED_MISSIONS = 60;
+
+function pruneFinishedMissions(s: DashboardSnapshot): DashboardSnapshot {
+  const finished = s.missions.filter((m) => m.status === 'COMPLETE' || m.status === 'FAILED');
+  if (finished.length <= MAX_FINISHED_MISSIONS) return s;
+  const drop = new Set(
+    finished
+      .sort((a, b) => (a.completedAt ?? '').localeCompare(b.completedAt ?? ''))
+      .slice(0, finished.length - MAX_FINISHED_MISSIONS)
+      .map((m) => m.id),
+  );
+  return { ...s, missions: s.missions.filter((m) => !drop.has(m.id)) };
 }

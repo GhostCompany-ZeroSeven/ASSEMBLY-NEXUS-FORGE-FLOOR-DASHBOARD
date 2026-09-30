@@ -49,6 +49,8 @@ export interface DataQuality {
 }
 
 export const MAX_EVENTS = 500;
+/** Retained conversation messages across all workers. */
+export const MAX_MESSAGES = 300;
 
 export function emptySnapshot(provenance: DataProvenance, now: string): DashboardSnapshot {
   return {

@@ -13,7 +13,7 @@ export { registerAdapter } from './registry';
 export function createAdapter(config: AdapterConfig): DashboardAdapter {
   switch (config.kind) {
     case 'demo':
-      return new DemoAdapter({ tickMs: config.tickMs, seed: config.seed });
+      return new DemoAdapter({ tickMs: config.tickMs, seed: config.seed, scale: config.scale });
     case 'rest':
       return new RestAdapter(config.rest);
     case 'custom':
