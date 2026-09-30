@@ -45,6 +45,40 @@ export interface DashboardAdapter {
 
   /** Optional — only present when `capabilities.messaging` is true. */
   sendWorkerMessage?(workerId: string, body: string, author: string): Promise<WorkerMessage>;
+
+  /**
+   * Optional read-only transport diagnostics for the Settings page. Values the
+   * adapter does not know are left undefined (shown as UNKNOWN). Must never
+   * contain credentials, tokens, headers or URLs.
+   */
+  diagnostics?(): TransportDiagnostics;
+}
+
+export type StreamStateName =
+  'connecting' | 'open' | 'stale' | 'retrying' | 'failed' | 'closed' | 'disabled';
+
+export interface TransportDiagnostics {
+  /** `simulated` = demo adapter: there is no network transport at all. */
+  configured: 'simulated' | 'polling' | 'polling+stream';
+  active: 'simulated' | 'polling' | 'sse' | 'polling-fallback';
+  streamState?: StreamStateName;
+  /** Consecutive failed stream attempts since data last arrived. */
+  streamAttempts?: number;
+  /** Any stream message, including heartbeats. */
+  lastStreamMessageAt?: string;
+  /** Last stream event accepted and applied (after validation). */
+  lastStreamEventAt?: string;
+  /** Stream messages rejected as malformed, unknown, oversized or unauthorized. */
+  rejectedStreamMessages?: number;
+  /** Last REST cycle whose health payload verified the backend. */
+  lastRestVerificationAt?: string;
+  /** Last REST cycle attempted (successful or not). */
+  lastRestAttemptAt?: string;
+  pollIntervalMs?: number;
+  /** Full REST re-sync interval while the stream is healthy. */
+  resyncIntervalMs?: number;
+  heartbeatTimeoutMs?: number;
+  maxRetries?: number;
 }
 
 export interface AdapterCapabilities {

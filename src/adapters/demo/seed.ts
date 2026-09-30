@@ -655,7 +655,8 @@ function mapApprovalsIntoMissions(
 function buildSeedHistory(at: (ms: number) => string): DashboardEvent[] {
   let n = 0;
   const id = () => `seed-${++n}`;
-  const e = <E extends DashboardEvent>(ev: Omit<E, 'id'>): E => ({ id: id(), ...ev }) as E;
+  const e = <E extends DashboardEvent>(ev: Omit<E, 'id'>): E =>
+    ({ id: id(), via: 'simulated', ...ev }) as E;
   return [
     e({
       kind: 'mission.failed',

@@ -590,6 +590,7 @@ export function normalizeEvent(raw: unknown, i: number, log: IssueLog): Dashboar
     missionId: str(raw.missionId),
     workerId: str(raw.workerId),
     payload: p,
+    via: 'poll',
   } as DashboardEvent;
   if (event.kind === 'worker.state_changed') {
     event.payload = { ...event.payload, state: mapWorkerState(String(p.state)) };

@@ -40,8 +40,10 @@ export function normalizeStreamEvent(
     log.add('warning', 'stream', 'Dropped stream message that is not valid JSON');
     return null;
   }
-  const base = normalizeEvent(raw, 0, log);
-  if (!base) return null;
+  const normalized = normalizeEvent(raw, 0, log);
+  if (!normalized) return null;
+  // Received over the event stream (adapter-stamped; never taken from the payload).
+  const base = { ...normalized, via: 'stream' as const };
   const p = (isObj(raw) && isObj(raw.payload) ? raw.payload : {}) as Obj;
   const src = `stream ${base.kind} ${base.id}`;
   const reject = (why: string, severity: 'warning' | 'error' = 'warning') => {

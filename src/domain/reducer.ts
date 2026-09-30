@@ -93,15 +93,20 @@ function reduceDomain(s: DashboardSnapshot, e: DashboardEvent): DashboardSnapsho
     case 'worker.state_changed':
       if (!e.workerId) return s;
       return updateWorker(s, e.workerId, (w) =>
-        withState(
-          {
-            ...w,
-            currentActivity: e.payload.activity ?? w.currentActivity,
-            progress: e.payload.progress !== undefined ? e.payload.progress : w.progress,
-          },
-          e.payload.state,
-          e.at,
-        ),
+        // A state change older than the worker's current state (late or
+        // out-of-order delivery) must not roll the worker back. The event is
+        // still kept in the log; only the current state ignores it.
+        isOlder(e.at, w.stateSince)
+          ? w
+          : withState(
+              {
+                ...w,
+                currentActivity: e.payload.activity ?? w.currentActivity,
+                progress: e.payload.progress !== undefined ? e.payload.progress : w.progress,
+              },
+              e.payload.state,
+              e.at,
+            ),
       );
 
     case 'task.progress': {
@@ -278,6 +283,12 @@ function reduceDomain(s: DashboardSnapshot, e: DashboardEvent): DashboardSnapsho
 
 function isTerminal(m: Mission): boolean {
   return m.status === 'COMPLETE' || m.status === 'FAILED' || m.status === 'CANCELLED';
+}
+
+function isOlder(at: string, than: string | undefined): boolean {
+  const a = Date.parse(at);
+  const b = than ? Date.parse(than) : NaN;
+  return !Number.isNaN(a) && !Number.isNaN(b) && a < b;
 }
 
 function withState(w: Worker, state: Worker['state'], at: string): Worker {

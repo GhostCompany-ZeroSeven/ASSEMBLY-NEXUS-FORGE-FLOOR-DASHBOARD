@@ -1,4 +1,8 @@
-import { assertHumanDecisionAllowed, verifyBackendAuthorityClaims } from '@/domain/governance';
+import {
+  assertHumanDecisionAllowed,
+  checkDecision,
+  verifyBackendAuthorityClaims,
+} from '@/domain/governance';
 import { applyEvent } from '@/domain/reducer';
 import { MAX_EVENTS, type DashboardSnapshot, type DataIssue } from '@/domain/snapshot';
 import type { ApprovalDecisionRecord, DataProvenance } from '@/domain/types';
@@ -17,6 +21,7 @@ import type {
   ApprovalDecisionInput,
   ConnectionStatus,
   DashboardAdapter,
+  TransportDiagnostics,
 } from '../types';
 import {
   endpointUrl,
@@ -47,6 +52,9 @@ export interface RestAdapterDeps {
   /** Injected SSE transport factory (tests). Defaults to `createSseTransport`. */
   createStream?: (opts: SseTransportOptions) => SseTransport;
 }
+
+/** Minimum wait before a stream that gave up is tried again (after a verified REST sync). */
+export const STREAM_RECOVERY_MS = 5 * 60_000;
 
 type Resource = 'health' | 'workers' | 'missions' | 'approvals' | 'alerts' | 'events';
 const REQUIRED: readonly Resource[] = ['health', 'workers', 'missions', 'approvals'];
@@ -90,6 +98,13 @@ export class RestAdapter implements DashboardAdapter {
   private streamIssues: DataIssue[] = [];
   private lastCycleAt = 0;
   private lastFullSyncOk = false;
+  // Diagnostics only (never used for decisions or verification).
+  private lastVerifiedAt: string | undefined;
+  private lastAttemptAt: string | undefined;
+  private lastStreamMessageAt: string | undefined;
+  private lastStreamEventAt: string | undefined;
+  private rejectedStreamMessages = 0;
+  private streamFailedAt: number | null = null;
 
   constructor(config: RestAdapterConfig, deps: RestAdapterDeps = {}) {
     this.config = resolveRestConfig(config);
@@ -159,6 +174,26 @@ export class RestAdapter implements DashboardAdapter {
     return this.streamState;
   }
 
+  /** Read-only transport diagnostics (no URLs, headers or credentials). */
+  diagnostics(): TransportDiagnostics {
+    const stream = this.config.stream;
+    return {
+      configured: stream ? 'polling+stream' : 'polling',
+      active: this.transportMode(),
+      streamState: this.streamState,
+      streamAttempts: this.stream?.attempts(),
+      lastStreamMessageAt: this.lastStreamMessageAt,
+      lastStreamEventAt: this.lastStreamEventAt,
+      rejectedStreamMessages: stream ? this.rejectedStreamMessages : undefined,
+      lastRestVerificationAt: this.lastVerifiedAt,
+      lastRestAttemptAt: this.lastAttemptAt,
+      pollIntervalMs: this.config.pollIntervalMs,
+      resyncIntervalMs: stream?.resyncIntervalMs,
+      heartbeatTimeoutMs: stream?.heartbeatTimeoutMs,
+      maxRetries: stream?.maxRetries,
+    };
+  }
+
   /**
    * Resolves even when the backend is down, with an honest DISCONNECTED
    * snapshot, and keeps retrying in the background. It rejects only for
@@ -177,9 +212,13 @@ export class RestAdapter implements DashboardAdapter {
           skipFirst = false;
           return;
         }
-        // While the push stream is healthy, only re-sync occasionally.
+        // While the push stream is healthy AND the backend is verified, only
+        // re-sync occasionally. An unverified backend is re-checked at the
+        // normal poll interval even if the stream is open: an open stream must
+        // never delay recovering (or losing) verification.
         if (
           this.streamState === 'open' &&
+          this.verified &&
           this.config.stream &&
           this.now() - this.lastCycleAt < this.config.stream.resyncIntervalMs
         ) {
@@ -245,6 +284,19 @@ export class RestAdapter implements DashboardAdapter {
     if (!record || record.decision !== input.decision) {
       throw new Error(
         'Decision not confirmed: the backend response did not include a matching decision record.',
+      );
+    }
+    // HTTP success is not trust: the confirmed record must itself satisfy the
+    // governance rules (the required human authority, never a worker).
+    const confirmed = checkDecision(
+      request,
+      record.decidedBy,
+      this.snapshot.workers,
+      record.decision,
+    );
+    if (!confirmed.ok) {
+      throw new Error(
+        `Decision not confirmed: the backend record fails governance (${confirmed.code ?? 'refused'}).`,
       );
     }
     void this.refresh();
@@ -413,6 +465,11 @@ export class RestAdapter implements DashboardAdapter {
     this.lastCycleAt = this.now();
     this.lastFullSyncOk = requiredOk;
     this.verified = healthOk;
+    this.lastAttemptAt = at;
+    if (healthOk) {
+      this.lastVerifiedAt = at;
+      this.maybeRecoverStream();
+    }
     if (healthOk || REQUIRED.some((r) => !failed.has(r))) this.everSynced = true;
 
     next.quality = {
@@ -458,11 +515,27 @@ export class RestAdapter implements DashboardAdapter {
     );
   }
 
+  /**
+   * After the stream gave up, re-arm it once the backend is verified again and
+   * a cool-down has passed. At most one new attempt series per cool-down, and
+   * each series is itself bounded by `maxRetries`: no reconnect storm.
+   */
+  private maybeRecoverStream(): void {
+    if (this.closed || !this.config.stream || this.streamState !== 'failed') return;
+    if (this.streamFailedAt === null || this.now() - this.streamFailedAt < STREAM_RECOVERY_MS)
+      return;
+    this.stream?.stop();
+    this.stream = null;
+    this.streamFailedAt = null;
+    this.startStream();
+  }
+
   private onStreamState(state: StreamState, detail?: string): void {
     if (this.closed) return;
     const was = this.streamState;
     this.streamState = state;
     if (state === 'failed') {
+      this.streamFailedAt = this.now();
       this.addStreamIssue(
         'error',
         `Live stream unavailable (${detail ?? 'failed'}). Falling back to polling.`,
@@ -473,6 +546,9 @@ export class RestAdapter implements DashboardAdapter {
     if (was !== state) {
       // Leaving 'open' means we must not rely on the stream: re-sync now.
       if (was === 'open' && state !== 'open') void this.runCycle();
+      // The stream reconnecting while unverified hints the backend is back:
+      // re-verify by REST now instead of waiting for the next poll.
+      if (state === 'open' && !this.verified) void this.runCycle();
       this.publish();
     }
   }
@@ -480,6 +556,7 @@ export class RestAdapter implements DashboardAdapter {
   private onStreamMessage(m: SseMessage): void {
     if (this.closed) return;
     const at = this.iso();
+    this.lastStreamMessageAt = at;
     if (m.type === 'heartbeat') {
       this.touchFreshness(at);
       this.publish();
@@ -489,9 +566,11 @@ export class RestAdapter implements DashboardAdapter {
     const event = normalizeStreamEvent(m.data, this.snapshot, log, this.config.statusMapping);
     for (const i of log.issues) this.addStreamIssue(i.severity, `${i.source}: ${i.message}`, false);
     if (!event) {
+      this.rejectedStreamMessages += 1;
       this.publish();
       return;
     }
+    this.lastStreamEventAt = at;
     this.snapshot = applyEvent(this.snapshot, event);
     this.touchFreshness(at);
     this.publish([event]);

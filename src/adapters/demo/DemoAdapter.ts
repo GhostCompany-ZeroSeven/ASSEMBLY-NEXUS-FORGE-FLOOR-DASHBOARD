@@ -9,6 +9,7 @@ import type {
   ApprovalDecisionInput,
   DashboardAdapter,
   SimulationControls,
+  TransportDiagnostics,
 } from '../types';
 import { createRng } from './rng';
 import {
@@ -54,6 +55,11 @@ export class DemoAdapter implements DashboardAdapter {
   };
 
   readonly simulation: SimulationControls;
+
+  /** The demo has no network transport: everything is simulated in the browser. */
+  diagnostics(): TransportDiagnostics {
+    return { configured: 'simulated', active: 'simulated' };
+  }
 
   private readonly opts: Required<Omit<DemoAdapterOptions, 'setInterval' | 'clearInterval'>> &
     Pick<DemoAdapterOptions, 'setInterval' | 'clearInterval'>;
@@ -206,7 +212,7 @@ export class DemoAdapter implements DashboardAdapter {
     let snap = this.current();
     const events: DashboardEvent[] = [];
     for (const draft of drafts) {
-      const event = { ...draft, id: this.nextId('evt'), at } as DashboardEvent;
+      const event = { ...draft, id: this.nextId('evt'), at, via: 'simulated' } as DashboardEvent;
       snap = applyEvent(snap, event);
       events.push(event);
     }

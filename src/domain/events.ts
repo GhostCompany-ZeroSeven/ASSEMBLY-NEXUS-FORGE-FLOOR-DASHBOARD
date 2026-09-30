@@ -25,7 +25,15 @@ interface EventBase<K extends string, P> {
   missionId?: string;
   workerId?: string;
   payload: P;
+  /**
+   * How this dashboard received the event, stamped by the ADAPTER on ingest
+   * (never read from backend data). Observability only: it says nothing about
+   * whether the event's claims are authorized.
+   */
+  via?: EventVia;
 }
+
+export type EventVia = 'stream' | 'poll' | 'simulated';
 
 export type MissionCreatedEvent = EventBase<'mission.created', { mission: Mission }>;
 export type WorkerAssignedEvent = EventBase<'worker.assigned', { taskId?: string }>;
