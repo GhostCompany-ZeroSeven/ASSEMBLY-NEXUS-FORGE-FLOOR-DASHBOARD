@@ -3,13 +3,14 @@ import { join } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 /**
- * Pseudo-locale detector shared by the Phase 5 and Phase 6 browser suites.
+ * Pseudo-locale detector shared by the Phase 5, 6 and 7 browser suites.
  * It is not weakened per suite: the allowlist is data only (demo adapter and
  * config literals), language names, key names and Intl month names.
  */
 /**
  * Words that may legitimately appear untransformed: DATA from the demo
- * adapter and the config (names, titles, ids, the authority value), the
+ * adapter and the config, including the test builds' data-source labels
+ * (names, titles, ids, the authority value), the
  * languages' own names, and key names. Everything else visible in the
  * pseudo-locale must come from the catalog; a plain-ASCII word is hard-coded.
  */
@@ -28,6 +29,10 @@ function dataWords(): string[] {
     if (f.endsWith('.ts') && !f.includes('.test.'))
       for (const m of readFileSync(f, 'utf8').matchAll(/(['"`])((?:(?!\1).)*)\1/g))
         for (const w of m[2]!.match(/[A-Za-z]{2,}/g) ?? []) words.add(w);
+  // Build-time config: the data-source labels of the test builds (`.env.*`).
+  for (const f of ['.env.e2e-rest', '.env.e2e-runtime'])
+    for (const m of readFileSync(f, 'utf8').matchAll(/^VITE_FORGE_REST_LABEL=(.*)$/gm))
+      for (const w of m[1]!.match(/[A-Za-z]{2,}/g) ?? []) words.add(w);
   return [...words];
 }
 const ALLOWED = dataWords();
