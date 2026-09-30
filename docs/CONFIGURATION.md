@@ -23,19 +23,19 @@ Then pass it in `src/main.tsx`: `<App config={myConfig} />`.
 
 ## Sections
 
-| Key                    | Purpose                                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `branding`             | Product/surface names, monogram, optional identity `hierarchy` (rendered verbatim, top → bottom)       |
-| `governance`           | `humanAuthority` shown on every gate. Confirmation step. Decisions that require a note                 |
-| `themes`               | Selectable themes. Each `id` must have a matching `[data-theme='id']` block in `src/styles/tokens.css` |
-| `floor.rooms`          | Room id, label, `kind`, `area` (percent x/y/w/h on the floor plan), `equipment`, optional `crewId`     |
-| `floor.stateRoutes`    | Worker state → room id, or `'home'` for the worker's `homeRoomId`                                      |
-| `floor.approvalRoomId` | Where workers waiting on an approval gather                                                            |
-| `crews`                | Crew label, motto, `status: 'active' \| 'reserved'`, emblem                                            |
-| `characters`           | `characterId` → character definition (see below)                                                       |
-| `features`             | `forgeFloor`, `approvals`, `alerts`, `workerMessaging`, `redAlertMode`                                 |
-| `statusMapping`        | Raw backend state string → `WorkerState`, used by adapters through `mapWorkerState`                    |
-| `adapter`              | `{ kind: 'demo', tickMs, seed }` or `{ kind: 'custom', id }`                                           |
+| Key                    | Purpose                                                                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `branding`             | Product/surface names, monogram, optional identity `hierarchy` (rendered verbatim, top → bottom)                            |
+| `governance`           | `humanAuthority` shown on every gate. Confirmation step. Decisions that require a note                                      |
+| `themes`               | Selectable themes. Each `id` must have a matching `[data-theme='id']` block in `src/styles/tokens.css`                      |
+| `floor.rooms`          | Room id, label, `kind`, `area` (percent x/y/w/h on the floor plan), `equipment`, optional `crewId`                          |
+| `floor.stateRoutes`    | Worker state → room id, or `'home'` for the worker's `homeRoomId`                                                           |
+| `floor.approvalRoomId` | Where workers waiting on an approval gather                                                                                 |
+| `crews`                | Crew label, motto, `status: 'active' \| 'reserved'`, emblem                                                                 |
+| `characters`           | `characterId` → character definition (see below)                                                                            |
+| `features`             | `forgeFloor`, `approvals`, `alerts`, `workerMessaging`, `redAlertMode`                                                      |
+| `statusMapping`        | Raw backend state string → `WorkerState`, used by adapters through `mapWorkerState`                                         |
+| `adapter`              | `{ kind: 'demo', tickMs, seed }`, `{ kind: 'rest', rest: RestAdapterConfig }` (see ADAPTERS.md) or `{ kind: 'custom', id }` |
 
 ## Characters and production art
 
@@ -54,5 +54,11 @@ Their feet should sit at the bottom edge so they stand correctly on the floor. U
 
 ## Viewer preferences
 
-Theme, motion (system / reduced / full) and density are stored per browser in `localStorage`
+Theme, motion (system / reduced / full), density and the single-key-shortcut switch are stored per browser in `localStorage`
 (`forge-floor:preferences`). They are not shared across viewers.
+
+## Build-time adapter override (development)
+
+`src/config/runtime.ts` switches the first-party config to the REST adapter when
+`VITE_FORGE_ADAPTER=rest` and `VITE_FORGE_REST_BASE_URL` are set. These values are compiled into
+the client bundle. **Never put secrets in `VITE_*` variables.**

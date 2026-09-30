@@ -8,6 +8,7 @@ import {
   pendingApprovals,
   selectOverview,
   sortMissions,
+  resourceUnavailable,
 } from '@/domain/selectors';
 import { HEALTH_STATUS_META, RISK_TONE, WORKER_STATE_META } from '@/domain/status';
 import { formatRelative } from '@/domain/time';
@@ -255,9 +256,15 @@ export function CommandCenter() {
 
           <Panel title="Crew" actions={<a href={href.workers()}>Roster →</a>}>
             {snapshot.workers.length === 0 ? (
-              <EmptyState title="No workers reported">
-                The data source lists zero workers.
-              </EmptyState>
+              resourceUnavailable(snapshot, 'workers') ? (
+                <EmptyState title="Worker data unavailable">
+                  The data source returned unreadable worker data.
+                </EmptyState>
+              ) : (
+                <EmptyState title="No workers reported">
+                  The data source lists zero workers.
+                </EmptyState>
+              )
             ) : (
               <ul className="crew-strip">
                 {snapshot.workers.map((w) => (

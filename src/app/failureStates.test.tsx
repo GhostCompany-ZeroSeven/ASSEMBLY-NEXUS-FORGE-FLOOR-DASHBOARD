@@ -76,6 +76,9 @@ describe('failure and disconnection states', () => {
     const summary = await screen.findByText('PARTIAL DATA');
     await userEvent.click(summary);
     expect(screen.getByText(/Malformed payload/)).toBeInTheDocument();
+    // Unreadable is not the same as zero: the UI must not claim there are no workers.
+    expect(screen.getByText('Worker data unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('No workers reported')).not.toBeInTheDocument();
   });
 
   it('unknown worker status renders as "Unknown state", not as a healthy state', async () => {

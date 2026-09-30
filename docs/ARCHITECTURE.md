@@ -11,7 +11,7 @@
 └───────────────▲─────────────────────────────────────────────────────────────────────────────┘
                 │ DashboardAdapter contract (src/adapters/types.ts)
 ┌───────────────┴──────────────┬───────────────────────────────┬─────────────────────────────┐
-│ DemoAdapter (implemented)    │ AssemblyNexusAdapter (future) │ REST / EventStream (future) │
+│ DemoAdapter (implemented)    │ RestAdapter (implemented)     │ AssemblyNexus / SSE (future)│
 │ seed + scripted beats        │ translate AN payloads         │ via transport layer         │
 └───────────────┬──────────────┴───────────────┬───────────────┴─────────────────────────────┘
                 │ applyEvent (src/domain/reducer.ts)  │ EventTransport (src/adapters/transport)
@@ -21,16 +21,19 @@
 
 ## Layers
 
-| Layer      | Path                     | Rules                                                                    |
-| ---------- | ------------------------ | ------------------------------------------------------------------------ |
-| Domain     | `src/domain`             | Pure TS. Types, events, reducer, selectors, formatting. No React.        |
-| Adapters   | `src/adapters`           | The only place that knows about backends. Emits normalized data only.    |
-| Transport  | `src/adapters/transport` | Moves raw messages. No domain knowledge.                                 |
-| Config     | `src/config`             | Brand/product specifics. Only `main.tsx` imports the first-party config. |
-| Store      | `src/store`              | React context wiring; hooks (`useSnapshot`, `useConfig`, `useNow`).      |
-| Characters | `src/characters`         | `CharacterAvatar` resolves art from config; procedural SVG placeholders. |
-| Features   | `src/features/*`         | One folder per surface.                                                  |
-| Styles     | `src/styles`             | Tokens → base → components → shell → floor → features.                   |
+| Layer      | Path                       | Rules                                                                    |
+| ---------- | -------------------------- | ------------------------------------------------------------------------ |
+| Domain     | `src/domain`               | Pure TS. Types, events, reducer, selectors, formatting. No React.        |
+| Adapters   | `src/adapters`             | The only place that knows about backends. Emits normalized data only.    |
+| REST       | `src/adapters/rest`        | Config validation, HTTP+timeout, untrusted-payload normalizer, adapter.  |
+| Governance | `src/domain/governance.ts` | Single decision rule set used by UI and every adapter.                   |
+| Commands   | `src/features/command`     | Command palette, shortcut layer, keyboard reference.                     |
+| Transport  | `src/adapters/transport`   | Moves raw messages. No domain knowledge.                                 |
+| Config     | `src/config`               | Brand/product specifics. Only `main.tsx` imports the first-party config. |
+| Store      | `src/store`                | React context wiring; hooks (`useSnapshot`, `useConfig`, `useNow`).      |
+| Characters | `src/characters`           | `CharacterAvatar` resolves art from config; procedural SVG placeholders. |
+| Features   | `src/features/*`           | One folder per surface.                                                  |
+| Styles     | `src/styles`               | Tokens → base → components → shell → floor → features.                   |
 
 ## Key decisions
 
@@ -42,12 +45,20 @@
    replayed or out-of-scope events do not corrupt state. The event log is capped at 500 entries.
 3. **No invented precision.** Missing progress shows "n/a" with a striped bar. Missing estimates
    show `--:--:--` and "NO ESTIMATE PROVIDED". Finished missions freeze their duration.
-4. **Provenance is always visible.** `DataProvenance.mode` plus `verifiedBackend` drive the
-   top-bar badge. `live` without `verifiedBackend` renders as DISCONNECTED.
-5. **Governance is enforced at two layers.** The UI requires a confirmation step and configurable
-   mandatory notes, and adapters must validate the decider against `requiredAuthority`. The demo
-   script is structurally unable to decide approvals, because only `submitApprovalDecision` emits
-   `approval.decided`.
+4. **Provenance is always visible.** `displayMode()` in `src/domain/provenance.ts` computes the
+   badge. LIVE needs a non-demo adapter, a verified backend and a connected transport; anything
+   less renders as DISCONNECTED. `snapshot.quality` (last sync, stale threshold, partial flag,
+   issue list) drives the stale, partial and malformed-data banners.
+5. **Governance is one rule set, enforced at every layer.** `checkDecision` and
+   `assertHumanDecisionAllowed` (`src/domain/governance.ts`) decide whether a decision is allowed:
+   - only the named human authority may decide
+   - no worker may decide, by id or by name, including on its own request
+   - missing, blank or worker-named authority blocks the decision
+   - only PENDING or HELD requests are open
+     The UI uses the same check to decide whether to show decision buttons. Both adapters call it
+     before recording or sending anything. The demo script is structurally unable to decide
+     approvals, because only `submitApprovalDecision` emits `approval.decided`. A real backend must
+     enforce the same rules again server-side against an authenticated identity.
 6. **Capability ≠ authority.** These are separate fields (`capabilities`, `authority`) on
    `Worker`, rendered in separate UI groups.
 7. **Floor placement is data-driven.** `stateRoutes` maps each state to a room, `'home'` means the
@@ -55,8 +66,15 @@
    absolutely positioned by percentage, and CSS transitions animate the walk between rooms.
    Below 900px the plan collapses into stacked rooms.
 8. **Hash routing, no router dependency.** Static hosting needs no server rewrites.
-9. **Plain CSS with tokens.** Themes swap custom properties. `[data-tone]` drives every status
-   color. Reduced motion disables all animation and transitions globally.
+9. **Fail safe on unknown data.** `UNKNOWN` is a first-class worker, mission and approval state.
+   `mapWorkerState` falls back to it instead of guessing. `UNKNOWN` is never in flight, never
+   decidable, and never styled as healthy.
+10. **Keyboard layer.** One global handler (`useGlobalShortcuts`): Ctrl/⌘+K always works, and
+    single-key shortcuts are optional (WCAG 2.1.4) and inactive while typing or while a dialog is
+    open. Dialogs share one accessible `Dialog` primitive, and the rest of the app is made
+    `inert` while one is open.
+11. **Plain CSS with tokens.** Themes swap custom properties. `[data-tone]` drives every status
+    color. Reduced motion disables all animation and transitions globally.
 
 ## Real-time readiness
 
@@ -64,3 +82,15 @@
 in the adapter, call `applyEvent` for each normalized event, and publish the result. Use
 `createPollingTransport` for REST polling. SSE and WebSocket transports should implement the same
 `EventTransport` interface. They are intentionally not built until a real backend needs them.
+
+## Verification layers
+
+| Layer                         | Tool                              | Location                                                |
+| ----------------------------- | --------------------------------- | ------------------------------------------------------- |
+| Domain/reducer/time           | Vitest                            | `src/domain/*.test.ts`                                  |
+| Governance regressions        | Vitest                            | `src/domain/governance.test.ts`                         |
+| Adapter behaviour             | Vitest + in-memory backend        | `src/adapters/**/*.test.ts`, `src/test/fakeBackend.ts`  |
+| Adapter conformance           | Shared suite                      | `src/test/conformance.ts`                               |
+| UI flows/failure states       | Testing Library (jsdom)           | `src/app/*.test.tsx`, `src/features/command/*.test.tsx` |
+| Structural a11y               | axe-core (jsdom)                  | `src/test/a11y.test.tsx`                                |
+| Browser a11y/keyboard/runtime | Playwright + @axe-core/playwright | `e2e/*.spec.ts`                                         |

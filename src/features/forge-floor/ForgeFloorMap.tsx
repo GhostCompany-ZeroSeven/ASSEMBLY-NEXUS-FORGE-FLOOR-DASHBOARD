@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { href } from '@/app/router';
 import { Icon } from '@/components/Icon';
 import type { RoomDefinition } from '@/config/types';
-import { pendingApprovals } from '@/domain/selectors';
+import { pendingApprovals, resourceUnavailable } from '@/domain/selectors';
 import type { Worker } from '@/domain/types';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useConfig, useSnapshot } from '@/store/hooks';
@@ -53,7 +53,9 @@ export function ForgeFloorMap({
       <div className="floor floor--stacked" data-critical={hasCritical || undefined}>
         {snapshot.workers.length === 0 && (
           <p className="empty" role="status">
-            No workers reported by the data source.
+            {resourceUnavailable(snapshot, 'workers')
+              ? 'Worker data unavailable: see data warnings above.'
+              : 'No workers reported by the data source.'}
           </p>
         )}
         {floor.rooms.map((room) => {
@@ -104,7 +106,9 @@ export function ForgeFloorMap({
       <div className="floor__grid" aria-hidden="true" />
       {snapshot.workers.length === 0 && (
         <p className="floor__empty" role="status">
-          No workers reported by the data source.
+          {resourceUnavailable(snapshot, 'workers')
+            ? 'Worker data unavailable: see data warnings above.'
+            : 'No workers reported by the data source.'}
         </p>
       )}
       {floor.rooms.map((room) => {

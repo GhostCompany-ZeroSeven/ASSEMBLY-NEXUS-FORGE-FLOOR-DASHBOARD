@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "test:e2e": "npm run build && playwright test",
-    "test:a11y": "vitest run src/test/a11y.test.tsx && npm run test:e2e -- e2e/a11y.spec.ts"
+    "test:a11y": "vitest run src/test/a11y.test.tsx && npm run test:e2e -- e2e/a11y.spec.ts",
+    "mock:rest": "node scripts/mock-rest-server.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

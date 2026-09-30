@@ -10,21 +10,23 @@ little Snow Wolf chaos. 🐺⚡
 
 > ⚠️ **Data provenance.** Out of the box the dashboard runs the **Local Demo Simulation**. Every
 > worker, mission, approval and alert is simulated in your browser, and the UI labels it
-> **DEMO · SIMULATED** everywhere. No Assembly Nexus backend is connected yet. See
-> [docs/ADAPTERS.md](docs/ADAPTERS.md) for how to connect one.
+> **DEMO · SIMULATED** everywhere. A **GenericRESTAdapter** can read a real backend that speaks the
+> documented wire format, but **no Assembly Nexus backend is connected yet**. See
+> [docs/ADAPTERS.md](docs/ADAPTERS.md).
 
 ## Surfaces
 
-| Surface            | What it shows                                                                                                                                                                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Command Center** | Stat tiles, featured-mission instrumentation, Founder Gate queue, floor preview, alerts, health, crew, activity                                                                                                   |
-| **Forge Floor**    | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes                                                    |
-| **Missions**       | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                             |
-| **Workers**        | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                   |
-| **Approval Gates** | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                        |
-| **Alerts**         | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert |
-| **Activity**       | Chronological stream built from structured events, filterable by category                                                                                                                                         |
-| **Settings**       | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                   |
+| Surface             | What it shows                                                                                                                                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Command Center**  | Stat tiles, featured-mission instrumentation, Founder Gate queue, floor preview, alerts, health, crew, activity                                                                                                   |
+| **Forge Floor**     | Rooms (Planning, Research, Build, Security, Review, Certification, Ops, Founder Gate, Snow Wolf Den, Break). Workers walk between rooms as their state changes                                                    |
+| **Missions**        | Mission board and per-mission control: elapsed/remaining clocks, tasks, dependencies, artifacts, review, certification, approvals, timeline, MISSION COMPLETE results                                             |
+| **Workers**         | Worker cards, and a full-screen focus view with timeline, conversation panel, blockers, artifacts and telemetry                                                                                                   |
+| **Approval Gates**  | APPROVE / DENY / HOLD with a confirmation step, required notes, risk and reversibility, and a clear split between capability and authority                                                                        |
+| **Alerts**          | INFO / NOTICE / WARNING / CRITICAL. Each alert says what happened, what is affected, what needs attention, and whether human action is required. An unacknowledged CRITICAL alert switches the shell to Red Alert |
+| **Activity**        | Chronological stream built from structured events, filterable by category                                                                                                                                         |
+| **Command palette** | `Ctrl/⌘ + K`: jump to any surface, worker or mission; pause/step the demo; switch theme. Press `?` for every shortcut                                                                                             |
+| **Settings**        | Theme (Forge / Snow Wolf), motion, density, adapter capabilities, governance, rooms, characters, status mapping                                                                                                   |
 
 ## Quick start
 
@@ -38,18 +40,34 @@ npm run dev        # http://localhost:5173
 Demo controls are in the top bar (**SIM**): pause/resume, single-step, speed, and reset. The demo
 never decides approvals itself. Pending gates stay pending until you act.
 
+### Try the GenericRESTAdapter locally
+
+```bash
+npm run mock:rest   # local mock backend on http://127.0.0.1:8787 (environment: mock)
+VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://127.0.0.1:8787 npm run dev
+```
+
+The badge shows **LIVE · MOCK** only while the mock's health endpoint answers. To see the failure
+states, inject a fault, for example
+`curl "http://127.0.0.1:8787/__fail?resource=workers&mode=malformed"` (modes: `down`, `http500`,
+`malformed`, `slow`, `off`). `VITE_*` variables are compiled into the client bundle, so never put
+secrets in them.
+
 ## Scripts
 
-| Command                | Purpose                                        |
-| ---------------------- | ---------------------------------------------- |
-| `npm run dev`          | Vite dev server                                |
-| `npm run build`        | Typecheck + production build to `dist/`        |
-| `npm run preview`      | Serve the production build                     |
-| `npm run typecheck`    | TypeScript project check                       |
-| `npm run lint`         | ESLint (typescript-eslint, react-hooks)        |
-| `npm run format:check` | Prettier check (`npm run format` to write)     |
-| `npm test`             | Vitest unit + component tests (jsdom)          |
-| `npm run verify`       | typecheck → lint → test → build (what CI runs) |
+| Command                | Purpose                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`          | Vite dev server                                                                                               |
+| `npm run build`        | Typecheck + production build to `dist/`                                                                       |
+| `npm run preview`      | Serve the production build                                                                                    |
+| `npm run typecheck`    | TypeScript project check                                                                                      |
+| `npm run lint`         | ESLint (typescript-eslint, react-hooks)                                                                       |
+| `npm run format:check` | Prettier check (`npm run format` to write)                                                                    |
+| `npm test`             | Vitest unit, component, conformance, governance and axe tests (jsdom)                                         |
+| `npm run test:e2e`     | Build, then Playwright: axe incl. contrast, keyboard, reduced motion, runtime errors, overflow at 4 viewports |
+| `npm run test:a11y`    | Only the accessibility audits (jsdom + browser)                                                               |
+| `npm run mock:rest`    | Local mock REST backend for the GenericRESTAdapter                                                            |
+| `npm run verify`       | typecheck → lint → test → build (CI also runs format check and e2e)                                           |
 
 ## Stack
 
@@ -76,15 +94,53 @@ than a hard-coded dependency. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.
 ## Governance principles baked into the UI
 
 - Only the configured human authority (`Founder #0007` in the first-party config) can decide a gate.
-  Adapters must reject decisions from anyone else.
+  One shared rule set (`src/domain/governance.ts`) is enforced in the UI **and** in every adapter.
+  No worker can decide, not even on its own request. Missing or malformed authority data blocks
+  the decision. HOLD never counts as APPROVE.
 - A worker's **capabilities** (what it can do) are always shown apart from its **authority**
   (what a human has explicitly granted). Workers start with no authority, and the dashboard never
   grants it.
-- A decision recorded by a demo adapter is marked **simulated**. A "LIVE" badge appears only when
-  an adapter reports a verified backend.
+- A decision recorded by a demo adapter is marked **simulated**. A REST decision counts only
+  when the backend returns a matching decision record.
+- **LIVE** appears only for a non-demo adapter that has a verified backend and a connected
+  transport. Moving demo data can never produce LIVE.
+- The regression suite `src/domain/governance.test.ts` encodes these rules. Do not weaken it.
+
+## Failure states
+
+Backend unavailable, timeout, malformed payload, partial data, stale data, reconnecting, adapter
+error, empty queues, zero workers, unknown status, and unsupported capability each have an
+explicit, tested presentation. Malformed data is dropped or shown as **UNKNOWN** and listed under
+**PARTIAL DATA**. It is never shown as healthy. See [docs/ADAPTERS.md](docs/ADAPTERS.md#failure-states).
+
+## Keyboard
+
+| Keys                       | Action                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `Ctrl/⌘ + K`               | Command palette (always on)                                                     |
+| `/`                        | Command palette                                                                 |
+| `?`                        | Keyboard reference (in-app)                                                     |
+| `G` then `C F M W A L V S` | Command Center, Floor, Missions, Workers, Approvals, Alerts, Activity, Settings |
+| `P` / `N`                  | Pause/resume, or step the demo simulation (demo only)                           |
+| `Esc`                      | Close dialog, or leave the worker focus view                                    |
+
+Single-key shortcuts are ignored while typing, and you can switch them off in the keyboard
+reference (WCAG 2.1.4).
 
 ## Accessibility
 
-Keyboard navigable, with a skip link, focus management on navigation, labelled landmarks and
-controls, and an accessible name for every floor token. Reduced motion is honoured (system setting
-or a manual override in Settings). The Red Alert state stays static and does not strobe.
+- **Keyboard:** everything is keyboard operable. There is a skip link, focus moves to the main
+  content on navigation (not on first load), and modal dialogs trap and restore focus.
+- **Semantics:** landmarks and controls are labelled, every floor token has an accessible name,
+  and results and connection changes are announced.
+- **Motion:** reduced motion is honoured, via the system setting or a Settings override. The Red
+  Alert state is static and never strobes.
+- **Automated checks:** axe runs on every surface and state (Red Alert, confirmation, dialogs,
+  failure states) in jsdom, and again in Chromium with colour contrast (WCAG 2.2 AA tags).
+  Playwright also verifies keyboard flows, focus visibility, reduced motion, and the absence of
+  runtime errors and horizontal overflow at phone, tablet, desktop and 2560px widths.
+
+## Licence
+
+No open-source licence has been chosen yet. Choosing one is a Founder decision that must be made
+before public release. Until then all rights are reserved.

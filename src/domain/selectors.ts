@@ -104,3 +104,8 @@ export function isStale(s: DashboardSnapshot, nowMs: number): boolean {
   if (!lastSuccessfulSyncAt) return true;
   return nowMs - Date.parse(lastSuccessfulSyncAt) > staleAfterMs;
 }
+
+/** True when a resource (e.g. `workers`) failed to load or parse in the latest sync. */
+export function resourceUnavailable(s: DashboardSnapshot, resource: string): boolean {
+  return s.quality.issues.some((i) => i.severity === 'error' && i.source === resource);
+}
