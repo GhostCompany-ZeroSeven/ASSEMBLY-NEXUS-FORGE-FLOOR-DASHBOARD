@@ -6,6 +6,8 @@ import { App } from '@/app/App';
 import { assemblyNexusConfig } from '@/config/assemblyNexus.config';
 import { MAX_EVENTS } from '@/domain/snapshot';
 import { mergeObserved } from '@/adapters/rest/RestAdapter';
+import { observeSession } from '@/domain/contract/observe';
+import { historyAssured } from '@/domain/contract/profiles';
 import { createFakeBackend } from './fakeBackend';
 import { waitForSurface } from './render';
 
@@ -55,6 +57,7 @@ describe('performance and resilience (stress dataset)', () => {
     '#/approvals',
     '#/activity',
     '#/brief',
+    '#/quality',
   ]) {
     it(`${hash} renders the stress dataset within budget with a bounded number of timers`, async () => {
       const live = trackIntervals();
@@ -275,5 +278,38 @@ describe('Phase 7 event reconciliation stays bounded', () => {
     for (let i = 0; i < 10; i++) await adapter.refresh();
     expect((performance.now() - t0) / 10).toBeLessThan(40);
     expect(adapter.getSnapshot().events.length).toBeLessThanOrEqual(MAX_EVENTS);
+  });
+});
+
+describe('Phase 8 contract evaluation stays bounded (and outside the render path)', () => {
+  const timeIt = (fn: () => void, runs = 50) => {
+    fn();
+    const t0 = performance.now();
+    for (let i = 0; i < runs; i++) fn();
+    return (performance.now() - t0) / runs;
+  };
+  const s = buildStressSnapshot(NOW);
+  const live = {
+    ...s,
+    provenance: { ...s.provenance, mode: 'live' as const, contractProfile: 'mock' },
+  };
+
+  it('profile resolution + history assurance < 0.1ms', () => {
+    expect(timeIt(() => historyAssured(live.provenance), 500)).toBeLessThan(0.1);
+  });
+
+  it('session observation of all 14 rules over 500 events < 5ms', () => {
+    const late = arrivedOutOfOrder(live.events).size;
+    expect(timeIt(() => observeSession(live, NOW, late))).toBeLessThan(5);
+  });
+
+  it('the inspector with the contract panel renders the stress dataset < 8s (jsdom)', async () => {
+    window.location.hash = '#/quality';
+    const t0 = performance.now();
+    const { unmount } = render(<App config={assemblyNexusConfig} adapter={stressAdapter()} />);
+    await waitForSurface();
+    expect(document.querySelectorAll('[data-rule]')).toHaveLength(14);
+    expect(performance.now() - t0).toBeLessThan(8000);
+    unmount();
   });
 });

@@ -150,6 +150,7 @@ export class RestAdapter implements DashboardAdapter {
       verifiedBackend: this.verified,
       environment: this.environment,
       transport: this.transportMode(),
+      contractProfile: this.config.contractProfile,
       note: !this.verified
         ? `Not verified: ${this.config.baseUrl} has not returned a valid health payload in the latest cycle.`
         : this.transportMode() === 'sse'

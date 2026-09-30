@@ -964,6 +964,8 @@ export const es: Messages = {
         'history-truncated': 'el historial conservado no llega tan atrás',
         'history-gap':
           'el historial de eventos tiene un hueco desde entonces: pueden faltar eventos',
+        'contract-unassured':
+          'el contrato de la fuente de datos no garantiza un historial de eventos completo',
         'baseline-truncated': 'la última visita era demasiado grande para registrarla entera',
       },
       eventsLowerBound: (n) => `al menos ${n} observados`,
@@ -1055,6 +1057,8 @@ export const es: Messages = {
       'history-not-covered': 'el historial conservado no llega hasta tu última visita',
       'history-gap':
         'el historial de eventos tiene un hueco desde tu última visita: pueden faltar eventos',
+      'contract-unassured':
+        'el contrato de la fuente de datos no garantiza un historial de eventos completo',
     },
     change: {
       missionNoLongerReported:
@@ -1162,6 +1166,146 @@ export const es: Messages = {
     reportedBySource: 'informado por la fuente de datos',
     external: 'se abre fuera del panel',
     noLink: 'sin enlace informado',
+  },
+
+  contract: {
+    title: 'Contrato del adaptador',
+    lede: 'Lo que se declara que garantiza esta fuente de datos, lo que muestran realmente los datos actuales y lo que sigue siendo desconocido. Una declaración no es una observación, y una observación no es una garantía.',
+    profile: 'Perfil de contrato',
+    kind: {
+      MOCK: 'PERFIL SIMULADO (MOCK)',
+      REAL_ANN_PLACEHOLDER: 'MARCADOR DE ASSEMBLY NEXUS',
+      UNDECLARED: 'SIN PERFIL DECLARADO',
+      SIMULATED: 'DATOS SIMULADOS',
+    },
+    kindNote: {
+      MOCK: 'El backend simulado propio de este repositorio. No es el contrato de Assembly Nexus, no es producción y no está aprobado por el Founder.',
+      REAL_ANN_PLACEHOLDER:
+        'Todas las propiedades son DESCONOCIDAS hasta que el Founder apruebe un contrato de Assembly Nexus.',
+      UNDECLARED:
+        'Esta compilación no declara ningún contrato para su backend: no se garantiza nada y la cobertura de eventos nunca es exacta.',
+      SIMULATED:
+        'La simulación genera sus eventos dentro del panel, así que no se aplica ningún contrato de fuente de datos.',
+    },
+    provenanceLabel: 'De dónde vienen las declaraciones',
+    provenance: {
+      MOCK_PROFILE: 'leídas de la implementación simulada de este repositorio',
+      FOUNDER_APPROVED_CONTRACT: 'un contrato aprobado por el Founder',
+      UNKNOWN: 'desconocido',
+    },
+    approval: 'Aprobación del Founder',
+    notApproved: 'no aprobado: ningún contrato de aquí está aprobado por el Founder',
+    coverage: 'Cobertura exacta de eventos permitida',
+    coverageYes: 'sí: el perfil garantiza las reglas de veracidad del historial',
+    coverageNo: 'no: los recuentos se muestran como «al menos N» o DESCONOCIDO',
+    environment: 'Entorno informado por el backend',
+    environmentNone: 'no informado',
+    environmentNote:
+      'Lo informa el backend y no está verificado. Si un backend que informa un entorno de pruebas debe mostrarse como SIMULADO en lugar de EN VIVO es una decisión pendiente del Founder; la insignia muestra ahora EN VIVO con esta etiqueta.',
+    rules: 'Reglas',
+    needs: 'El panel lo necesita',
+    requirement: { REQUIRED: 'obligatorio', OPTIONAL: 'opcional', UNKNOWN: 'desconocido' },
+    states: 'El perfil declara',
+    guarantee: {
+      GUARANTEED: 'garantizado',
+      NOT_GUARANTEED: 'no garantizado',
+      UNKNOWN: 'DESCONOCIDO',
+      UNSPECIFIED: 'sin especificar',
+      NOT_APPLICABLE: 'no es una propiedad de la fuente (comportamiento del panel)',
+    },
+    capability: { SUPPORTED: 'admitido', NOT_SUPPORTED: 'no admitido', UNKNOWN: 'DESCONOCIDO' },
+    observedLabel: 'Visto en los datos actuales',
+    observed: {
+      'violation-observed': (n) => `informes contradictorios vistos: ${n}`,
+      observed: (n) => `vistos: ${n}`,
+      'none-observed': 'ninguno visto (esto no es un aprobado)',
+      'not-observable': 'no se puede observar solo con los datos',
+      'not-applicable': 'no aplicable',
+    },
+    historyTruth: 'afecta a la veracidad del historial de eventos',
+    note: {
+      mockGenerated:
+        'se cumple para los eventos que genera la simulación; la inyección de pruebas puede romperlo a propósito',
+      insertionOrder: 'el orden del listado es el de inserción, no el de la hora del evento',
+      suffixWindow: 'el listado contiene los eventos más recientes, sin huecos',
+      streamAtMostOnce:
+        'los eventos del flujo enviados durante una desconexión se pierden; el listado puede recuperarlos',
+      noReplay: 'no se reenvía nada al reconectar; el panel se recupera al resincronizar',
+      noTruncationSignal:
+        'la fuente nunca indica que el historial se cortó; el panel deduce los huecos',
+      duplicatesPossible: 'el mismo evento puede llegar más de una vez',
+      noConflictRule: 'la fuente no define ninguna regla para un mismo id con datos distintos',
+      missionSubrecords:
+        'el equipo, las tareas, las dependencias y los artefactos vienen dentro de las misiones',
+      handledByAdapter: 'comportamiento del panel, comprobado por el ejecutor de conformidad',
+    },
+    runnerNote:
+      'Los procedimientos de conformidad se ejecutan de forma explícita y acotada (npm run test:conformance) contra la simulación, nunca desde esta página. Un aprobado describe una sola ejecución: no es una garantía, ni autoridad, ni certificación, ni aprobación del Founder.',
+    rule: {
+      EVENT_ID_UNIQUENESS: {
+        name: 'Unicidad del id de evento',
+        description: 'Un id nunca se reutiliza para otro evento.',
+      },
+      EVENT_ID_STABILITY: {
+        name: 'Estabilidad del id de evento',
+        description:
+          'El mismo evento conserva el mismo id por cualquier vía y en cualquier listado.',
+      },
+      LISTING_WINDOW_CONTIGUITY: {
+        name: 'Continuidad de la ventana del listado',
+        description:
+          'Un listado contiene los eventos más recientes sin huecos, así que el solapamiento demuestra que no se saltó nada.',
+      },
+      LISTING_ORDERING: {
+        name: 'Orden del listado',
+        description: 'El orden en que un listado devuelve los eventos.',
+      },
+      DUPLICATE_DELIVERY: {
+        name: 'Entrega duplicada',
+        description:
+          'Un evento entregado más de una vez se cuenta una vez y conserva su primera llegada.',
+      },
+      AT_LEAST_ONCE_DELIVERY: {
+        name: 'Entrega al menos una vez',
+        description: 'Cada evento llega al panel al menos una vez.',
+      },
+      SAME_ID_CONFLICT_SEMANTICS: {
+        name: 'Mismo id, datos contradictorios',
+        description: 'Una copia con datos distintos nunca reescribe lo observado; se informa.',
+      },
+      RECONNECT_RESUME_SEMANTICS: {
+        name: 'Reconexión y reanudación',
+        description: 'Si un flujo reconectado reenvía lo que se perdió.',
+      },
+      REST_SSE_RECONCILIATION: {
+        name: 'Conciliación entre REST y flujo',
+        description:
+          'Los eventos solo del flujo, solo del listado o de ambas vías quedan exactamente una vez.',
+      },
+      EVENT_TIME_SEMANTICS: {
+        name: 'Hora del evento en la fuente',
+        description: 'La hora de la fuente se conserva tal como se informa, aunque esté desfasada.',
+      },
+      RECEIVED_TIME_SEMANTICS: {
+        name: 'Hora de recepción',
+        description:
+          'La hora de llegada es el reloj del panel en la primera llegada y nunca se reescribe.',
+      },
+      HISTORY_TRUNCATION_SIGNAL: {
+        name: 'Truncamiento del historial',
+        description: 'Se detecta un hueco en el historial de eventos, se señale o no.',
+      },
+      RESOURCE_PARTIAL_FAILURE: {
+        name: 'Fallo parcial de recursos',
+        description:
+          'Un recurso que falla está NO DISPONIBLE, nunca vacío, y el fallo no se extiende.',
+      },
+      MALFORMED_RECORD_HANDLING: {
+        name: 'Registros mal formados',
+        description:
+          'Los registros no válidos se descartan o se degradan; una carga ilegible hace fallar su recurso.',
+      },
+    },
   },
 
   quality: {

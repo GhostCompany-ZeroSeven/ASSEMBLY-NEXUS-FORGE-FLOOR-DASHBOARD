@@ -1,5 +1,6 @@
 import { href, withQuery } from '@/app/router';
 import { alertPhase, type Checkpoint } from './checkpoint';
+import { historyAssured } from './contract/profiles';
 import { eventCoverage, historyGapSince, type CoverageState } from './eventCoverage';
 import { resourceUnavailable } from './selectors';
 import type { DashboardSnapshot } from './snapshot';
@@ -55,6 +56,7 @@ export type UnknownReason =
   | 'unavailable-now'
   | 'history-truncated'
   | 'history-gap'
+  | 'contract-unassured'
   | 'baseline-truncated';
 
 export type DigestEntity = 'mission' | 'worker' | 'approval' | 'alert' | 'artifact';
@@ -363,6 +365,7 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
     !resourceUnavailable(s, 'events'),
     true,
     historyGapSince(s.quality, cp.at),
+    historyAssured(s.provenance),
   );
   const eventsObserved = cov.observedNew;
   if (cov.state === 'exact') counts.events = cov.count;
@@ -373,8 +376,8 @@ export function computeDigest(s: DashboardSnapshot, cp: Checkpoint | null): Dige
         ? 'unavailable-now'
         : cov.reason === 'events-unavailable-then'
           ? 'unavailable-then'
-          : cov.reason === 'history-gap'
-            ? 'history-gap'
+          : cov.reason === 'history-gap' || cov.reason === 'contract-unassured'
+            ? cov.reason
             : 'history-truncated',
     );
 

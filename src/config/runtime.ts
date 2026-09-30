@@ -7,8 +7,8 @@ import type { AdapterConfig, DashboardConfig } from './types';
  *   (+ VITE_FORGE_REST_STREAM=/stream to enable the optional SSE stream)
  *
  * Vite inlines `VITE_*` variables into the client bundle, so they must NEVER
- * contain secrets. Only the adapter kind, a base URL, a label, the stream path
- * and two timing numbers are read here. The timings are clamped by
+ * contain secrets. Only the adapter kind, a base URL, a label, the stream path,
+ * a contract profile id and two timing numbers are read here. The timings are clamped by
  * `resolveRestConfig` (poll ≥ 1s; re-sync ≥ poll); non-numbers are ignored.
  */
 export function withEnvOverrides(
@@ -44,6 +44,9 @@ export function withEnvOverrides(
         decide: '/approvals/:id/decision',
         acknowledge: '/alerts/:id/acknowledge',
       },
+      ...(env.VITE_FORGE_CONTRACT_PROFILE
+        ? { contractProfile: env.VITE_FORGE_CONTRACT_PROFILE }
+        : {}),
       ...(ms(env.VITE_FORGE_REST_POLL_MS) !== undefined
         ? { pollIntervalMs: ms(env.VITE_FORGE_REST_POLL_MS) }
         : {}),

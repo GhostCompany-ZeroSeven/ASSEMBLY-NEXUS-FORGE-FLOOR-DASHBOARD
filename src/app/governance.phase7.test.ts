@@ -58,11 +58,25 @@ async function control(path: string, body?: unknown, method = 'POST') {
 
 describe('the dashboard never reaches the mock control surface', () => {
   it('no application module references the control routes or the runtime server', () => {
-    const hits = files('src')
-      .filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\.tsx?$/.test(f))
-      .filter((f) =>
-        /__mock|__fail|mock-runtime-server|scripts\/mock/.test(readFileSync(f, 'utf8')),
-      );
+    // src/test/ is test support (never bundled; see the next check).
+    const app = files('src').filter(
+      (f) =>
+        /\.(ts|tsx)$/.test(f) && !/\.test\.tsx?$/.test(f) && !f.startsWith(join('src', 'test')),
+    );
+    const hits = app.filter((f) =>
+      /__mock|__fail|mock-runtime-server|scripts\/mock/.test(readFileSync(f, 'utf8')),
+    );
+    expect(hits).toEqual([]);
+  });
+
+  it('no application module imports test support (which may reach the mock)', () => {
+    const app = files('src').filter(
+      (f) =>
+        /\.(ts|tsx)$/.test(f) && !/\.test\.tsx?$/.test(f) && !f.startsWith(join('src', 'test')),
+    );
+    const hits = app.filter((f) =>
+      /from ['"](@\/test\/|(\.\.\/)+test\/)/.test(readFileSync(f, 'utf8')),
+    );
     expect(hits).toEqual([]);
   });
 
@@ -72,6 +86,7 @@ describe('the dashboard never reaches the mock control surface', () => {
     expect(keys.sort()).toEqual(
       [
         'VITE_FORGE_ADAPTER',
+        'VITE_FORGE_CONTRACT_PROFILE',
         'VITE_FORGE_REST_BASE_URL',
         'VITE_FORGE_REST_LABEL',
         'VITE_FORGE_REST_POLL_MS',

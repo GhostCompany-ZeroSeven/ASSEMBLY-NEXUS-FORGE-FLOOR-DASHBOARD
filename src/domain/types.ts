@@ -46,6 +46,12 @@ export interface DataProvenance {
    * `polling-fallback` (a configured stream failed; polling explicitly took over).
    */
   transport?: 'polling' | 'sse' | 'polling-fallback';
+  /**
+   * Contract profile id DECLARED BY THE BUILD for this adapter (see
+   * domain/contract/profiles.ts), never read from backend data. Absent or
+   * unknown ids mean "undeclared": no source guarantee is assumed.
+   */
+  contractProfile?: string;
 }
 
 /* ------------------------------------------------------------------------- */

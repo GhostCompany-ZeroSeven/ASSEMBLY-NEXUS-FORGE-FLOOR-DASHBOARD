@@ -15,6 +15,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:conformance": "vitest run src/domain/contract",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "build:e2e-rest": "vite build --mode e2e-rest --outDir dist-e2e-rest",
     "build:e2e-runtime": "vite build --mode e2e-runtime --outDir dist-e2e-runtime",

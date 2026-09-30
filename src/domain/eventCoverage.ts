@@ -30,7 +30,8 @@ export type CoverageReason =
   | 'events-unavailable-then'
   | 'history-starts-after-checkpoint'
   | 'no-history-at-checkpoint'
-  | 'history-gap';
+  | 'history-gap'
+  | 'contract-unassured';
 
 export interface EventWatermark {
   /** Ids of the events retained at the checkpoint (bounded). */
@@ -80,6 +81,10 @@ export function createWatermark(events: readonly DashboardEvent[]): EventWaterma
  * @param gapSinceCheckpoint  a break in event-history continuity was detected
  *   after the checkpoint (see `historyGapSince`): events may have been missed
  *   even though the checkpoint's newest event is still retained.
+ * @param assured  the source's contract profile GUARANTEES the history-truth
+ *   rules (id uniqueness and stability, contiguous listing windows; see
+ *   domain/contract). Without that, identity overlap cannot prove
+ *   completeness, so coverage is never EXACT.
  */
 export function eventCoverage(
   events: readonly DashboardEvent[],
@@ -87,6 +92,7 @@ export function eventCoverage(
   availableNow: boolean,
   hasBaseline = true,
   gapSinceCheckpoint = false,
+  assured = true,
 ): EventCoverage {
   const empty = new Set<string>();
   if (!hasBaseline)
@@ -139,6 +145,9 @@ export function eventCoverage(
     else if (gapSinceCheckpoint) {
       proven = false;
       reason = 'history-gap';
+    } else if (!assured) {
+      proven = false;
+      reason = 'contract-unassured';
     }
   }
   if (proven) return { state: 'exact', count: observedNew, observedNew, newIds, retainedFrom };

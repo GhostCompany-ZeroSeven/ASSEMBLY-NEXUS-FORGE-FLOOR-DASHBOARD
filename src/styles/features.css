@@ -1577,3 +1577,46 @@ a.situation__cell:hover {
   color: var(--text-dim);
   overflow-wrap: anywhere;
 }
+
+/* Phase 8: adapter contract panel (inspector) */
+.contract__profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 8px 0 12px;
+}
+.contract__profile p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.contract__kind {
+  padding: 2px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.contract__rules {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+}
+.contract__rules > li {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.contract__rule-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  overflow-wrap: anywhere;
+}

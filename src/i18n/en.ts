@@ -990,6 +990,8 @@ export const en = {
         'unavailable-now': 'cannot be loaded now',
         'history-truncated': 'retained history does not reach back that far',
         'history-gap': 'the event history has a gap since then: events may be missing',
+        'contract-unassured':
+          "the data source's contract does not guarantee a complete event history",
         'baseline-truncated': 'last view was too large to record fully',
       },
       eventsLowerBound: (n: string) => `at least ${n} observed`,
@@ -1078,6 +1080,8 @@ export const en = {
       'mission-not-reported': 'mission not reported then or now',
       'history-not-covered': 'retained history does not reach back to your last view',
       'history-gap': 'the event history has a gap since your last view: events may be missing',
+      'contract-unassured':
+        "the data source's contract does not guarantee a complete event history",
     },
     change: {
       missionNoLongerReported:
@@ -1182,6 +1186,141 @@ export const en = {
     reportedBySource: 'reported by the data source',
     external: 'opens outside the dashboard',
     noLink: 'no link reported',
+  },
+
+  contract: {
+    title: 'Adapter contract',
+    lede: 'What this data source is stated to guarantee, what the current data actually shows, and what is still unknown. A statement is not an observation, and an observation is not a guarantee.',
+    profile: 'Contract profile',
+    kind: {
+      MOCK: 'MOCK PROFILE',
+      REAL_ANN_PLACEHOLDER: 'ASSEMBLY NEXUS PLACEHOLDER',
+      UNDECLARED: 'NO PROFILE DECLARED',
+      SIMULATED: 'SIMULATED DATA',
+    },
+    kindNote: {
+      MOCK: "This repository's own mock backend. It is not the Assembly Nexus contract, not production, and not approved by the Founder.",
+      REAL_ANN_PLACEHOLDER:
+        'Every property is UNKNOWN until the Founder approves an Assembly Nexus contract.',
+      UNDECLARED:
+        'This build declares no contract for its backend, so nothing is guaranteed and event coverage is never exact.',
+      SIMULATED:
+        'The simulation generates its events inside the dashboard, so no data-source contract applies.',
+    },
+    provenanceLabel: 'Where the statements come from',
+    provenance: {
+      MOCK_PROFILE: "read from this repository's mock implementation",
+      FOUNDER_APPROVED_CONTRACT: 'a Founder-approved contract',
+      UNKNOWN: 'unknown',
+    },
+    approval: 'Founder approval',
+    notApproved: 'not approved: no contract here is approved by the Founder',
+    coverage: 'Exact event coverage allowed',
+    coverageYes: 'yes: the profile guarantees the history-truth rules',
+    coverageNo: 'no: counts are shown as "at least N" or UNKNOWN',
+    environment: 'Environment reported by the backend',
+    environmentNone: 'not reported',
+    environmentNote:
+      'Reported by the backend and not verified. Whether a backend reporting a test environment is shown as SIMULATED instead of LIVE is an open Founder decision; the badge currently shows LIVE with this tag.',
+    rules: 'Rules',
+    needs: 'Dashboard needs it',
+    requirement: { REQUIRED: 'required', OPTIONAL: 'optional', UNKNOWN: 'unknown' },
+    states: 'Profile states',
+    guarantee: {
+      GUARANTEED: 'guaranteed',
+      NOT_GUARANTEED: 'not guaranteed',
+      UNKNOWN: 'UNKNOWN',
+      UNSPECIFIED: 'unspecified',
+      NOT_APPLICABLE: 'not a source property (dashboard behaviour)',
+    },
+    capability: { SUPPORTED: 'supported', NOT_SUPPORTED: 'not supported', UNKNOWN: 'UNKNOWN' },
+    observedLabel: 'Seen in the current data',
+    observed: {
+      'violation-observed': (n: string) => `contradicting reports seen: ${n}`,
+      observed: (n: string) => `seen: ${n}`,
+      'none-observed': 'none seen (this is not a pass)',
+      'not-observable': 'not observable from the data alone',
+      'not-applicable': 'not applicable',
+    },
+    historyTruth: 'affects event-history truth',
+    note: {
+      mockGenerated: 'holds for events the mock generates; test injection may break it on purpose',
+      insertionOrder: 'listing order is insertion order, not event-time order',
+      suffixWindow: 'the listing is the newest events, without gaps',
+      streamAtMostOnce:
+        'stream events sent while disconnected are lost; the listing may recover them',
+      noReplay: 'no replay after reconnect; the dashboard recovers by re-syncing',
+      noTruncationSignal: 'the source never says history was cut; the dashboard infers gaps',
+      duplicatesPossible: 'the same event may arrive more than once',
+      noConflictRule: 'the source defines no rule for one id with different facts',
+      missionSubrecords: 'crew, tasks, dependencies and artifacts come inside missions',
+      handledByAdapter: 'dashboard behaviour, checked by the conformance runner',
+    },
+    runnerNote:
+      'Conformance procedures run explicitly and in bounded form (npm run test:conformance) against the mock, never from this page. A PASS describes one run only: it is not a guarantee, not authority, not certification and not Founder approval.',
+    rule: {
+      EVENT_ID_UNIQUENESS: {
+        name: 'Event id uniqueness',
+        description: 'An id is never reused for a different event.',
+      },
+      EVENT_ID_STABILITY: {
+        name: 'Event id stability',
+        description: 'The same event keeps the same id on every path and in every listing.',
+      },
+      LISTING_WINDOW_CONTIGUITY: {
+        name: 'Listing window contiguity',
+        description:
+          'A listing is the newest events without holes, so overlap proves nothing was skipped.',
+      },
+      LISTING_ORDERING: {
+        name: 'Listing ordering',
+        description: 'The order in which a listing returns events.',
+      },
+      DUPLICATE_DELIVERY: {
+        name: 'Duplicate delivery',
+        description:
+          'An event delivered more than once is counted once, keeping its first arrival.',
+      },
+      AT_LEAST_ONCE_DELIVERY: {
+        name: 'At-least-once delivery',
+        description: 'Every event reaches the dashboard at least once.',
+      },
+      SAME_ID_CONFLICT_SEMANTICS: {
+        name: 'Same id, conflicting facts',
+        description:
+          'A copy with different facts never rewrites what was observed; it is reported.',
+      },
+      RECONNECT_RESUME_SEMANTICS: {
+        name: 'Reconnect and resume',
+        description: 'Whether a reconnected stream replays what was missed.',
+      },
+      REST_SSE_RECONCILIATION: {
+        name: 'REST and stream reconciliation',
+        description: 'Stream-only, listing-only and both-path events end up exactly once.',
+      },
+      EVENT_TIME_SEMANTICS: {
+        name: 'Source event time',
+        description: 'The source time is kept as reported, even when skewed.',
+      },
+      RECEIVED_TIME_SEMANTICS: {
+        name: 'Received time',
+        description:
+          'The arrival time is the dashboard clock at first arrival and is never rewritten.',
+      },
+      HISTORY_TRUNCATION_SIGNAL: {
+        name: 'History truncation',
+        description: 'A gap in the event history is detected, signalled or not.',
+      },
+      RESOURCE_PARTIAL_FAILURE: {
+        name: 'Partial resource failure',
+        description: 'One failing resource is UNAVAILABLE, never empty, and does not spread.',
+      },
+      MALFORMED_RECORD_HANDLING: {
+        name: 'Malformed records',
+        description:
+          'Invalid records are dropped or degraded; an unreadable payload fails its resource.',
+      },
+    },
   },
 
   quality: {

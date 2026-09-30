@@ -1,3 +1,4 @@
+import { historyAssured } from './contract/profiles';
 import {
   ALERT_PHASES,
   APPROVAL_STATUSES,
@@ -281,7 +282,8 @@ export type MissionUnknownReason =
   | 'unavailable-now'
   | 'mission-not-reported'
   | 'history-not-covered'
-  | 'history-gap';
+  | 'history-gap'
+  | 'contract-unassured';
 
 export interface MissionDigest {
   baseline: 'none' | 'different-source' | 'ok';
@@ -428,6 +430,7 @@ export function computeMissionDigest(
     !down.has('events'),
     true,
     historyGapSince(s.quality, cp.at),
+    historyAssured(s.provenance),
   );
   if (cov.state !== 'exact')
     unknown.events =
@@ -435,8 +438,8 @@ export function computeMissionDigest(
         ? 'unavailable-now'
         : cov.reason === 'events-unavailable-then'
           ? 'unavailable-then'
-          : cov.reason === 'history-gap'
-            ? 'history-gap'
+          : cov.reason === 'history-gap' || cov.reason === 'contract-unassured'
+            ? cov.reason
             : 'history-not-covered';
 
   const recordChanges = changes.length > 0;

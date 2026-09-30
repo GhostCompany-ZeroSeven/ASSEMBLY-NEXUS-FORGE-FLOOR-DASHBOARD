@@ -37,6 +37,12 @@ export interface RestAdapterConfig {
    * `maxRetries` times in a row the adapter falls back to polling and says so.
    */
   stream?: RestStreamConfig;
+  /**
+   * Contract profile this BUILD declares for the backend (see
+   * domain/contract/profiles.ts; today only `mock`). Never read from backend
+   * data. Omitted = undeclared: no source guarantee is assumed.
+   */
+  contractProfile?: string;
 }
 
 export interface RestStreamConfig {
@@ -84,6 +90,7 @@ export interface ResolvedRestConfig {
   statusMapping?: WorkerStateMapping;
   credentials: 'omit' | 'same-origin';
   stream?: Required<RestStreamConfig>;
+  contractProfile?: string;
 }
 
 export class RestConfigError extends Error {
@@ -165,8 +172,13 @@ export function resolveRestConfig(config: RestAdapterConfig): ResolvedRestConfig
     };
   }
 
+  const contractProfile = config.contractProfile;
+  if (contractProfile !== undefined && !/^[a-z][a-z0-9-]{0,39}$/.test(contractProfile))
+    throw new RestConfigError('contractProfile must be a short lowercase profile id.');
+
   return {
     stream,
+    contractProfile,
     baseUrl,
     label: config.label?.trim() || 'Generic REST backend',
     endpoints,

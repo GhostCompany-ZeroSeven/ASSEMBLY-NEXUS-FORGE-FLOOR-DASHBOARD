@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { FreshnessLine } from '@/components/FreshnessLine';
+import { ContractPanel } from './ContractPanel';
 import { KeyValue, Panel } from '@/components/ui';
 import { computeDigest } from '@/domain/digest';
 import { selectDataQuality } from '@/domain/dataQuality';
@@ -198,6 +199,8 @@ export function QualityPage() {
             {t.forgetMissionViews}
           </button>
         </Panel>
+
+        <ContractPanel snapshot={snapshot} now={now} />
       </div>
     </div>
   );
