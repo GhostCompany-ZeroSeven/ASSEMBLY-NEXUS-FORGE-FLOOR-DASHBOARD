@@ -11,6 +11,8 @@ export const ROUTES = [
   '/approvals',
   '/alerts',
   '/activity',
+  '/activity?details=1&range=24h',
+  '/brief',
   '/settings',
 ];
 

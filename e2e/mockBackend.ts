@@ -9,7 +9,8 @@ import { buildSeedSnapshot } from '../src/adapters/demo/seed';
 export const MOCK_BASE = 'http://mock-backend.test/api';
 export const REST_APP = 'http://localhost:4175';
 
-export type MockMode = 'healthy' | 'partial' | 'down';
+/** `approvals-down`: only the approvals resource fails (the Founder queue is then incomplete). */
+export type MockMode = 'healthy' | 'partial' | 'down' | 'approvals-down';
 
 export interface MockBackend {
   mode: MockMode;
@@ -63,6 +64,8 @@ export async function installMockBackend(
     const name = path.slice(1);
     if (backend.mode === 'partial' && name === 'workers') return json({ unexpected: 'shape' });
     if (backend.mode === 'partial' && name === 'missions')
+      return route.fulfill({ status: 500, headers: CORS, body: 'boom' });
+    if (backend.mode === 'approvals-down' && name === 'approvals')
       return route.fulfill({ status: 500, headers: CORS, body: 'boom' });
     if (name in data) return json(data[name]);
     return json({ error: 'not found' }, 404);

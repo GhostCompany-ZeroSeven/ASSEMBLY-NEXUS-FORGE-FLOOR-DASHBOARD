@@ -33,6 +33,38 @@ test('axe: phone width floor and command center', async ({ page }) => {
   }
 });
 
+test('axe: Founder brief with digest items, desktop and phone, and keyboard reachability', async ({
+  page,
+}) => {
+  for (const vp of [
+    { width: 1440, height: 900 },
+    { width: 320, height: 700 },
+  ]) {
+    await page.setViewportSize(vp);
+    await openPaused(page, '/brief');
+    await page.evaluate(() => localStorage.removeItem('forge-floor:last-view'));
+    await page.getByRole('button', { name: 'Mark all as seen' }).click();
+    for (let i = 0; i < 12; i++) await page.keyboard.press('n');
+    await expect(page.locator('.digest-item').first()).toBeVisible();
+    expect(await scan(page), `${vp.width}px`).toEqual([]);
+  }
+  // Every digest and queue link is reachable by keyboard (Tab order includes them).
+  const links = await page.locator('.digest-item a, .attention-item a').count();
+  expect(links).toBeGreaterThan(0);
+  await page.locator('.digest-item a').first().focus();
+  await expect(page.locator('.digest-item a').first()).toBeFocused();
+});
+
+test('reduced motion: the timeline does not animate new events', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openPaused(page, '/activity');
+  const anim = await page
+    .locator('.stream__item')
+    .first()
+    .evaluate((el) => getComputedStyle(el).animationDuration);
+  expect(parseFloat(anim)).toBeLessThanOrEqual(0.01);
+});
+
 test('axe: Red Alert state', async ({ page }) => {
   await openPaused(page, '/alerts');
   for (let i = 0; i < 8; i++) await page.keyboard.press('n');

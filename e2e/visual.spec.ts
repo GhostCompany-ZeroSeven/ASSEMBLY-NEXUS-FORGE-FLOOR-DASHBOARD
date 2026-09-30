@@ -192,3 +192,66 @@ test('visual: URL-filtered missions (deep link)', async ({ page }) => {
   await open(page, '/missions?group=in-flight&sort=priority');
   await snap(page, 'missions-url-filtered');
 });
+
+/* ------------------------------ Phase 5 states ------------------------------ */
+
+async function markSeenThenStep(page: Page, steps: number) {
+  await page.getByRole('button', { name: 'Mark all as seen' }).click();
+  // Let a minute pass so simulated events are timestamped after the checkpoint.
+  await page.clock.setFixedTime(new Date(FIXED.getTime() + 60_000));
+  for (let i = 0; i < steps; i++) await page.keyboard.press('n');
+  await expect(page.locator('.digest-item').first()).toBeVisible();
+  // Wait for the UI's shared clock to tick past the new time (relative times settle).
+  await expect(page.getByText(/\(1m ago\)/)).toBeVisible({ timeout: 10_000 });
+}
+
+test('visual: Founder brief, first visit (history UNKNOWN)', async ({ page }) => {
+  await open(page, '/brief');
+  await expect(page.getByText(/No previous view is recorded/)).toBeVisible();
+  await snap(page, 'brief-first-visit');
+});
+
+test('visual: Founder brief with changes since last view', async ({ page }) => {
+  await open(page, '/brief');
+  await markSeenThenStep(page, 6);
+  await snap(page, 'brief-changes-desktop');
+});
+
+test('visual: Founder brief with changes (phone)', async ({ page }) => {
+  await open(page, '/brief', 'phone');
+  await markSeenThenStep(page, 6);
+  await snap(page, 'brief-changes-phone');
+});
+
+test('visual: Spanish Founder brief', async ({ page }) => {
+  await openEs(page, '/brief');
+  await page.getByRole('button', { name: 'Marcar todo como visto' }).click();
+  await snap(page, 'es-brief-desktop');
+});
+
+test('visual: REST brief with approvals unavailable (UNKNOWN, not 0)', async ({ page }) => {
+  await openRest(page, 'approvals-down', '/brief');
+  await expect(page.locator('[data-figure="needsFounder"]')).toContainText('UNKNOWN');
+  await snap(page, 'rest-brief-approvals-down');
+});
+
+test('visual: operations timeline with arrival details', async ({ page }) => {
+  await open(page, '/activity?details=1');
+  await snap(page, 'activity-timeline-details');
+});
+
+test('visual: operations timeline (phone)', async ({ page }) => {
+  await open(page, '/activity', 'phone');
+  await snap(page, 'activity-timeline-phone');
+});
+
+test('visual: pseudo-locale diagnostic (phone approvals)', async ({ page }) => {
+  await page.setViewportSize(VIEWPORTS.phone);
+  await page.clock.setFixedTime(FIXED);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?pseudo=1&demo=paused#/approvals');
+  await page.locator('[data-surface="ready"]').waitFor();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en-XA');
+  await page.evaluate(() => document.fonts.ready);
+  await snap(page, 'pseudo-approvals-phone');
+});
