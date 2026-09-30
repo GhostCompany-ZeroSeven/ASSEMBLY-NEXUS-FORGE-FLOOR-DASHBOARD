@@ -8,8 +8,82 @@ _Operational continuity log. A later session should read this first._
 - **Session 3:** `7ae4ed8` → `0d77f3a` (UI/UX product hardening, Phase 3)
 - **Session 4:** `0d77f3a` → `4d5279e` (product hardening Phase 4)
 - **Session 5:** `4d5279e` → `c3286ba` (Founder operations intelligence, Phase 5)
-- **Session 6:** `c3286ba` → Founder command intelligence (Phase 6); see `git log` for the head
+- **Session 6:** `c3286ba` → `eaae7e3` (Founder command intelligence, Phase 6)
+- **Session 7:** `eaae7e3` → adversarial mock runtime (Phase 7); see `git log` for the head
 - **Last updated:** 2026-09-30
+
+## Session 7: adversarial mock runtime (Phase 7)
+
+Continuity was verified at the start. The branch was at `eaae7e3` (same as the remote), `main` was at `3a3e217`, the tree was clean,
+and there were no AI trailers. GitHub CI run #6 on `eaae7e3` was **observed passing**.
+Nothing connects to Assembly Nexus. Everything below runs against this repository's own mock.
+
+### Delivered
+
+| Objective              | Result                                                                                                                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mock injection harness | A real HTTP + SSE mock (`scripts/mock/backend.ts`) with bounded test-data controls: events (stream, listing or both), bulk, faults and a closed list of fixture ops. There is no decision, grant or code-execution operation |
+| Runtime server         | `scripts/mock-runtime-server.ts` serves the `--mode e2e-runtime` bundle and the mock on the same origin. Each test gets its own `*.localhost` origin (data and storage isolated)                                             |
+| Runtime scenario suite | `e2e/phase7.spec.ts`, 29 tests covering the 25-scenario matrix, plus en/es/pseudo at 320–2560 px with axe                                                                                                                    |
+| Event truth            | Arrival-ordered retention, no re-admission of evicted ids, first observation kept on id conflicts, history-gap detection, arrival-time snapshot clock, record-level duplicate handling                                       |
+| Inspector              | New issue classes (`event-conflict`, `history-gap`, `duplicate-delivery`) by adapter code, a "History continuity" row, and an "Adapter note" row                                                                             |
+| Governance             | `src/app/governance.phase7.test.ts` (11): the app never calls mock controls; the control surface is closed and bounded; injected decisions still face governance                                                             |
+
+### Defects found and fixed (each with a regression test and a mutation check)
+
+| ID    | Defect                                                                                                                                        | Fix                                                                                        |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| P7-D1 | At capacity, the REST merge trimmed by SOURCE time, so a late event was dropped at the next re-sync. Coverage could still say EXACT           | Keep first-observation order and drop the earliest observed first                          |
+| P7-D2 | A listing with the same id but different facts silently rewrote the observed event                                                            | Keep the first observation and report `event-conflict` (stream and REST)                   |
+| P7-D3 | Within one session, a source window that skipped events still gave EXACT (the checkpoint event stayed retained locally)                       | Detect gaps between listings; coverage is never EXACT across a gap                         |
+| P7-D4 | A stream event set `snapshot.generatedAt` to its source time (a future-skewed event moved "snapshot produced" into the future)                | `generatedAt` is the arrival time                                                          |
+| P7-D5 | One duplicate id in the events listing marked the whole events resource UNAVAILABLE (coverage UNKNOWN, timeline warning)                      | Record-level `duplicate-delivery` issue for events; other resources keep the stricter rule |
+| P7-D6 | Introduced by the P7-D1 fix and caught before commit: evicted ids came back as "new" from later listings (churn, rewritten arrival)           | Remember evicted ids (bounded to 5,000)                                                    |
+| P7-D7 | Search results had no provenance while data was LIVE but PARTIAL                                                                              | PARTIAL DATA label                                                                         |
+| P7-D8 | REST badge: the tooltip was the adapter's English note; backend and config text were not marked `translate="no"`; the badge clipped on phones | Localized tooltip, note moved to the inspector, tags added, badge wraps                    |
+
+P7-D8 was found by the first pseudo-locale sweep ever run against a REST build.
+
+### Performance (Phase 6 vs Phase 7 builds, stress dataset, interleaved, median of 5)
+
+| Median (ms)           | Phase 6 | Phase 7 |
+| --------------------- | ------- | ------- |
+| Render `/missions`    | 414     | 422     |
+| Render mission detail | 242     | 245     |
+| Render `/activity`    | 500     | 507     |
+| Render `/brief`       | 376     | 374     |
+| Render `/quality`     | 123     | 147     |
+| Palette open + search | 390     | 347     |
+| Locale switch en → es | 99      | 84      |
+
+Raw costs on the stress dataset:
+
+| Measure                                          | Result                                       |
+| ------------------------------------------------ | -------------------------------------------- |
+| Global digest                                    | 0.65 ms                                      |
+| Mission digest                                   | 0.03 ms                                      |
+| Markers                                          | 1.29 ms                                      |
+| Inspector                                        | 0.05 ms                                      |
+| Coverage                                         | 0.08 ms                                      |
+| Merge of a 600-event listing (5,000 evicted ids) | 1.51 ms                                      |
+| REST sync with 1,000 listed events               | 7.52 ms with 500 duplicates, 5.03 ms without |
+| Checkpoint                                       | 19,073 B (unchanged)                         |
+
+Initial JS is 108.7 kB gzip, up 0.42 kB. `/quality` is +24 ms because it has two more rows. Everything else is within
+run-to-run noise.
+
+### Runtime scenario matrix
+
+All 25 scenarios PASS in `e2e/phase7.spec.ts`. Tasks, dependencies and artifacts are fields of the
+missions resource (the wire format has no separate endpoints), so they fail together with missions.
+
+## Session 7 verification
+
+See the Phase 7 report for the full gate list. Summary:
+
+- 535 unit tests
+- 157 browser tests (Phase 7: 29)
+- 42/42 visual tests in the pinned image, run twice
 
 ## Session 6: Founder command intelligence (Phase 6)
 
@@ -471,6 +545,9 @@ tree, and `main` untouched.
    local-only by design. The Founder may later want it per identity across devices; that needs
    an authenticated backend store and is deliberately not built. Phase 6 mission views are
    local-only for the same reason.
+7. **Mock labelling (Phase 7):** a connected mock backend is shown as LIVE with a MOCK environment
+   tag. The environment is reported by the backend. Should a backend reporting a test environment be
+   shown as SIMULATED instead of LIVE? This would change the LIVE rule, so it is left to the Founder.
 
 ## Known limitations
 
@@ -510,6 +587,17 @@ tree, and `main` untouched.
   was not identified and has not reproduced since.
 - **Brief detection delay:** while the stream is healthy, a REST resource failure reaches the
   brief within the 60s re-sync window (measured: 42s).
+
+## Known limitations (Phase 7)
+
+- Event ids are assumed unique, and a listing is assumed to be a contiguous most-recent window.
+  Both are mock-contract assumptions and must be confirmed with the real contract.
+- Payload differences under the same id are not compared (the paths normalize differently). Only
+  kind, time, mission and worker are compared.
+- A stream-delivered state change is applied provisionally, as in Phase 6. REST re-sync stays the
+  source of truth for records.
+- When the mock is connected, the badge shows LIVE with a MOCK environment tag, not the word
+  SIMULATED. See Founder decisions.
 
 ## Next autonomous actions
 

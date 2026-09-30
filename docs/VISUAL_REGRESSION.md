@@ -122,6 +122,19 @@ Each was classified by region (expected vs actual) and inspected:
 Three baselines were added (mission changes desktop/phone, inspector). All 42
 matched in the pinned image twice (update, then verify) and on the host.
 
+## Phase 7 baseline changes (reviewed before regeneration)
+
+The 42 Phase 6 baselines were run first; one differed.
+
+| Baseline          | Classification          | Cause                                                                                                                                                  |
+| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `quality-desktop` | INTENDED_PHASE_7_CHANGE | Two new inspector rows: "Adapter note" (the adapter's own text, moved out of the badge tooltip) and "History continuity". Everything below shifts down |
+
+The diff image showed only those rows and the shift. No baseline was added:
+the runtime states are proven by assertions in `e2e/phase7.spec.ts`, which
+does not rely on screenshots. The one baseline was regenerated alone in the
+pinned image, and all 42 then matched there twice.
+
 ## Updating baselines
 
 Update only for an intended visual change, and review every changed PNG first.

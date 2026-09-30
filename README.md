@@ -50,6 +50,11 @@ npm run mock:rest   # local mock backend on http://127.0.0.1:8787 (environment: 
 VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://127.0.0.1:8787 npm run dev
 ```
 
+With `VITE_FORGE_REST_STREAM=/stream` the mock also streams events. Bounded test-data controls
+(`POST /__mock/events|bulk|fault|fixture`) inject late, duplicate or conflicting events, faults and
+fixtures; see docs/ARCHITECTURE.md ("Adversarial mock runtime"). They are mock-only and are never
+called by the dashboard.
+
 The badge shows **LIVE · MOCK** only while the mock's health endpoint answers. To see the failure
 states, inject a fault, for example
 `curl "http://127.0.0.1:8787/__fail?resource=workers&mode=malformed"` (modes: `down`, `http500`,
@@ -73,6 +78,7 @@ secrets in them.
 | `npm run test:visual:update`   | Rewrite visual baselines after an intended change (review the PNGs before committing)                                                                          |
 | `npm run test:visual:ci-image` | Visual regression inside the pinned CI image (Docker); `:update` rewrites baselines there                                                                      |
 | `npm run mock:rest`            | Local mock REST backend for the GenericRESTAdapter                                                                                                             |
+| `npm run mock:runtime`         | App (`--mode e2e-runtime` bundle) + same-origin REST/SSE mock for the Phase 7 runtime suite (`npm run build:e2e-runtime` first)                                |
 | `npm run verify`               | typecheck → lint → test → build (CI also runs format check and e2e)                                                                                            |
 
 ## Stack

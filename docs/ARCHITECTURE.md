@@ -262,7 +262,9 @@ Rules:
 - **No clock is compared with another clock.** A view stores a watermark
   (the ids it had seen, plus the newest event's id and source time). Coverage
   is proven by identity overlap. The newest-seen event must still be
-  retained, because retention drops the oldest event times first.
+  retained, because retention drops the EARLIEST OBSERVED events first
+  (Phase 7; see below), and no event-history gap may have been detected since
+  the view.
 - "New" means _newly observed_, so an old event that arrives late is counted
   once (and flagged ARRIVED LATE in the timeline).
 
@@ -379,6 +381,88 @@ no sidebar item.
   example over the stream) that a listing omits are kept, bounded to 500 with
   the oldest dropped first. Ingest facts keep their first arrival.
 
+## Adversarial mock runtime and event truth (Phase 7)
+
+Phase 7 exercises the Phase 6 claims against a real HTTP + Server-Sent Events
+**mock** backend. Nothing here is the Assembly Nexus contract.
+
+### Mock runtime and its test-data controls
+
+| Piece                                      | Role                                                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `scripts/mock/backend.ts`                  | Wire format v1 from demo seed data, per-tenant in-memory state, SSE, and the bounded `/__mock/*` controls |
+| `scripts/mock-runtime-server.ts`           | Serves the `--mode e2e-runtime` bundle and the mock under `/mockapi` on the same origin (127.0.0.1 only)  |
+| `scripts/mock-rest-server.ts`              | Manual mock for `npm run dev` (`npm run mock:rest`); same core, plus the legacy `GET /__fail`             |
+| `e2e/runtimeMock.ts`, `e2e/phase7.spec.ts` | Browser client and the runtime scenario suite                                                             |
+
+The controls are **TEST/DEMO DATA CONTROL, never ANN authority control**:
+
+- `POST /__mock/events` injects events by stream, listing or both (at most 50
+  per call, 8 KB each). A `raw` stream message can be malformed on purpose.
+  Line breaks are removed, so injected text cannot add SSE fields.
+- `POST /__mock/bulk` generates up to 2,000 synthetic progress events.
+- `POST /__mock/fault` makes one resource (`http500`, `down`, `malformed`,
+  `slow`, `empty`) or the stream (`down`, `silent`, `malformed`) fail.
+- `POST /__mock/fixture` runs one op from a closed list: hide or restore a
+  mission, patch a mission's status, title or summary (bounded strings), set a
+  mission's artifacts, add a PENDING gate or an alert record, set the listing
+  window, clear events, or reset.
+- There is no decision, grant, dispatch, deploy or code-execution operation.
+  There are no file writes and no proxying, and every body is capped at 64 KB.
+- The dashboard never calls these routes (`governance.phase7.test.ts`).
+
+Each test uses its own origin (`http://<tenant>.localhost:4176`). That gives
+it its own mock data and its own browser storage, so the tests run in
+parallel.
+
+### Arrival and occurrence
+
+- `at` is the source's claimed event time. `receivedAt` is when this dashboard
+  first observed the event (its own clock). Neither is ever rewritten.
+- The event log is kept in **first-observation order**. Consumers that need
+  event-time order sort by `at` (timeline) or by `receivedAt` (ARRIVED LATE
+  detection).
+- The log is bounded (500) by dropping the **earliest observed** first.
+  Dropped ids are remembered (up to 5,000), so a re-listing or re-delivery is
+  not re-admitted as a new arrival. A late event, with an old `at` and a new
+  arrival, is therefore never the first to go.
+- The snapshot's `generatedAt` is the arrival time. A skewed or late source
+  time never becomes "when this data was produced".
+
+### REST and SSE reconciliation (`RestAdapter.mergeObserved`)
+
+| Case                                             | Behaviour                                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Observed on the stream, absent from the listing  | Kept (Phase 6). A listing that omits it is not evidence it did not happen                                  |
+| In the listing, never streamed                   | Added with `via: poll` and its arrival time                                                                |
+| In both, same facts                              | One event; the first ingest path and arrival time are kept                                                 |
+| Same id, different kind, time, mission or worker | The first observation is kept and never rewritten. The conflict is a data-quality issue (`event-conflict`) |
+| Same id twice in one listing                     | Counted once and reported as `duplicate-delivery`, at record level. The events resource stays available    |
+| A listing sharing no id with the previous one    | History gap: the source window moved past events that may never have been observed (`history-gap`)         |
+
+Event ids are treated as unique identities (the mock contract's rule, not an
+ANN guarantee). Payloads are not compared, because the stream and listing paths
+normalize them differently.
+
+### History gaps and coverage
+
+`quality.eventHistoryGapAt` records the latest gap, on the dashboard clock.
+Coverage is never EXACT across a gap after the view
+(`historyGapSince(quality, checkpoint.at)` compares two dashboard-clock
+times). It is LOWER_BOUND ("at least N") when something new was observed, and
+UNKNOWN otherwise. The inspector shows "History continuity", and the unknown
+area names the gap. Continuity assumes a listing is a contiguous most-recent
+window; that is a mock-contract assumption to confirm against the real
+contract.
+
+### Data-quality classes
+
+Issues now carry an adapter-set `code` for classes that are not about one
+resource or record: `event-conflict`, `history-gap` and `duplicate-delivery`.
+Classification never reads message text, so backend text cannot promote itself
+to another class. Search results are labelled PARTIAL DATA when some resources
+failed.
+
 ## Loading and code splitting
 
 - `main.tsx` loads the viewer's language catalog (English is bundled, Spanish is a
@@ -407,21 +491,24 @@ no sidebar item.
 
 ## Verification layers
 
-| Layer                             | Tool                              | Location                                                |
-| --------------------------------- | --------------------------------- | ------------------------------------------------------- |
-| Domain/reducer/time               | Vitest                            | `src/domain/*.test.ts`                                  |
-| Governance regressions            | Vitest                            | `src/domain/governance.test.ts`                         |
-| Adapter behaviour                 | Vitest + in-memory backend        | `src/adapters/**/*.test.ts`, `src/test/fakeBackend.ts`  |
-| Adapter conformance               | Shared suite                      | `src/test/conformance.ts`                               |
-| UI flows/failure states           | Testing Library (jsdom)           | `src/app/*.test.tsx`, `src/features/command/*.test.tsx` |
-| Structural a11y                   | axe-core (jsdom)                  | `src/test/a11y.test.tsx`                                |
-| Browser a11y/keyboard/runtime     | Playwright + @axe-core/playwright | `e2e/*.spec.ts`                                         |
-| Transport conformance             | Vitest + fake EventSource         | `src/adapters/transport/conformance.test.ts`            |
-| Phase-3 governance + static guard | Vitest                            | `src/domain/governance.phase3.test.ts`                  |
-| Visual regression                 | Playwright screenshots            | `e2e/visual.spec.ts`, `e2e/__screenshots__`             |
-| Performance budgets               | Vitest + Playwright               | `src/test/perf.test.tsx`, `e2e/performance.spec.ts`     |
-| Phase-4 governance                | Vitest                            | `src/app/governance.phase4.test.tsx`                    |
-| i18n parity + glyph coverage      | Vitest                            | `src/i18n/*.test.ts`                                    |
-| URL state                         | Vitest + Playwright               | `src/app/urlState.test.tsx`, `e2e/phase4.spec.ts`       |
-| Adversarial SSE/REST              | Vitest + fake EventSource         | `src/adapters/rest/stream.adversarial.test.ts`          |
-| Mobile/ultrawide + Spanish        | Playwright                        | `e2e/phase4.spec.ts`                                    |
+| Layer                               | Tool                              | Location                                                |
+| ----------------------------------- | --------------------------------- | ------------------------------------------------------- |
+| Domain/reducer/time                 | Vitest                            | `src/domain/*.test.ts`                                  |
+| Governance regressions              | Vitest                            | `src/domain/governance.test.ts`                         |
+| Adapter behaviour                   | Vitest + in-memory backend        | `src/adapters/**/*.test.ts`, `src/test/fakeBackend.ts`  |
+| Adapter conformance                 | Shared suite                      | `src/test/conformance.ts`                               |
+| UI flows/failure states             | Testing Library (jsdom)           | `src/app/*.test.tsx`, `src/features/command/*.test.tsx` |
+| Structural a11y                     | axe-core (jsdom)                  | `src/test/a11y.test.tsx`                                |
+| Browser a11y/keyboard/runtime       | Playwright + @axe-core/playwright | `e2e/*.spec.ts`                                         |
+| Transport conformance               | Vitest + fake EventSource         | `src/adapters/transport/conformance.test.ts`            |
+| Phase-3 governance + static guard   | Vitest                            | `src/domain/governance.phase3.test.ts`                  |
+| Visual regression                   | Playwright screenshots            | `e2e/visual.spec.ts`, `e2e/__screenshots__`             |
+| Performance budgets                 | Vitest + Playwright               | `src/test/perf.test.tsx`, `e2e/performance.spec.ts`     |
+| Phase-4 governance                  | Vitest                            | `src/app/governance.phase4.test.tsx`                    |
+| i18n parity + glyph coverage        | Vitest                            | `src/i18n/*.test.ts`                                    |
+| URL state                           | Vitest + Playwright               | `src/app/urlState.test.tsx`, `e2e/phase4.spec.ts`       |
+| Adversarial SSE/REST                | Vitest + fake EventSource         | `src/adapters/rest/stream.adversarial.test.ts`          |
+| Mobile/ultrawide + Spanish          | Playwright                        | `e2e/phase4.spec.ts`                                    |
+| Event truth (late/dup/conflict/gap) | Vitest + fake EventSource         | `src/adapters/rest/eventTruth.test.ts`                  |
+| Phase-7 governance + static guards  | Vitest                            | `src/app/governance.phase7.test.ts`                     |
+| Adversarial mock runtime            | Playwright + real HTTP/SSE mock   | `e2e/phase7.spec.ts`, `scripts/mock-runtime-server.ts`  |

@@ -208,6 +208,22 @@ Behaviour (`src/adapters/transport/sse.ts`, `src/adapters/rest/stream.ts`):
 
 The transport conformance suite (`src/adapters/transport/conformance.test.ts`) pins these rules.
 
+### Event reconciliation (REST + SSE)
+
+The REST listing and the stream are reconciled by event **id** (see
+docs/ARCHITECTURE.md, "Adversarial mock runtime and event truth"):
+
+- The first observation of an id wins. Later copies never change it, and
+  copies with different facts are reported as conflicts.
+- Events observed only on the stream survive re-syncs.
+- The log drops the earliest observed events first and does not re-admit them.
+- A listing with no overlap with the previous one is recorded as a history
+  gap, and coverage is then never exact.
+
+These rules assume ids are unique and a listing is a contiguous most-recent
+window. That is this project's mock contract. **Confirm both against the real
+Assembly Nexus contract before relying on them.**
+
 ### Normalization rules (fail safe, never fail healthy)
 
 - A record missing identity fields is **dropped** and reported.

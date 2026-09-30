@@ -151,6 +151,25 @@ Findings fixed in Phase 5:
   - status badge overflowing the mission record at 1440px (the Phase 5 wrap
     rule was phone-only)
 
+### Phase 7
+
+- This was the first pseudo-locale sweep against a REST build (earlier sweeps
+  used the demo). `e2e/phase7.spec.ts` sweeps the mission page, the scoped
+  timeline, the inspector and `?since=changed` in English, Spanish and pseudo
+  at 320/390/1440/2560. The adversarial states are on screen during the sweep:
+  a late event, a conflict, a history gap and a duplicate. Axe runs at 1440.
+- Fixed from that sweep:
+  - The badge tooltip was the adapter's English `note`. It is now the
+    localized badge description. The note is shown, as adapter text, in the
+    inspector's "Adapter note" row.
+  - The backend environment tag, the configured adapter label and adapter
+    issue messages in the data banner were not marked `translate="no"`.
+  - The REST badge (mode, environment, qualifiers, transport) was clipped at
+    phone widths. It now wraps.
+- The detector's allowlist also takes the test builds' configured data-source
+  labels (`VITE_FORGE_REST_LABEL` in `.env.e2e-*`) as config data. The
+  detector itself is unchanged.
+
 ## Adding a language
 
 1. Add the code to `SUPPORTED_LOCALES` and its own name to `LOCALE_NAMES` (`locales.ts`).
