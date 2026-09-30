@@ -657,6 +657,7 @@
   color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 .stream__refs {
   font-size: 11px;
@@ -1161,4 +1162,284 @@ a.situation__cell:hover {
 }
 .activity-filters {
   margin-bottom: var(--space);
+}
+
+/* ======================================================================== */
+/* Founder brief: figures, attention queue, change digest                    */
+/* ======================================================================== */
+.brief {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.brief__freshness {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.brief__freshness-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.brief__figures {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.brief__figure {
+  --tone: var(--tone-neutral);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--tone);
+  background: var(--surface);
+}
+.brief__figure[data-unknown] {
+  border-top-style: dashed;
+  border-top-color: var(--text-faint);
+}
+.brief__figure-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.brief__figure-value {
+  font-size: 24px;
+  font-weight: 750;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.brief__figure[data-unknown] .brief__figure-value {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+.brief__figure-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.brief__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.brief__note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+.brief__warning {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--tone-warning);
+  background: color-mix(in srgb, var(--tone-warning) 10%, transparent);
+  font-size: 13px;
+}
+.brief__calm {
+  margin: 8px 0 0;
+  color: var(--text-dim);
+}
+.brief__subhead {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.brief__baseline p {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.attention-list,
+.digest-items,
+.brief__problems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.attention-item {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.attention-item__reason {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-dim);
+}
+.attention-item__title {
+  display: block;
+  font-weight: 650;
+  margin: 2px 0 6px;
+}
+.attention-item__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 12px;
+}
+.attention-item__facts div {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.attention-item__facts dt {
+  color: var(--text-dim);
+}
+.attention-item__facts dt::after {
+  content: ':';
+}
+.attention-item__facts dd {
+  margin: 0;
+}
+.attention-item__related {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.digest-counts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+}
+.digest-counts__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  min-width: 0;
+}
+.digest-counts__row dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.digest-counts__row dd {
+  margin: 0;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.digest-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.digest-item__cat {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.digest-item__entity {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.digest-item__link {
+  font-weight: 600;
+  min-width: 0;
+}
+.digest-item__change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.digest-item__note {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.brief__problems li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1500px) {
+  .brief__figures {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .brief__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .brief__figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .brief__figure-value {
+    font-size: 20px;
+  }
+}
+
+/* ---- Operations timeline: arrival facts and current state ---------------- */
+.stream__late,
+.stream__now,
+.stream__received {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.stream__late {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tone-warning);
+}
+.stream__now {
+  padding: 0 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  font-size: 11px;
+}
+/* Phones: links and arrival facts move under the event text, so the text
+   column never collapses (it was 0px wide at 320px). */
+@media (max-width: 700px) {
+  .stream__item {
+    grid-template-columns: 64px 24px minmax(0, 1fr);
+  }
+  .stream__refs {
+    grid-column: 3;
+    padding-left: 0;
+  }
+}
+.gate__related {
+  margin: -4px 0 8px;
+  overflow-wrap: anywhere;
 }

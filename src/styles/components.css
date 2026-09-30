@@ -84,6 +84,19 @@
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
+/* In narrow cards (320px phones, longer languages) a long status wraps inside
+   its badge rather than spilling out of the card. Badges that fit are unchanged. */
+@media (max-width: 560px) {
+  .kv dd .badge,
+  .mission-card__top .badge,
+  .worker-card__state .badge,
+  .gate__head .badge {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
 .badge--sm {
   font-size: 11px;
   padding: 1px 7px;

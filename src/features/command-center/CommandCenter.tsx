@@ -35,7 +35,7 @@ export function CommandCenter() {
   const snapshot = useSnapshot();
   const config = useConfig();
   const now = useNow(5000);
-  const { m, rel } = useI18n();
+  const { m, rel, num } = useI18n();
   const t = m.command;
   const featured = featuredMission(snapshot.missions);
   const gates = pendingApprovals(snapshot);
@@ -216,7 +216,7 @@ export function CommandCenter() {
                   </StatusBadge>
                   <span className="small muted">{c.detail}</span>
                   {typeof c.latencyMs === 'number' && (
-                    <span className="mono small">{c.latencyMs}ms</span>
+                    <span className="mono small">{m.common.milliseconds(num(c.latencyMs))}</span>
                   )}
                 </li>
               ))}

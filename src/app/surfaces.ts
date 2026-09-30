@@ -21,6 +21,7 @@ export const SURFACE_LOADERS = {
   alerts: () => import('@/features/alerts/AlertsPage').then((m) => ({ default: m.AlertsPage })),
   activity: () =>
     import('@/features/activity/ActivityPage').then((m) => ({ default: m.ActivityPage })),
+  brief: () => import('@/features/brief/BriefPage').then((m) => ({ default: m.BriefPage })),
   settings: () =>
     import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 } as const;
@@ -37,6 +38,7 @@ export const SURFACE_LABEL: Record<SurfaceName, string> = {
   approvals: 'Approval Gates',
   alerts: 'Alerts',
   activity: 'Activity',
+  brief: 'Founder brief',
   settings: 'Settings',
 };
 

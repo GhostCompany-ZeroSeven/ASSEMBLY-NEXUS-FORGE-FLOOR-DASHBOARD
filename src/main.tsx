@@ -4,7 +4,8 @@ import { loadAdapter } from './adapters/loadAdapter';
 import { App } from './app/App';
 import { assemblyNexusConfig } from './config/assemblyNexus.config';
 import { withEnvOverrides } from './config/runtime';
-import { loadCatalog } from './i18n/catalogs';
+import { loadCatalog, loadPseudo } from './i18n/catalogs';
+import { pseudoRequested } from './i18n/pseudoFlag';
 import { navigatorLanguages, resolveLocale, storedLocalePreference } from './i18n/locales';
 // Bundled (self-hosted, OFL-1.1) fonts: identical rendering everywhere, no font CDN.
 import '@fontsource-variable/inter';
@@ -19,7 +20,10 @@ const config = withEnvOverrides(assemblyNexusConfig, import.meta.env, window.loc
 // Load the viewer's language before first render (no flash of English). A
 // failure here falls back to English; it never blocks the dashboard.
 const locale = resolveLocale(storedLocalePreference(), navigatorLanguages());
-const catalogReady = loadCatalog(locale).catch(() => undefined);
+const catalogReady = Promise.all([
+  loadCatalog(locale),
+  pseudoRequested() ? loadPseudo() : undefined,
+]).catch(() => undefined);
 
 Promise.all([loadAdapter(config.adapter), catalogReady])
   .then(([adapter]) =>

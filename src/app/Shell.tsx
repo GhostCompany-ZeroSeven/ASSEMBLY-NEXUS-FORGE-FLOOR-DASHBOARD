@@ -6,7 +6,6 @@ import { SimulationControlsBar } from '@/components/SimulationControlsBar';
 import { StatusBadge } from '@/components/ui';
 import { selectOverview, redAlertActive } from '@/domain/selectors';
 import { HEALTH_STATUS_META } from '@/domain/status';
-import { formatTimeOfDay } from '@/domain/time';
 import { useI18n } from '@/i18n/useI18n';
 import { RedAlertBanner } from '@/features/alerts/RedAlertBanner';
 import { buildCommands, resultToCommand } from '@/features/command/commands';
@@ -129,6 +128,7 @@ export function Shell() {
 
   const nav: NavItem[] = [
     { route: 'command', label: m.nav.command, icon: 'command', href: href.command() },
+    { route: 'brief', label: m.nav.brief, icon: 'info', href: href.brief() },
     ...(config.features.forgeFloor
       ? [
           {
@@ -243,7 +243,7 @@ export function Shell() {
           <div className="topbar__clock" role="timer" aria-label={m.shell.localTime}>
             <Icon name="clock" size={16} />
             <time dateTime={new Date(now).toISOString()}>
-              {formatTimeOfDay(new Date(now).toISOString())}
+              {i18n.time(new Date(now).toISOString())}
             </time>
           </div>
           <div className="topbar__authority" title={m.shell.authorityTitle}>

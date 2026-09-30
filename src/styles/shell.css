@@ -463,6 +463,35 @@
   .page__title {
     font-size: 22px;
   }
+  /* The data-source label must never be cut off or hidden under another control.
+     Phones get a tighter topbar gap so it fits on one line in English and Spanish;
+     a longer label wraps between words inside the badge instead of spilling. */
+  .topbar {
+    gap: 8px;
+  }
+  .topbar__health > svg {
+    display: none; /* decorative: the badge carries the status text */
+  }
+  .topbar__health {
+    white-space: normal;
+  }
+  .provenance__mode,
+  .topbar__health .badge {
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
+  }
+  /* Last resort for the data-source label only: break inside a word rather than
+     ever hide part of it. */
+  .provenance {
+    gap: 4px;
+    padding-right: 4px;
+  }
+  .provenance__mode {
+    overflow-wrap: anywhere;
+    padding: 2px 6px;
+    letter-spacing: 0.04em;
+  }
 }
 
 /* ---- Command palette trigger ----------------------------------------- */
@@ -595,6 +624,7 @@ kbd {
   z-index: 100;
   display: grid;
   place-items: start center;
+  grid-template-columns: minmax(0, 1fr);
   padding: 12vh 16px 16px;
   background: rgba(2, 4, 8, 0.72);
   backdrop-filter: blur(2px);
@@ -607,6 +637,7 @@ kbd {
 }
 .dialog {
   width: min(640px, 100%);
+  min-width: 0;
   max-height: 76vh;
   display: flex;
   flex-direction: column;
@@ -680,6 +711,18 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Narrow screens: wrap instead of cutting the command off mid-word (longer
+   locales and the pseudo-locale made the ellipsis hide what a command does). */
+@media (max-width: 560px) {
+  .palette__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'group kbd' 'title title' 'hint hint';
+  }
+  .palette__title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
 .palette__hint {
   grid-area: hint;
   font-size: 12px;
@@ -695,6 +738,9 @@ kbd {
 }
 .palette__foot {
   margin: 10px 0 0;
+}
+.shortcuts__table td {
+  overflow-wrap: anywhere;
 }
 .shortcuts__table td:first-child {
   width: 40%;

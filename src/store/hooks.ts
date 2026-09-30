@@ -1,5 +1,5 @@
 import { useContext, useSyncExternalStore } from 'react';
-import { ConfigContext, DashboardContext, PreferencesContext } from './contexts';
+import { ConfigContext, DashboardContext, LastViewContext, PreferencesContext } from './contexts';
 import type { DashboardSnapshot } from '@/domain/snapshot';
 
 export function useDashboard() {
@@ -13,6 +13,12 @@ export function useSnapshot(): DashboardSnapshot {
   const { snapshot } = useDashboard();
   if (!snapshot) throw new Error('Snapshot not loaded yet');
   return snapshot;
+}
+
+export function useLastView() {
+  const ctx = useContext(LastViewContext);
+  if (!ctx) throw new Error('useLastView must be used inside <LastViewProvider>');
+  return ctx;
 }
 
 export function useConfig() {

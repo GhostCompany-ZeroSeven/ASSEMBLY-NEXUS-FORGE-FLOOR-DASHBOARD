@@ -1,7 +1,6 @@
 import { useId, useState, type FormEvent } from 'react';
 import { Icon } from '@/components/Icon';
 import { EmptyState, SimulatedTag } from '@/components/ui';
-import { formatTimeOfDay } from '@/domain/time';
 import { useI18n } from '@/i18n/useI18n';
 import type { Worker } from '@/domain/types';
 import { useConfig, useDashboard, useSnapshot } from '@/store/hooks';
@@ -19,7 +18,9 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputId = useId();
-  const t = useI18n().m.convo;
+  const i18n = useI18n();
+  const t = i18n.m.convo;
+  const time = i18n.time;
   const messages = snapshot.messages.filter((m) => m.workerId === worker.id);
   const enabled = features.workerMessaging && sendWorkerMessage !== null;
 
@@ -46,7 +47,7 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
         {messages.map((m) => (
           <li key={m.id} className="convo__msg" data-direction={m.direction}>
             <div className="convo__meta">
-              <strong>{m.author}</strong> <span className="mono">{formatTimeOfDay(m.sentAt)}</span>
+              <strong>{m.author}</strong> <span className="mono">{time(m.sentAt)}</span>
               {m.delivery === 'simulated' && (
                 <SimulatedTag>{m.direction === 'to-worker' ? t.notDelivered : t.demo}</SimulatedTag>
               )}

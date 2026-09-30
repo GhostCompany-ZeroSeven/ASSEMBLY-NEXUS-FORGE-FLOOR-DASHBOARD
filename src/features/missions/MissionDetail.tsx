@@ -1,7 +1,7 @@
 import { href, withQuery } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
-import { EmptyState, KeyValue, Panel, ProgressBar, StatusBadge } from '@/components/ui';
+import { EmptyState, KeyValue, MoreLink, Panel, ProgressBar, StatusBadge } from '@/components/ui';
 import { findMission } from '@/domain/selectors';
 import {
   CERT_TONE,
@@ -270,7 +270,15 @@ export function MissionDetail({ missionId }: { missionId: string }) {
           </Panel>
         )}
 
-        <Panel title={t.timeline} className="span-3">
+        <Panel
+          title={t.timeline}
+          className="span-3"
+          actions={
+            <MoreLink href={withQuery(href.activity(), { mission: mission.id })}>
+              {m.activity.openTimeline}
+            </MoreLink>
+          }
+        >
           <ActivityStream
             filter={{ missionId: mission.id, includeLowSignal: true }}
             showLinks={false}

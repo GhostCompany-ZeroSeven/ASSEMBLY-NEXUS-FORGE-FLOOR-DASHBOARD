@@ -29,11 +29,20 @@ export const GO_KEYS: {
   key: string;
   /** Key into `Messages['nav']` (display text is localized, the key is not). */
   nav:
-    'command' | 'floor' | 'missions' | 'workers' | 'approvals' | 'alerts' | 'activity' | 'settings';
+    | 'command'
+    | 'brief'
+    | 'floor'
+    | 'missions'
+    | 'workers'
+    | 'approvals'
+    | 'alerts'
+    | 'activity'
+    | 'settings';
   target: () => string;
   flag?: keyof DashboardConfig['features'];
 }[] = [
   { key: 'c', nav: 'command', target: href.command },
+  { key: 'b', nav: 'brief', target: href.brief },
   { key: 'f', nav: 'floor', target: href.floor, flag: 'forgeFloor' },
   { key: 'm', nav: 'missions', target: href.missions },
   { key: 'w', nav: 'workers', target: href.workers },
@@ -80,6 +89,23 @@ export function buildCommands(ctx: CommandContext): Command[] {
     run: () => navigate(g.target()),
   }));
 
+  // Change digest and attention queue (navigation only; they carry no authority).
+  cmds.push(
+    {
+      id: 'attention:what-changed',
+      title: p.whatChanged,
+      group: 'Attention',
+      keywords: 'what changed since last looked digest new brief morning return',
+      run: () => navigate(withQuery(href.brief(), { focus: 'digest' })),
+    },
+    {
+      id: 'attention:queue',
+      title: p.attentionQueue,
+      group: 'Attention',
+      keywords: 'founder attention queue waiting needs brief',
+      run: () => navigate(withQuery(href.brief(), { focus: 'attention' })),
+    },
+  );
   // Founder attention: open gates first (navigation only; deciding stays on the gate card).
   if (config.features.approvals) {
     cmds.push({

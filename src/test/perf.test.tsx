@@ -45,7 +45,15 @@ describe('performance and resilience (stress dataset)', () => {
     expect(a.workers.every((w) => w.authority.length === 0)).toBe(true);
   });
 
-  for (const hash of ['#/', '#/floor', '#/missions', '#/workers', '#/approvals', '#/activity']) {
+  for (const hash of [
+    '#/',
+    '#/floor',
+    '#/missions',
+    '#/workers',
+    '#/approvals',
+    '#/activity',
+    '#/brief',
+  ]) {
     it(`${hash} renders the stress dataset within budget with a bounded number of timers`, async () => {
       const live = trackIntervals();
       window.location.hash = hash;
@@ -122,5 +130,55 @@ describe('resilience: bounded state, no leaks, no duplicate polling', () => {
     await adapter.connect();
     expect(starts).toBe(1);
     adapter.disconnect();
+  });
+});
+
+import { selectAttentionQueue } from '@/domain/attention';
+import { createCheckpoint } from '@/domain/checkpoint';
+import { computeDigest } from '@/domain/digest';
+import { selectFreshness } from '@/domain/freshness';
+import { arrivedOutOfOrder, filterEvents, timelineOrder } from '@/features/activity/filter';
+
+describe('Phase 5 computations stay bounded on the stress dataset', () => {
+  const timeIt = (fn: () => void, runs = 20) => {
+    fn(); // warm-up
+    const t0 = performance.now();
+    for (let i = 0; i < runs; i++) fn();
+    return (performance.now() - t0) / runs;
+  };
+  const s = buildStressSnapshot(NOW);
+  // Baseline where every record differs, so the digest does maximal work.
+  const changed = {
+    ...s,
+    missions: s.missions.map((m, i) => ({
+      ...m,
+      status: i % 2 ? ('COMPLETE' as const) : m.status,
+    })),
+    workers: s.workers.map((w) => ({ ...w, state: 'IDLE' as const })),
+  };
+  const cp = createCheckpoint(changed, new Date(NOW - 3_600_000).toISOString());
+
+  it('change digest (400 missions, 120 workers, 500 events) < 25ms', () => {
+    const ms = timeIt(() => computeDigest(s, cp));
+    expect(ms).toBeLessThan(25);
+    const d = computeDigest(s, cp);
+    expect(d.items.length).toBeLessThanOrEqual(150); // display list stays bounded
+  });
+
+  it('attention queue < 10ms', () => {
+    const f = selectFreshness(s, 'connected', NOW);
+    expect(timeIt(() => selectAttentionQueue(s, 'Founder #0007', f))).toBeLessThan(10);
+  });
+
+  it('timeline filter + order + out-of-order detection over the full log < 10ms', () => {
+    const ms = timeIt(() => {
+      timelineOrder(filterEvents(s.events, { includeLowSignal: true, via: 'simulated' }));
+      arrivedOutOfOrder(s.events);
+    });
+    expect(ms).toBeLessThan(10);
+  });
+
+  it('checkpoint size stays bounded (stored in localStorage)', () => {
+    expect(JSON.stringify(cp).length).toBeLessThan(64 * 1024);
   });
 });

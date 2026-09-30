@@ -253,11 +253,14 @@ function RoomHeader({
           onClick={() => onSelect(room.id)}
           aria-pressed={selected}
           aria-label={t.roomButton(room.label, count)}
+          title={room.label}
         >
           {room.label}
         </button>
       ) : (
-        <span className="room__label">{room.label}</span>
+        <span className="room__label" title={room.label}>
+          {room.label}
+        </span>
       )}
       <span className="room__count" title={t.workersPresent} aria-hidden="true">
         {count}

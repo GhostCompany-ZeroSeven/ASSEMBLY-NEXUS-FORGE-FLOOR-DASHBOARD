@@ -1,5 +1,6 @@
 import { en, type Messages } from './en';
 import type { Locale } from './locales';
+import type * as PseudoNs from './pseudo';
 
 /**
  * Catalog loading. English (the default and fallback) is bundled; other
@@ -13,6 +14,19 @@ const loaders: Record<Exclude<Locale, 'en'>, () => Promise<Messages>> = {
 
 export function getCatalog(locale: Locale): Messages | undefined {
   return loaded.get(locale);
+}
+
+/** The diagnostic pseudo-locale module (loaded only when `?pseudo=1` is present). */
+export type PseudoModule = typeof PseudoNs;
+let pseudo: PseudoModule | null = null;
+
+export function getPseudo(): PseudoModule | null {
+  return pseudo;
+}
+
+export async function loadPseudo(): Promise<PseudoModule> {
+  pseudo ??= await import('./pseudo');
+  return pseudo;
 }
 
 export async function loadCatalog(locale: Locale): Promise<Messages> {

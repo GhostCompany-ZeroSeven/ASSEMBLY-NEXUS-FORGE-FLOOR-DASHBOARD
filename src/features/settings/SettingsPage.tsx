@@ -60,6 +60,11 @@ export function SettingsPage() {
                 ))}
               </select>
             </label>
+            {i18n.pseudo && (
+              <p className="muted" role="note" data-testid="pseudo-note">
+                {t.pseudoActive}
+              </p>
+            )}
             <label className="select-field">
               <span>{t.theme}</span>
               <select value={prefs.themeId} onChange={(e) => prefs.setThemeId(e.target.value)}>
@@ -134,7 +139,9 @@ export function SettingsPage() {
         <Panel title={t.flags}>
           <KeyValue
             items={Object.entries(config.features).map(([k, v]) => [
-              <span className="mono">{k}</span>,
+              <span className="mono" translate="no">
+                {k}
+              </span>,
               yesNo(Boolean(v)),
             ])}
           />
@@ -172,7 +179,9 @@ export function SettingsPage() {
                 {config.floor.rooms.map((r) => (
                   <tr key={r.id}>
                     <td>{r.label}</td>
-                    <td className="mono">{r.kind}</td>
+                    <td className="mono" translate="no">
+                      {r.kind}
+                    </td>
                     <td className="small">{r.equipment.join(', ')}</td>
                   </tr>
                 ))}
@@ -183,7 +192,10 @@ export function SettingsPage() {
           <div className="chips">
             {WORKER_STATES.map((s) => (
               <span key={s} className="chip">
-                {m.status.worker[s]}: <span className="mono">{config.floor.stateRoutes[s]}</span>
+                {m.status.worker[s]}:{' '}
+                <span className="mono" translate="no">
+                  {config.floor.stateRoutes[s]}
+                </span>
               </span>
             ))}
           </div>
@@ -207,7 +219,10 @@ export function SettingsPage() {
           <div className="chips">
             {Object.entries(config.statusMapping).map(([raw, s]) => (
               <span key={raw} className="chip">
-                <span className="mono">{raw}</span>: {m.status.worker[s]}
+                <span className="mono" translate="no">
+                  {raw}
+                </span>
+                : {m.status.worker[s]}
               </span>
             ))}
           </div>

@@ -49,6 +49,7 @@ export const en = {
     simulatedTitle: 'Produced by the local demo adapter. No backend involved.',
     progressLabel: (what: string) => `${what} progress`,
     by: (who: string) => `by ${who}`,
+    milliseconds: (n: string) => `${n} ms`,
   },
 
   time: {
@@ -68,6 +69,7 @@ export const en = {
     approvals: 'Approval Gates',
     alerts: 'Alerts',
     activity: 'Activity',
+    brief: 'Brief',
     settings: 'Settings',
     skip: 'Skip to content',
     home: (product: string, surface: string) => `${product} ${surface} home`,
@@ -105,6 +107,7 @@ export const en = {
       approvals: 'Approval Gates',
       alerts: 'Alerts',
       activity: 'Activity',
+      brief: 'Founder brief',
       settings: 'Settings',
     },
   },
@@ -650,6 +653,7 @@ export const en = {
   },
 
   gate: {
+    relatedAlerts: 'Related alerts',
     ifApproved: 'If approved, this will happen',
     rationale: 'Rationale',
     risk: 'Risk',
@@ -727,6 +731,36 @@ export const en = {
     reset: 'Reset filters',
     bounded: (shown: number, max: number) =>
       `Showing the latest ${shown} events. The dashboard keeps at most ${max} in memory.`,
+    range: 'Time range',
+    rangeOption: {
+      all: 'Any time',
+      '15m': 'Last 15 minutes',
+      '1h': 'Last hour',
+      '6h': 'Last 6 hours',
+      '24h': 'Last 24 hours',
+      'last-view': 'Since my last view',
+    },
+    viaFilter: 'Received via',
+    anyVia: 'Any path',
+    viaOption: { stream: 'Event stream', poll: 'REST polling', simulated: 'Demo simulation' },
+    details: 'Show arrival details',
+    received: (time: string) => `received ${time}`,
+    eventTitle: (eventTime: string, received: string) =>
+      `Event time (from the source): ${eventTime}. Received by this dashboard: ${received}.`,
+    receivedUnknown: 'not recorded',
+    late: 'ARRIVED LATE',
+    lateTitle:
+      'Received after an event with a later event time. The timeline is ordered by event time.',
+    now: 'Now',
+    nowTitle: 'Current state from the latest data, not the state when this event happened.',
+    gone: 'no longer reported',
+    retained: (oldest: string) =>
+      `Retained history starts at ${oldest}. Earlier events were not received or not retained; they are never reconstructed.`,
+    atCapacity: (max: number) =>
+      `The log is at its limit of ${max} events: the oldest are dropped as new ones arrive.`,
+    noLastView:
+      'No last view is recorded in this browser, so "Since my last view" cannot be applied. Showing any time.',
+    openTimeline: 'Open in timeline',
   },
 
   /** Rendering of structured events. The event log itself stays language-free data. */
@@ -859,6 +893,131 @@ export const en = {
     },
   },
 
+  brief: {
+    eyebrow: 'Founder brief',
+    title: 'Since you last looked',
+    lead: 'What the data says now and what changed. Information only: nothing here approves, denies, dispatches or grants anything.',
+    glance: 'At a glance',
+    figure: {
+      running: 'Running',
+      completed: 'Completed',
+      blocked: 'Blocked',
+      failed: 'Failed',
+      needsFounder: (who: string) => `Needs ${who}`,
+      newSinceLastView: 'New since last view',
+    },
+    figureHint: {
+      running: 'Missions active or in review',
+      completed: 'Missions reported complete now',
+      blocked: 'Blocked missions and workers',
+      failed: 'Failed missions and workers',
+      needsFounder: 'Items in the attention queue',
+      newSinceLastView: 'Changes found by the digest',
+    },
+    completedSince: (n: string) => `${n} since last view`,
+    unknownValue: 'UNKNOWN',
+    unknownBecause: (what: string) => `Unknown: ${what} could not be loaded`,
+    unknownNoBaseline: 'Unknown: no comparable last view',
+    dataSource: 'Data',
+    resource: {
+      missions: 'missions',
+      workers: 'workers',
+      approvals: 'approval gates',
+      alerts: 'alerts',
+      events: 'events',
+    } as Record<string, string>,
+    alertPhase: { open: 'open', acknowledged: 'acknowledged', resolved: 'resolved' } as Record<
+      string,
+      string
+    >,
+    and: ' and ',
+    digest: {
+      title: 'What changed',
+      since: (when: string, rel: string) => `Compared with your last view on ${when} (${rel}).`,
+      sourceChanged: (then: string, now: string) =>
+        `The data source was ${then} then and is ${now} now.`,
+      noBaseline:
+        'No previous view is recorded in this browser, so what changed is UNKNOWN. This is not the same as "nothing changed".',
+      differentSource: (then: string) =>
+        `Your last view came from a different data source (${then}). Changes cannot be compared, so they are UNKNOWN.`,
+      rejected: 'A stored last-view record was unreadable or invalid and was ignored.',
+      storageUnavailable:
+        'This browser would not store the last-view record; it will not survive a reload.',
+      markSeen: 'Mark all as seen',
+      markSeenHint: 'Record what is on screen now as your last view (this browser only).',
+      clear: 'Forget last view',
+      counts: 'Changes by category',
+      category: {
+        missionsNew: 'New missions',
+        missionsStarted: 'Missions started',
+        missionsCompleted: 'Missions completed',
+        missionsFailed: 'Missions failed',
+        workersChanged: 'Worker state changes',
+        approvalsNew: 'New approval gates',
+        approvalsResolved: 'Approval gates no longer open',
+        alertsOpened: 'New alerts',
+        alertsResolved: 'Alerts resolved',
+        artifactsNew: 'New artifacts',
+        statusBecameUnknown: 'Status became UNKNOWN',
+        noLongerReported: 'No longer reported',
+        events: 'Events since then',
+      },
+      reason: {
+        'no-baseline': 'no previous view',
+        'different-source': 'different data source',
+        'unavailable-then': 'not loaded at your last view',
+        'unavailable-now': 'cannot be loaded now',
+        'history-truncated': 'retained history does not reach back that far',
+        'baseline-truncated': 'last view was too large to record fully',
+      },
+      eventsLowerBound: (n: string) => `at least ${n} retained`,
+      nothing: 'Nothing changed in any category since your last view.',
+      items: 'Changes',
+      entity: {
+        mission: 'Mission',
+        worker: 'Worker',
+        approval: 'Approval gate',
+        alert: 'Alert',
+        artifact: 'Artifact',
+      },
+      moreItems: (n: string) => `${n} more changes are counted above but not listed.`,
+      goneNote: 'No longer in the data: this does not mean completed or deleted.',
+    },
+    attention: {
+      title: 'Founder attention queue',
+      note: 'Navigation only. Decisions are made on the approval gate card, which checks authority.',
+      incomplete: (what: string) =>
+        `Incomplete: ${what} could not be loaded. An empty queue here does not mean nothing is waiting.`,
+      empty: 'Nothing in the data is waiting on the Founder.',
+      reason: {
+        'data-unavailable': 'Could not load this data',
+        'data-not-current': 'Items below are from data that is not current',
+        'gate-open': 'Approval gate open for your decision',
+        'gate-undecidable': 'Gate cannot be decided: its required authority is missing or a worker',
+        'gate-status-unknown': 'Gate status is UNKNOWN',
+        'alert-human-action': 'Alert says human action is required',
+      },
+      source: { approval: 'Approval gate', alert: 'Alert', data: 'Data' },
+      state: 'Current state',
+      since: 'Since',
+      freshness: 'Freshness',
+      related: 'Related',
+      open: 'Open',
+    },
+    problems: {
+      title: 'Data and transport problems',
+      none: 'No data or transport problems are reported.',
+      unavailable: (r: string) => `${r} could not be loaded; related answers are UNKNOWN`,
+      disconnected: 'Disconnected from the data source',
+      stale: 'Data is older than its freshness limit',
+      partial: 'Some records were dropped as invalid',
+      'last-known': 'Showing the last known data',
+      'stream-fallback': 'Event stream unavailable; updating by polling',
+      issues: (n: string) => `${n} data quality issues reported`,
+      diagnostics: 'Open transport diagnostics',
+    },
+  },
+
   settings: {
     eyebrow: 'Configuration',
     title: 'Settings',
@@ -866,6 +1025,8 @@ export const en = {
     display: 'Display',
     language: 'Language',
     languageAuto: (name: string) => `Automatic (browser: ${name})`,
+    pseudoActive:
+      'Pseudo-locale active (diagnostic, from ?pseudo=1). Remove it from the address to return to normal text.',
     theme: 'Theme',
     motion: 'Motion',
     motionSystem: 'Follow system setting',
@@ -992,6 +1153,8 @@ export const en = {
     founderAttention: 'Jump to what needs the Founder',
     unavailable: (r: string) => `Show data problem: ${r}`,
     clearFilters: 'Clear filters on this page',
+    whatChanged: 'What changed since I last looked?',
+    attentionQueue: 'Open the Founder attention queue',
   },
 
   search: {

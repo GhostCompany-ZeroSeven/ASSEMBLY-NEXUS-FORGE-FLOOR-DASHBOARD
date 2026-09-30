@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { href } from '@/app/router';
+import { href, withQuery } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
 import { SimulatedTag, StatusBadge } from '@/components/ui';
@@ -26,6 +26,10 @@ const DECISION_ICON: Record<ApprovalDecision, 'check' | 'x' | 'hold'> = {
  */
 export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   const snapshot = useSnapshot();
+  // Only alerts that explicitly name this gate as affected (no inferred links).
+  const relatedAlerts = snapshot.alerts.filter((al) =>
+    al.affected.some((x) => x.kind === 'approval' && x.id === request.id),
+  );
   const { governance } = useConfig();
   const { decideApproval, adapter } = useDashboard();
   const now = useNow(5000);
@@ -101,6 +105,19 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
       <h3 className="gate__title" id={`gate-title-${request.id}`}>
         {request.title}
       </h3>
+      {relatedAlerts.length > 0 && (
+        <p className="gate__related small">
+          <span className="muted">{t.relatedAlerts}:</span>{' '}
+          {relatedAlerts.map((al, i) => (
+            <span key={al.id}>
+              {i > 0 && ', '}
+              <a className="target" href={withQuery(href.alerts(), { focus: al.id })}>
+                {al.title}
+              </a>
+            </span>
+          ))}
+        </p>
+      )}
 
       <div className="gate__body">
         <div className="gate__action">

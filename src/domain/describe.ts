@@ -19,6 +19,8 @@ export function describeEvent(
   e: DashboardEvent,
   s: DashboardSnapshot,
   m: Messages = en,
+  /** Locale-aware percentage from 0–100 (see useI18n().pct). */
+  pct: (value: number) => string = (v) => `${v}%`,
 ): EventDescription {
   const t = m.events;
   const worker = e.workerId ? (s.workers.find((w) => w.id === e.workerId)?.name ?? e.workerId) : '';
@@ -35,7 +37,7 @@ export function describeEvent(
         detail: e.payload.activity,
       };
     case 'task.progress':
-      return { title: t.progress, detail: `${Math.round(e.payload.progress * 100)}%` };
+      return { title: t.progress, detail: pct(Math.round(e.payload.progress * 100)) };
     case 'task.completed':
       return { title: t.taskCompleted, detail: e.payload.taskId };
     case 'artifact.produced':

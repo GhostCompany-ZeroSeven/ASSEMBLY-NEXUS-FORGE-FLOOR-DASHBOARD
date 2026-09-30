@@ -5,6 +5,7 @@ import { assemblyNexusConfig } from '@/config/assemblyNexus.config';
 import { allStrings } from '@/test/i18nStrings';
 import { en } from './en';
 import { es } from './es';
+import { pseudoMessages } from './pseudo';
 
 /**
  * Rendering determinism guard. Every character the UI renders must be covered
@@ -37,6 +38,7 @@ describe('glyph coverage (bundled fonts only)', () => {
     for (const [name, m] of [
       ['en', en],
       ['es', es],
+      ['pseudo', pseudoMessages()],
     ] as const) {
       expect(uncovered(allStrings(m).join('')), name).toEqual([]);
     }

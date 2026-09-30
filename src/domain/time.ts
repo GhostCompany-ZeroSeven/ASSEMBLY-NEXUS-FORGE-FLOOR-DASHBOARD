@@ -34,15 +34,6 @@ export function formatRelative(iso: string, nowMs: number): string {
   return delta >= 0 ? `${formatDuration(delta)} ago` : `in ${formatDuration(-delta)}`;
 }
 
-export function formatTimeOfDay(iso: string): string {
-  const ms = toMs(iso);
-  if (ms === null) return '--:--:--';
-  const d = new Date(ms);
-  return [d.getHours(), d.getMinutes(), d.getSeconds()]
-    .map((n) => String(n).padStart(2, '0'))
-    .join(':');
-}
-
 export interface MissionTiming {
   /** Elapsed ms since start (frozen at completion), or null if not started. */
   elapsedMs: number | null;

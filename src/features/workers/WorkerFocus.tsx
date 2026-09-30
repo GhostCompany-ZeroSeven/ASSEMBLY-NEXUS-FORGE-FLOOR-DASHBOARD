@@ -7,6 +7,7 @@ import { Icon } from '@/components/Icon';
 import {
   EmptyState,
   KeyValue,
+  MoreLink,
   Panel,
   ProgressBar,
   SegmentClock,
@@ -200,7 +201,15 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           )}
         </Panel>
 
-        <Panel title={t.timeline} className="span-2">
+        <Panel
+          title={t.timeline}
+          className="span-2"
+          actions={
+            <MoreLink href={withQuery(href.activity(), { worker: worker.id })}>
+              {m.activity.openTimeline}
+            </MoreLink>
+          }
+        >
           <ActivityStream filter={{ workerId: worker.id, includeLowSignal: true }} limit={80} />
         </Panel>
 

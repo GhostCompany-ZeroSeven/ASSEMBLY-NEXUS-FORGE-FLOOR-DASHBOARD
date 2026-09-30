@@ -82,7 +82,7 @@ export function ProgressBar({
   label: string;
   showValue?: boolean;
 }) {
-  const { m } = useI18n();
+  const { m, pct: fmtPct } = useI18n();
   if (value === null || value === undefined) {
     return (
       <div className="progress progress--unknown" aria-label={`${label}: ${m.common.notReported}`}>
@@ -103,10 +103,11 @@ export function ProgressBar({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={pct}
+        aria-valuetext={fmtPct(pct)}
       >
         <div className="progress__fill" style={{ width: `${pct}%` }} />
       </div>
-      {showValue && <span className="progress__value">{pct}%</span>}
+      {showValue && <span className="progress__value">{fmtPct(pct)}</span>}
     </div>
   );
 }

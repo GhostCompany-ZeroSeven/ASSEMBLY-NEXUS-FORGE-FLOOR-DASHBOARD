@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfigContext } from '@/store/contexts';
 import { useConfig, usePreferences } from '@/store/hooks';
-import { getCatalog, loadCatalog } from './catalogs';
+import { getCatalog, getPseudo, loadCatalog, loadPseudo } from './catalogs';
 import { I18nContext, type I18nContextValue } from './context';
 import { formatDurationIn, formatRelativeIn, localizeConfig } from './format';
+import { intlFormatters } from './intlFormatters';
 import { browserLocale, navigatorLanguages, resolveLocale, type Locale } from './locales';
+import { pseudoRequested } from './pseudoFlag';
 
 /**
  * Supplies the active locale's messages and formatters, keeps `<html lang>` in
@@ -19,6 +21,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const prefs = usePreferences();
   const config = useConfig();
   const browser = useMemo(() => browserLocale(navigatorLanguages()), []);
+  // Diagnostic pseudo-locale (?pseudo=1): fixed for the page load, never stored,
+  // and its code is only downloaded when requested.
+  const [wantPseudo] = useState(pseudoRequested);
+  const [pseudoMod, setPseudoMod] = useState(() => (wantPseudo ? getPseudo() : null));
+  useEffect(() => {
+    if (!wantPseudo || pseudoMod) return;
+    let cancelled = false;
+    loadPseudo()
+      .then((mod) => {
+        if (!cancelled) setPseudoMod(mod);
+      })
+      .catch(() => {
+        /* diagnostic only: keep the normal language */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [wantPseudo, pseudoMod]);
+  const pseudo = pseudoMod !== null;
   const wanted = resolveLocale(prefs.locale, navigatorLanguages());
   const [shown, setShown] = useState<Locale>(() => (getCatalog(wanted) ? wanted : 'en'));
 
@@ -43,23 +64,30 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const locale = getCatalog(shown) ? shown : 'en';
   useEffect(() => {
-    document.documentElement.lang = locale;
-  }, [locale]);
+    document.documentElement.lang = pseudo ? 'en-XA' : locale;
+  }, [locale, pseudo]);
 
   const value = useMemo<I18nContextValue>(() => {
-    const m = getCatalog(locale)!;
+    // Pseudo text is derived from English, so plurals and Intl formats use `en`.
+    const m = pseudoMod ? pseudoMod.pseudoMessages() : getCatalog(locale)!;
+    const fmt = pseudo ? 'en' : locale;
     return {
-      locale,
+      locale: fmt,
+      pseudo,
       preference: prefs.locale,
       browserLocale: browser,
       setPreference: prefs.setLocale,
       m,
       rel: (iso, now) => formatRelativeIn(m, iso, now),
       duration: (ms) => formatDurationIn(m, ms),
+      ...intlFormatters(fmt, m.time.unknown),
     };
-  }, [locale, prefs.locale, prefs.setLocale, browser]);
+  }, [locale, pseudo, pseudoMod, prefs.locale, prefs.setLocale, browser]);
 
-  const localized = useMemo(() => localizeConfig(config, locale), [config, locale]);
+  const localized = useMemo(
+    () => (pseudoMod ? pseudoMod.pseudoConfig(config) : localizeConfig(config, locale)),
+    [config, locale, pseudoMod],
+  );
 
   return (
     <I18nContext.Provider value={value}>
