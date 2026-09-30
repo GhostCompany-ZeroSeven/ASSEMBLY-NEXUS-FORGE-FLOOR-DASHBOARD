@@ -255,3 +255,32 @@ test('visual: pseudo-locale diagnostic (phone approvals)', async ({ page }) => {
   await page.evaluate(() => document.fonts.ready);
   await snap(page, 'pseudo-approvals-phone');
 });
+
+/* ------------------------------ Phase 6 states ------------------------------ */
+
+/** View AN-0142, leave, advance the demo: the mission has proven changes. */
+async function missionWithChanges(page: Page, viewport: keyof typeof VIEWPORTS) {
+  await open(page, '/missions/AN-0142', viewport);
+  await page.goto('/?demo=paused#/missions');
+  await page.locator('.mission-card').first().waitFor();
+  for (let i = 0; i < 6; i++) await page.keyboard.press('n');
+  await page.goto('/?demo=paused#/missions/AN-0142?focus=changes');
+  await page.locator('[data-surface="ready"]').waitFor();
+  await expect(page.getByText(/Your last view of this mission/)).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+}
+
+test('visual: mission changes since last viewed (desktop)', async ({ page }) => {
+  await missionWithChanges(page, 'desktop');
+  await snap(page, 'mission-changes-desktop');
+});
+
+test('visual: mission changes since last viewed (phone)', async ({ page }) => {
+  await missionWithChanges(page, 'phone');
+  await snap(page, 'mission-changes-phone');
+});
+
+test('visual: data-quality inspector', async ({ page }) => {
+  await open(page, '/quality');
+  await snap(page, 'quality-desktop');
+});

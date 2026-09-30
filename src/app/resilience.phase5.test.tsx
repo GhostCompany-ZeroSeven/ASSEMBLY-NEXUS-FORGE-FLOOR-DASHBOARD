@@ -33,12 +33,27 @@ describe('malformed stored state', () => {
     ['not JSON', '{{{'],
     ['wrong type', '"a string"'],
     ['prototype pollution attempt', '{"__proto__":{"v":1},"constructor":{"prototype":{"x":1}}}'],
-    ['huge garbage', JSON.stringify({ v: 1, at: 'x'.repeat(100_000) })],
+    ['huge garbage', JSON.stringify({ v: 2, at: 'x'.repeat(100_000) })],
+    ['oversized payload (refused before parsing)', `{"v":2,"pad":"${'x'.repeat(600_000)}"}`],
   ])('a corrupt checkpoint (%s) is ignored and reported; the app still works', async (_n, raw) => {
     localStorage.setItem(LAST_VIEW_KEY, raw);
     await renderAt('#/brief', testAdapter());
     expect(screen.getByText(/unreadable or invalid and was ignored/)).toBeInTheDocument();
     expect(({} as Record<string, unknown>).x).toBeUndefined();
+  });
+
+  it('a checkpoint from an older schema version is reported as outdated, not corrupt', async () => {
+    localStorage.setItem(
+      LAST_VIEW_KEY,
+      JSON.stringify({ v: 1, at: '2026-09-30T11:00:00.000Z', adapterId: 'demo', mode: 'demo' }),
+    );
+    await renderAt('#/brief', testAdapter());
+    expect(
+      screen.getByText(/from another version of the dashboard was discarded/),
+    ).toBeInTheDocument();
+    expect(document.querySelector('[data-figure="newSinceLastView"]')!.textContent).toContain(
+      'UNKNOWN',
+    );
   });
 
   it('storage that throws never breaks the brief (reported as unavailable)', async () => {

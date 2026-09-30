@@ -182,3 +182,53 @@ describe('Phase 5 computations stay bounded on the stress dataset', () => {
     expect(JSON.stringify(cp).length).toBeLessThan(64 * 1024);
   });
 });
+
+import { selectAttentionQueue as queueOf } from '@/domain/attention';
+import { explainAttention } from '@/domain/attentionExplain';
+import { selectDataQuality } from '@/domain/dataQuality';
+import { lastActivityByMission, selectMissionMarkers } from '@/domain/missionMarkers';
+import { computeMissionDigest, createMissionCheckpoint } from '@/domain/missionView';
+
+describe('Phase 6 computations stay bounded on the stress dataset', () => {
+  const timeIt = (fn: () => void, runs = 20) => {
+    fn();
+    const t0 = performance.now();
+    for (let i = 0; i < runs; i++) fn();
+    return (performance.now() - t0) / runs;
+  };
+  const s = buildStressSnapshot(NOW);
+  const f = selectFreshness(s, 'connected', NOW);
+  const at = new Date(NOW - 60_000).toISOString();
+  // 50 viewed missions (the storage cap), all with checkpoints.
+  const views = new Map(
+    s.missions.slice(0, 50).map((m) => [m.id, createMissionCheckpoint(s, m.id, f, at)]),
+  );
+  const q = queueOf(s, 'Founder #0007', f);
+
+  it('mission digest < 5ms', () => {
+    const id = s.missions[0]!.id;
+    expect(timeIt(() => computeMissionDigest(s, id, views.get(id)!, f))).toBeLessThan(5);
+  });
+
+  it('markers for 400 missions with 50 viewed + last activity < 60ms', () => {
+    const ms = timeIt(() => {
+      selectMissionMarkers(s, null, (id) => views.get(id) ?? null, q, f);
+      lastActivityByMission(s);
+    }, 10);
+    expect(ms).toBeLessThan(60);
+  });
+
+  it('data quality report and all attention explanations < 10ms', () => {
+    expect(
+      timeIt(() => {
+        selectDataQuality(s, f, 'connected', NOW);
+        for (const i of q.items) explainAttention(i, s, f);
+      }),
+    ).toBeLessThan(10);
+  });
+
+  it('all 50 mission checkpoints serialize under 1MB (the storage cap)', () => {
+    const json = JSON.stringify({ v: 1, missions: Object.fromEntries(views) });
+    expect(json.length).toBeLessThan(1_000_000);
+  });
+});

@@ -49,18 +49,18 @@ describe('operations timeline', () => {
 describe('cross-surface context (real relationships only)', () => {
   it('mission and worker timelines link to the filtered operations timeline', async () => {
     await renderAt('#/missions/AN-0142');
-    expect(screen.getByRole('link', { name: /Open in timeline/ })).toHaveAttribute(
-      'href',
-      '#/activity?mission=AN-0142',
-    );
+    const hrefs = screen
+      .getAllByRole('link', { name: /Open in timeline/ })
+      .map((l) => l.getAttribute('href'));
+    expect(hrefs).toContain('#/activity?mission=AN-0142');
   });
 
   it('worker focus links to its timeline', async () => {
     await renderAt('#/workers/w-cyrus');
-    expect(screen.getByRole('link', { name: /Open in timeline/ })).toHaveAttribute(
-      'href',
-      '#/activity?worker=w-cyrus',
-    );
+    const hrefs = screen
+      .getAllByRole('link', { name: /Open in timeline/ })
+      .map((l) => l.getAttribute('href'));
+    expect(hrefs).toContain('#/activity?worker=w-cyrus');
   });
 
   it('an approval gate lists only alerts that explicitly name it', async () => {
