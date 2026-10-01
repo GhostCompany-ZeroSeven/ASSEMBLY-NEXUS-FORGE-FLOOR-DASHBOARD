@@ -1,0 +1,857 @@
+{
+  "schema_version": 1,
+  "founder": "Founder #0007",
+  "founder_approved": true,
+  "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+  "asset_file_count": 42,
+  "png_asset_count": 21,
+  "webp_asset_count": 21,
+  "transparent_rgba_asset_count": 17,
+  "transparent_asset_file_count": 34,
+  "assets": [
+    {
+      "asset_id": "founder-universe.baby-ghost-sacred-cyber-skull.png",
+      "relative_path": "public/assets/founder-universe/baby-ghost/baby-ghost-sacred-cyber-skull.png",
+      "filename": "baby-ghost-sacred-cyber-skull.png",
+      "family": "BABY_GHOST",
+      "decorative_identity": "BABY_GHOST_AND_SACRED_CYBER_SKULL",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1204,
+        "height": 1306
+      },
+      "transparency": false,
+      "byte_size": 2570557,
+      "sha256": "267ef02a0d6e6a396c423673d12d246fba687e668e2b42c1136ef818e06dbd67",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.baby-ghost-sacred-cyber-skull.webp",
+      "relative_path": "public/assets/founder-universe/baby-ghost/baby-ghost-sacred-cyber-skull.webp",
+      "filename": "baby-ghost-sacred-cyber-skull.webp",
+      "family": "BABY_GHOST",
+      "decorative_identity": "BABY_GHOST_AND_SACRED_CYBER_SKULL",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1204,
+        "height": 1306
+      },
+      "transparency": false,
+      "byte_size": 522362,
+      "sha256": "e5b72f4f609c993057977a881d2f7e4869affdb262c201bde0ed0b42486e3672",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.baby-ghost-transparent.png",
+      "relative_path": "public/assets/founder-universe/baby-ghost/baby-ghost-transparent.png",
+      "filename": "baby-ghost-transparent.png",
+      "family": "BABY_GHOST",
+      "decorative_identity": "BABY_GHOST",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1204,
+        "height": 1306
+      },
+      "transparency": true,
+      "byte_size": 1383421,
+      "sha256": "8b8b8a3e779d503bcdf01f25ae466ced278a4f217ab8b6580e216a6f4860ce12",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.baby-ghost-transparent.webp",
+      "relative_path": "public/assets/founder-universe/baby-ghost/baby-ghost-transparent.webp",
+      "filename": "baby-ghost-transparent.webp",
+      "family": "BABY_GHOST",
+      "decorative_identity": "BABY_GHOST",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1204,
+        "height": 1306
+      },
+      "transparency": true,
+      "byte_size": 1031192,
+      "sha256": "3c551271f96d781a2f42ae93af7df72117d85e0c31f1c04816e776af6477a9fa",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-01-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-01-transparent.png",
+      "filename": "crown-top-scientist-01-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_01",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2263252,
+      "sha256": "f53f53113f897458b10bb96e378444b51f87bfd96fd078892581534935680ca8",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-01-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-01-transparent.webp",
+      "filename": "crown-top-scientist-01-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_01",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1522272,
+      "sha256": "bea3b77e64c4fe7fe4e373d2cb964f760a61ab051e0ddcc79d1bae002baa8930",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-02-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-02-transparent.png",
+      "filename": "crown-top-scientist-02-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_02",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2487535,
+      "sha256": "9d1d450df6625ae969ba36ba0d90bb0bdbde342e98c590b3f8527cfb2fb318b0",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-02-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-02-transparent.webp",
+      "filename": "crown-top-scientist-02-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_02",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1672504,
+      "sha256": "bbbda453a3ee2627ffde234fe142468351a03aeeb4b15b475c2cb96b249de94d",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-03-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-03-transparent.png",
+      "filename": "crown-top-scientist-03-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_03",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1557218,
+      "sha256": "00b0f724db2b4847026ea247fb2362edbd42c33d9de69b9f271ee7f730beafb5",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-03-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-03-transparent.webp",
+      "filename": "crown-top-scientist-03-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_03",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1133736,
+      "sha256": "1704c369e12a9b5fc9f179cd4709cd8858ba2f3c6cbe181f6b65995dbad4dc36",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-04-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-04-transparent.png",
+      "filename": "crown-top-scientist-04-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_04",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2404183,
+      "sha256": "69d80462ade82cd74d15a5957ac72f38e6a4043f65af646b7fcd21e21f4361f0",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-04-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-04-transparent.webp",
+      "filename": "crown-top-scientist-04-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_04",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1611688,
+      "sha256": "1535419714f50336f8eadd9c8aa9916a16ca766eefcfc5b01e9ad27fc320b6d3",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-05-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-05-transparent.png",
+      "filename": "crown-top-scientist-05-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_05",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2627567,
+      "sha256": "62d6562f8c6243290b535272820f277b101a4592482970a282e25a4fe688d764",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-05-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-05-transparent.webp",
+      "filename": "crown-top-scientist-05-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_05",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1781590,
+      "sha256": "10d17edfdf4edde2e0099d7e86edbde938fda3cb9bf2866f0c3e193d615a249d",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-06-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-06-transparent.png",
+      "filename": "crown-top-scientist-06-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_06",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1147,
+        "height": 1372
+      },
+      "transparency": true,
+      "byte_size": 1656298,
+      "sha256": "06c90b2cbd9f0f962ff554d787867ad62f64cecbb169dcd4b8dd7f1e095d51f2",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-06-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-06-transparent.webp",
+      "filename": "crown-top-scientist-06-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_06",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1147,
+        "height": 1372
+      },
+      "transparency": true,
+      "byte_size": 1198820,
+      "sha256": "7fcd802e2ddaa2a10c4951d819271fae387d773a1f1a4d6e41569215ba900323",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-07-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-07-transparent.png",
+      "filename": "crown-top-scientist-07-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_07",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2783467,
+      "sha256": "6e8d73387e5ceda250267992185499f85f1f8cfbb261892cc7c8e9b706234142",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-07-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-07-transparent.webp",
+      "filename": "crown-top-scientist-07-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_07",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1913866,
+      "sha256": "d185e7f537443a40c17742b3a2711c090158edf2ee512642fe75f5a088c1362c",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-08-transparent.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-08-transparent.png",
+      "filename": "crown-top-scientist-08-transparent.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_08",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2310240,
+      "sha256": "69c415f29960bbefa7e8f37cd0f02568e2ce98b5a504e35876b6b26de70db008",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientist-08-transparent.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientist-08-transparent.webp",
+      "filename": "crown-top-scientist-08-transparent.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_08",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1528156,
+      "sha256": "7768df4320bb67c1e49dd215d3c750d6d8ee339da88691c66bc6b99ae72fd1db",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientists-group.png",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientists-group.png",
+      "filename": "crown-top-scientists-group.png",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_SCIENTISTS",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1670,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 2732885,
+      "sha256": "97824341b78c81b99216f05d81d74671ac8b3bc97575b320a9d1191c17c7a16f",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.crown-top-scientists-group.webp",
+      "relative_path": "public/assets/founder-universe/crown-top/crown-top-scientists-group.webp",
+      "filename": "crown-top-scientists-group.webp",
+      "family": "CROWN_TOP_SCIENTISTS",
+      "decorative_identity": "CROWN_TOP_SCIENTISTS",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1670,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 569070,
+      "sha256": "2ffa8a1979d08039289bdcc109bf71f0b119c165dd84ddcfe19f866c3b0e8417",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.forge-floor-composition-mockup.png",
+      "relative_path": "public/assets/founder-universe/references/forge-floor-composition-mockup.png",
+      "filename": "forge-floor-composition-mockup.png",
+      "family": "FORGE_FLOOR_COMPOSITION_REFERENCE",
+      "decorative_identity": "FORGE_FLOOR_COMPOSITION",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1670,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 3044894,
+      "sha256": "9f92db311cb6b32599157ccb0736f7b85ca21893ad7c0aeccfb155e5db3180b9",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE",
+      "reference_only": true,
+      "integration_asset": false
+    },
+    {
+      "asset_id": "founder-universe.forge-floor-composition-mockup.webp",
+      "relative_path": "public/assets/founder-universe/references/forge-floor-composition-mockup.webp",
+      "filename": "forge-floor-composition-mockup.webp",
+      "family": "FORGE_FLOOR_COMPOSITION_REFERENCE",
+      "decorative_identity": "FORGE_FLOOR_COMPOSITION",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1670,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 751644,
+      "sha256": "a970749976b56a23e798db7b0c3b0547c533d10a92d4cc99a89eeff710e80c65",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE",
+      "reference_only": true,
+      "integration_asset": false
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-boxer-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-boxer-transparent.png",
+      "filename": "snow-wolf-boxer-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "BOXER",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1142,
+        "height": 1377
+      },
+      "transparency": true,
+      "byte_size": 1733894,
+      "sha256": "8e571eb6e9d7a38a8ab904c9d76f1616566d68cfd199479580d6de875c3ed366",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-boxer-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-boxer-transparent.webp",
+      "filename": "snow-wolf-boxer-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "BOXER",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1142,
+        "height": 1377
+      },
+      "transparency": true,
+      "byte_size": 1237810,
+      "sha256": "0bd9a5920bc1c7dbf95e6618e119185cf76df0ba10ddb4aa4c284bfb49642172",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-chuy-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-chuy-transparent.png",
+      "filename": "snow-wolf-chuy-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "CHUY",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 2393144,
+      "sha256": "e623c9c0236f31e4587e0da49a9293a1f77c2d4b14920cc1fc2ee53b93899e8f",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-chuy-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-chuy-transparent.webp",
+      "filename": "snow-wolf-chuy-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "CHUY",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1024,
+        "height": 1536
+      },
+      "transparency": true,
+      "byte_size": 1617834,
+      "sha256": "4d86dedada06674d86c1e759f50b5be4271d9f0825c951e07283ed337bec30b6",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-coder-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-coder-transparent.png",
+      "filename": "snow-wolf-coder-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "CODER",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1592647,
+      "sha256": "43a5a0dc0b5602e3b205f573a9c284014da5842c6c9031a1b50f359ab313ae52",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-coder-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-coder-transparent.webp",
+      "filename": "snow-wolf-coder-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "CODER",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1118140,
+      "sha256": "98b7a2f5ea50acdc0d4a6aa4457a5f2698b3ba0a6014c2df648f18714c94a80c",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-crew-group.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-crew-group.png",
+      "filename": "snow-wolf-crew-group.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "SNOW_WOLF_CREW",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1669,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 2691851,
+      "sha256": "620ee677c3370f21b2a0196fa6be91bfcebf06b6bc7c1a4760196d9913b4ced5",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-crew-group.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-crew-group.webp",
+      "filename": "snow-wolf-crew-group.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "SNOW_WOLF_CREW",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1669,
+        "height": 942
+      },
+      "transparency": false,
+      "byte_size": 571610,
+      "sha256": "fc95e6fb502cd21a937b4ad6cda23b51ad07e55b9e757a5facf1197b4eb36402",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-dj-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-dj-transparent.png",
+      "filename": "snow-wolf-dj-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "DJ",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1199,
+        "height": 1312
+      },
+      "transparency": true,
+      "byte_size": 1702622,
+      "sha256": "ca6ea7d6e1118844ab2f4f0ad2661d977948886813d0d23bb43db9e2d0be0016",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-dj-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-dj-transparent.webp",
+      "filename": "snow-wolf-dj-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "DJ",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1199,
+        "height": 1312
+      },
+      "transparency": true,
+      "byte_size": 1225872,
+      "sha256": "fa1e1d08d3af82ce81a1dda9b00a2a39370ed28e8dc8ba67f84e6395e644d5d5",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-hauler-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-hauler-transparent.png",
+      "filename": "snow-wolf-hauler-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "HAULER",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1693851,
+      "sha256": "0e8836649ea7940ec3ebf582723ca25d41bb033f03b95c187dc16821fef30c56",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-hauler-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-hauler-transparent.webp",
+      "filename": "snow-wolf-hauler-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "HAULER",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1194892,
+      "sha256": "612b4243478719b9d84f61fb238b88fc3f6d1ca1f90678e2159d591eb5ea424a",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-lookout-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-lookout-transparent.png",
+      "filename": "snow-wolf-lookout-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "LOOKOUT",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1661848,
+      "sha256": "d9d06a192fb5f928d3e0ab4b49bd98652123b9af89d6f00a03981c31acf2a638",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-lookout-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-lookout-transparent.webp",
+      "filename": "snow-wolf-lookout-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "LOOKOUT",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1144268,
+      "sha256": "6f68d8b6b6115cd6e5d47761a3689fbccbce0290df894e16b5b7d490e290679a",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-snack-guard-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-snack-guard-transparent.png",
+      "filename": "snow-wolf-snack-guard-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "SNACK_GUARD",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 2656083,
+      "sha256": "44584e62ec43d0e6f36d3ae3132352ba4828cb2662ae9a851a43a0c106f493f9",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-snack-guard-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-snack-guard-transparent.webp",
+      "filename": "snow-wolf-snack-guard-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "SNACK_GUARD",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1145,
+        "height": 1374
+      },
+      "transparency": true,
+      "byte_size": 1803190,
+      "sha256": "6b6022329d1daaf7e68a4eb35a0a68b76dc11184db48e7039974143f3426ffcb",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-wild-paw-transparent.png",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-wild-paw-transparent.png",
+      "filename": "snow-wolf-wild-paw-transparent.png",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "WILD_PAW",
+      "format": "PNG",
+      "dimensions": {
+        "width": 1229,
+        "height": 1280
+      },
+      "transparency": true,
+      "byte_size": 1630432,
+      "sha256": "71217b5e43a3d13dd4e7350cbec770618b76baf2a0e7539e17f088ba2482f807",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    },
+    {
+      "asset_id": "founder-universe.snow-wolf-wild-paw-transparent.webp",
+      "relative_path": "public/assets/founder-universe/snow-wolf/snow-wolf-wild-paw-transparent.webp",
+      "filename": "snow-wolf-wild-paw-transparent.webp",
+      "family": "SNOW_WOLF_CREW",
+      "decorative_identity": "WILD_PAW",
+      "format": "WEBP",
+      "dimensions": {
+        "width": 1229,
+        "height": 1280
+      },
+      "transparency": true,
+      "byte_size": 1159144,
+      "sha256": "71f8d2a2314e01444628fe6115db1095f171298e03fa8333ce53014abbedb08d",
+      "founder_approved": true,
+      "source_mission": "DASHBOARD-PHASE-11-CODEX-FOUNDER-VISUAL-ASSET-FORGE-01",
+      "decorative": true,
+      "factual_binding": "NONE",
+      "authority_binding": "NONE"
+    }
+  ]
+}
