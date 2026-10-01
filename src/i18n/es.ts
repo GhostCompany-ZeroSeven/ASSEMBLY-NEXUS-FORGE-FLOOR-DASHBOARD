@@ -1267,7 +1267,7 @@ export const es: Messages = {
       presence: 'DESCONOCIDO',
       presenceNote: 'sin conexión',
       forge: 'Forge Crew (científicos Crown-Top)',
-      snow: 'Snow Wolf Bandits',
+      snow: 'Snow Wolf Crew',
       inData: (n) => `${n} en los datos actuales`,
     },
     attention: {
@@ -1283,8 +1283,19 @@ export const es: Messages = {
     },
     station: {
       scientist: 'Científico Crown-Top',
-      bandit: 'Snow Wolf Bandit',
-      wisp: 'ByteWisp',
+      bandit: 'Snow Wolf Crew',
+      wisp: 'Baby Ghost',
+      young: 'nueva generación',
+      persona: {
+        boxer: 'Boxeador',
+        dj: 'DJ',
+        'wild-paw': 'Wild Paw',
+        chuy: 'Chuy',
+        coder: 'Programador',
+        hauler: 'Cargador',
+        lookout: 'Vigía',
+        'snack-guard': 'Guardián de snacks',
+      },
       bound: (who, name, state) => `${who}: ${name}, ${state}`,
       decorative: (who) => `${who}: decorativo, sin vínculo con los datos`,
     },
@@ -1299,7 +1310,9 @@ export const es: Messages = {
       openMission: 'Abrir misión',
       decorative:
         'Este personaje es decorado. Ningún trabajador de los datos actuales está vinculado a él.',
-      wisp: 'ByteWisp es la mascota del sistema. Su brillo muestra el modo de la escena, no un trabajador ni un hecho.',
+      wisp: 'Baby Ghost es la pequeña mascota digital del laboratorio: solo decoración. Su brillo muestra el modo de la escena; no es un trabajador, ni un runtime, ni un hecho.',
+      wardrobe: 'Ropa personal, con el chaleco del uniforme A•N encima.',
+      named: 'Un personaje con nombre de la Snow Wolf Crew. Nunca vinculado a datos.',
       boardDetails: 'Detalles',
       missionBoard:
         'El tablero destaca una misión de los datos actuales o una preselección de vista previa claramente indicada. El estado de cada etapa se deriva de los campos de la misión; lo que los datos no incluyen es DESCONOCIDO.',

@@ -255,12 +255,30 @@ function alerts(s: DashboardSnapshot): AlertBoardState {
   };
 }
 
-/** Scene stations, in the order they are bound. */
-export const SCIENTIST_STATIONS = ['sci-1', 'sci-2', 'sci-3', 'sci-4', 'sci-5', 'sci-6'] as const;
-export const BANDIT_STATIONS = ['ban-1', 'ban-2', 'ban-3', 'ban-4', 'ban-5'] as const;
-export const WISP_STATIONS = ['wisp-1'] as const;
+/** Scene stations, in the order they are bound. Eight Crown-Top scientists. */
+export const SCIENTIST_STATIONS = [
+  'sci-1',
+  'sci-2',
+  'sci-3',
+  'sci-4',
+  'sci-5',
+  'sci-6',
+  'sci-7',
+  'sci-8',
+] as const;
+/** Snow Wolf Crew role personas: a Snow Wolf worker in the data may be shown here. */
+export const CREW_ROLE_STATIONS = ['ban-1', 'ban-2', 'ban-3', 'ban-4'] as const;
+/** Named Snow Wolf Crew personas (Boxer, DJ, Wild Paw, Chuy): never bound to data. */
+export const CREW_NAMED_STATIONS = ['ban-5', 'ban-6', 'ban-7', 'ban-8'] as const;
+/** Baby Ghosts: decorative mascots, never bound to data. */
+export const WISP_STATIONS = ['wisp-1', 'wisp-2'] as const;
 
-/** Bind workers to stations: the Snow Wolf crew to Bandits, others to scientists. Unbound stations stay decorative. */
+/**
+ * Bind workers to stations: the Snow Wolf crew to the crew ROLE stations,
+ * others to scientists, in order. Named personas, Baby Ghosts and any
+ * unmatched station stay decorative; workers beyond the stations appear only
+ * in the factual views.
+ */
 export function bindStations(s: DashboardSnapshot): StationBinding[] {
   const pick = (w: Worker) => ({
     id: w.id,
@@ -277,11 +295,12 @@ export function bindStations(s: DashboardSnapshot): StationBinding[] {
       kind: 'scientist' as const,
       worker: others[i] ? pick(others[i]) : undefined,
     })),
-    ...BANDIT_STATIONS.map((id, i) => ({
+    ...CREW_ROLE_STATIONS.map((id, i) => ({
       stationId: id,
       kind: 'bandit' as const,
       worker: wolves[i] ? pick(wolves[i]) : undefined,
     })),
+    ...CREW_NAMED_STATIONS.map((id) => ({ stationId: id, kind: 'bandit' as const })),
     ...WISP_STATIONS.map((id) => ({ stationId: id, kind: 'wisp' as const })),
   ];
 }

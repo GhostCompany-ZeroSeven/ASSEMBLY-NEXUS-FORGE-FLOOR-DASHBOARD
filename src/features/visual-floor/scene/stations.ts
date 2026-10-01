@@ -1,3 +1,4 @@
+import type { BabyGhostProps } from '@/characters/forge/BabyGhost';
 import type { CrownTopProps } from '@/characters/forge/CrownTopScientist';
 import type { SnowWolfBanditProps } from '@/characters/forge/SnowWolfBandit';
 
@@ -23,90 +24,116 @@ type BanditStation = {
   s: number;
   look: SnowWolfBanditProps;
 };
-type WispStation = { id: string; kind: 'wisp'; x: number; y: number; s: number };
+type WispStation = {
+  id: string;
+  kind: 'wisp';
+  x: number;
+  y: number;
+  s: number;
+  look: Pick<BabyGhostProps, 'pose' | 'mark'>;
+};
 export type Station = ScientistStation | BanditStation | WispStation;
 
 /**
- * Character placement. Half of the scientists are TRUE CHROME DOMES, half are
- * FRANTICALLY SHAVED (stubble dots) with side/back hair kept. Bandits differ in
- * fur, hoodie, accessories and activity.
+ * Character placement: the principal ensemble.
+ *
+ * - EIGHT Crown-Top scientists: four natural chrome domes and four shaved
+ *   tops with stubble, all keeping side/back hair. Seven veterans; `sci-7` is
+ *   the younger-generation Crown-Top.
+ * - EIGHT Snow Wolf Crew members, each a different persona and job, each in a
+ *   personal outfit with the A•N uniform vest over it. `ban-1`..`ban-4` are
+ *   role personas that a Snow Wolf worker in the data may be shown as; the
+ *   named personas (`ban-5`..`ban-8`) are never bound to data.
+ * - Two Baby Ghosts (decorative mascots, never bound to data).
  */
 export const STATIONS: readonly Station[] = [
+  // Back row, at the desks.
   {
     id: 'sci-1',
     kind: 'scientist',
     x: 410,
-    y: 410,
-    s: 1.25,
+    y: 416,
+    s: 1.2,
     look: {
       scalp: 'chrome',
       skin: 'light',
-      hair: '#cfd6df',
+      hair: '#e5e7eb',
       glasses: 'round',
       brow: 'raised',
       pose: 'type',
+      facial: 'mustache',
     },
   },
   {
     id: 'sci-2',
     kind: 'scientist',
     x: 552,
-    y: 416,
-    s: 1.22,
+    y: 420,
+    s: 1.18,
     look: {
       scalp: 'stubble',
       skin: 'tan',
-      hair: '#3b2f2a',
+      hair: '#57534e',
       glasses: 'square',
       brow: 'furrowed',
-      pose: 'clipboard',
+      pose: 'lens',
+      facial: 'beard',
     },
   },
   {
     id: 'sci-3',
     kind: 'scientist',
     x: 900,
-    y: 410,
-    s: 1.25,
+    y: 416,
+    s: 1.2,
     look: {
       scalp: 'chrome',
       skin: 'medium',
       hair: '#f1f5f9',
       brow: 'flat',
       pose: 'beaker',
-      older: true,
+      goggles: true,
+      facial: 'goatee',
     },
   },
   {
     id: 'sci-4',
     kind: 'scientist',
     x: 1042,
-    y: 416,
-    s: 1.22,
+    y: 420,
+    s: 1.18,
     look: {
       scalp: 'stubble',
       skin: 'light',
-      hair: '#6b4f3a',
+      hair: '#a8a29e',
       glasses: 'round',
       brow: 'raised',
       pose: 'point',
       facing: -1,
     },
   },
+  // Front row.
   {
     id: 'sci-5',
     kind: 'scientist',
-    x: 186,
-    y: 598,
-    s: 1.45,
-    look: { scalp: 'stubble', skin: 'deep', hair: '#1f1a17', brow: 'flat', pose: 'think' },
+    x: 172,
+    y: 602,
+    s: 1.4,
+    look: {
+      scalp: 'stubble',
+      skin: 'deep',
+      hair: '#d6d3d1',
+      brow: 'flat',
+      pose: 'think',
+      facial: 'beard',
+    },
   },
   {
     id: 'sci-6',
     kind: 'scientist',
     x: 1236,
-    y: 592,
-    s: 1.45,
+    y: 596,
+    s: 1.4,
     look: {
       scalp: 'chrome',
       skin: 'medium',
@@ -114,57 +141,104 @@ export const STATIONS: readonly Station[] = [
       glasses: 'square',
       brow: 'furrowed',
       pose: 'clipboard',
-      older: true,
+      facial: 'mustache',
       facing: -1,
     },
   },
   {
-    id: 'ban-1',
-    kind: 'bandit',
-    x: 96,
-    y: 514,
-    s: 1.3,
-    look: { fur: 'snow', hoodie: '#5b21b6', headphones: true, activity: 'console' },
+    id: 'sci-7',
+    kind: 'scientist',
+    x: 452,
+    y: 604,
+    s: 1.38,
+    look: {
+      scalp: 'stubble',
+      skin: 'medium',
+      hair: '#1c1917',
+      brow: 'raised',
+      pose: 'tablet',
+      generation: 'young',
+    },
   },
+  {
+    id: 'sci-8',
+    kind: 'scientist',
+    x: 1078,
+    y: 604,
+    s: 1.38,
+    look: {
+      scalp: 'chrome',
+      skin: 'deep',
+      hair: '#e7e5e4',
+      glasses: 'round',
+      brow: 'flat',
+      pose: 'solder',
+      goggles: true,
+      facial: 'beard',
+    },
+  },
+  // Snow Wolf Crew: role personas (bindable).
+  { id: 'ban-1', kind: 'bandit', x: 92, y: 520, s: 1.25, look: { persona: 'coder', fur: 'snow' } },
   {
     id: 'ban-2',
     kind: 'bandit',
-    x: 612,
-    y: 636,
-    s: 1.35,
-    look: { fur: 'cream', hoodie: '#18181b', crown: true, activity: 'carry', accent: '#22d3ee' },
+    x: 604,
+    y: 642,
+    s: 1.28,
+    look: { persona: 'hauler', fur: 'cream', accent: '#22d3ee' },
   },
   {
     id: 'ban-3',
     kind: 'bandit',
-    x: 872,
-    y: 650,
-    s: 1.35,
-    look: { fur: 'fawn', hoodie: '#0e7490', activity: 'inspect' },
+    x: 1494,
+    y: 690,
+    s: 0.92,
+    look: { persona: 'lookout', fur: 'fawn', facing: -1 },
   },
   {
     id: 'ban-4',
     kind: 'bandit',
-    x: 292,
-    y: 440,
-    s: 1.15,
-    look: { fur: 'snow', hoodie: '#a21caf', activity: 'watch', facing: -1 },
+    x: 770,
+    y: 700,
+    s: 0.86,
+    look: { persona: 'snack-guard', fur: 'cream', accent: '#facc15' },
   },
+  // Snow Wolf Crew: named personas (never bound to data).
   {
     id: 'ban-5',
     kind: 'bandit',
-    x: 1360,
-    y: 596,
+    x: 880,
+    y: 650,
     s: 1.3,
-    look: {
-      fur: 'cream',
-      hoodie: '#3f6212',
-      headphones: true,
-      activity: 'chaos',
-      accent: '#f0abfc',
-    },
+    look: { persona: 'boxer', fur: 'fawn', accent: '#facc15' },
   },
-  { id: 'wisp-1', kind: 'wisp', x: 888, y: 196, s: 0.92 },
+  {
+    id: 'ban-6',
+    kind: 'bandit',
+    x: 290,
+    y: 446,
+    s: 1.12,
+    look: { persona: 'dj', fur: 'snow', accent: '#22d3ee' },
+  },
+  {
+    id: 'ban-7',
+    kind: 'bandit',
+    x: 1366,
+    y: 600,
+    s: 1.26,
+    look: { persona: 'wild-paw', fur: 'cream', accent: '#f0abfc' },
+  },
+  {
+    id: 'ban-8',
+    kind: 'bandit',
+    x: 318,
+    y: 664,
+    s: 1.14,
+    look: { persona: 'chuy', fur: 'snow', accent: '#facc15' },
+  },
+  // Baby Ghosts.
+  { id: 'wisp-1', kind: 'wisp', x: 896, y: 188, s: 0.86, look: { pose: 'point' } },
+  { id: 'wisp-2', kind: 'wisp', x: 818, y: 648, s: 0.5, look: { pose: 'bone', mark: false } },
 ];
 
 /** Hotspot rectangle of a station, in scene coordinates. */

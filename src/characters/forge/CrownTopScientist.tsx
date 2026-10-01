@@ -9,10 +9,15 @@ import { useId } from 'react';
  *   hair kept around the sides and back.
  * - `stubble`: the top is freshly, frantically shaved (subtle dark follicle
  *   dots clipped to the scalp cap), and the side/back hair is KEPT.
+ * - `generation`: most of the team are veteran Crown-Tops (laugh lines, lighter
+ *   side hair); the `young` Crown-Top is a younger ADULT professional of the same
+ *   tradition (same crown-top cut, darker fuller side hair, ID lanyard).
  * Drawn in a 100 x 150 box, feet at y = 150, centred on x = 50.
  */
 export type ScalpStyle = 'chrome' | 'stubble';
-export type ScientistPose = 'type' | 'clipboard' | 'point' | 'beaker' | 'think';
+export type ScientistPose =
+  'type' | 'clipboard' | 'point' | 'beaker' | 'think' | 'tablet' | 'solder' | 'lens';
+export type FacialHair = 'none' | 'mustache' | 'beard' | 'goatee';
 
 export interface CrownTopProps {
   scalp: ScalpStyle;
@@ -21,8 +26,10 @@ export interface CrownTopProps {
   glasses?: 'round' | 'square';
   brow?: 'flat' | 'raised' | 'furrowed';
   pose?: ScientistPose;
-  /** Older characters get softer brows and a hint of laugh lines. */
-  older?: boolean;
+  generation?: 'veteran' | 'young';
+  facial?: FacialHair;
+  /** Lab goggles hanging around the neck. */
+  goggles?: boolean;
   facing?: 1 | -1;
 }
 
@@ -41,9 +48,12 @@ export function CrownTopScientist({
   glasses,
   brow = 'flat',
   pose = 'type',
-  older = false,
+  generation = 'veteran',
+  facial = 'none',
+  goggles = false,
   facing = 1,
 }: CrownTopProps) {
+  const older = generation === 'veteran';
   const uid = useId().replace(/:/g, '');
   const [hi, base, shade] = SKIN[skin];
   const coat = `ct-coat-${uid}`;
@@ -136,6 +146,73 @@ export function CrownTopScientist({
             {hand(58, 50)}
           </g>
         );
+      case 'tablet':
+        // Holding a glowing tablet up, mid-explanation.
+        return (
+          <g>
+            {sleeve('M30 66 Q22 80 36 86')}
+            {sleeve('M70 66 Q82 74 76 60')}
+            <g transform="rotate(-10 46 84)">
+              <rect x="32" y="74" width="30" height="21" rx="2.5" fill="#0b1020" stroke="#22d3ee" />
+              <path
+                d="M36 89 L42 83 L47 86 L55 78"
+                stroke="#a3e635"
+                strokeWidth="1.4"
+                fill="none"
+              />
+              <circle cx="57" cy="80" r="1.4" fill="#f0abfc" />
+            </g>
+            {hand(37, 88)}
+            {hand(76, 58)}
+          </g>
+        );
+      case 'solder':
+        // Soldering iron in hand, a puff of smoke.
+        return (
+          <g>
+            {sleeve('M30 66 Q24 86 34 98')}
+            {sleeve('M70 66 Q80 82 70 92')}
+            {hand(36, 100)}
+            <path d="M70 92 L86 104" stroke="#fbbf24" strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M86 104 L93 109" stroke="#94a3b8" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="94" cy="110" r="1.6" fill="#fb923c" className="vf-blink" />
+            <path
+              d="M94 104 Q90 98 95 94 Q99 90 95 86"
+              stroke="#cbd5e1"
+              strokeWidth="1"
+              fill="none"
+              opacity="0.5"
+              className="vf-steam"
+            />
+            {hand(70, 92)}
+          </g>
+        );
+      case 'lens':
+        // Inspecting something through a big magnifying lens.
+        return (
+          <g>
+            {sleeve('M30 66 Q24 86 34 98')}
+            {sleeve('M70 66 Q82 62 82 50')}
+            {hand(36, 100)}
+            <path d="M84 54 L90 68" stroke="#4b3621" strokeWidth="4" strokeLinecap="round" />
+            <circle
+              cx="80"
+              cy="44"
+              r="10"
+              fill="rgba(125,211,252,0.2)"
+              stroke="#e5e7eb"
+              strokeWidth="2.6"
+            />
+            <path
+              d="M74 40 Q77 36 81 37"
+              stroke="#ffffff"
+              strokeWidth="1.2"
+              fill="none"
+              opacity="0.8"
+            />
+            {hand(82, 52)}
+          </g>
+        );
     }
   })();
 
@@ -154,7 +231,12 @@ export function CrownTopScientist({
     );
 
   return (
-    <g transform={facing === -1 ? 'translate(100 0) scale(-1 1)' : undefined}>
+    <g
+      transform={facing === -1 ? 'translate(100 0) scale(-1 1)' : undefined}
+      data-character="crown-top"
+      data-crown={scalp}
+      data-generation={generation}
+    >
       <defs>
         <linearGradient id={coat} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#ffffff" />
@@ -179,8 +261,11 @@ export function CrownTopScientist({
       {/* legs + shoes */}
       <rect x="38" y="116" width="10" height="28" rx="3.5" fill="#1f2937" />
       <rect x="52" y="116" width="10" height="28" rx="3.5" fill="#1a2230" />
-      <ellipse cx="42" cy="145" rx="8" ry="3.4" fill="#0b0f16" />
-      <ellipse cx="58" cy="145" rx="8" ry="3.4" fill="#0b0f16" />
+      <ellipse cx="42" cy="145" rx="8" ry="3.4" fill={older ? '#0b0f16' : '#e2e8f0'} />
+      <ellipse cx="58" cy="145" rx="8" ry="3.4" fill={older ? '#0b0f16' : '#e2e8f0'} />
+      {!older && (
+        <path d="M36 146 H48 M52 146 H64" stroke="#a3e635" strokeWidth="1.2" opacity="0.9" />
+      )}
       {/* lab coat */}
       <path
         d="M24 70 Q24 57 38 55 L62 55 Q76 57 76 70 L81 128 Q50 135 19 128 Z"
@@ -196,6 +281,47 @@ export function CrownTopScientist({
       <path d="M63.5 84 L63.5 78.5" stroke="#d946ef" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M67 84 L67 80" stroke="#a3e635" strokeWidth="1.6" strokeLinecap="round" />
       <rect x="30" y="98" width="12" height="8" rx="1.4" fill="#d5dde7" />
+      {!older && (
+        <g data-accessory="lanyard">
+          <path d="M43 56 L47 80 M57 56 L53 80" stroke="#a3e635" strokeWidth="1.2" />
+          <rect
+            x="45"
+            y="79"
+            width="10"
+            height="13"
+            rx="1.4"
+            fill="#0b1020"
+            stroke="#a3e635"
+            strokeWidth="0.6"
+          />
+          <rect x="47" y="82" width="6" height="2" fill="#22d3ee" />
+          <rect x="47" y="86" width="4" height="1.4" fill="#e2e8f0" />
+        </g>
+      )}
+      {goggles && (
+        <g data-accessory="goggles">
+          <path d="M38 58 Q50 66 62 58" stroke="#1f2937" strokeWidth="2.2" fill="none" />
+          <ellipse
+            cx="44"
+            cy="62"
+            rx="5"
+            ry="3.8"
+            fill="#0f172a"
+            stroke="#22d3ee"
+            strokeWidth="1.4"
+          />
+          <ellipse
+            cx="56"
+            cy="62"
+            rx="5"
+            ry="3.8"
+            fill="#0f172a"
+            stroke="#22d3ee"
+            strokeWidth="1.4"
+          />
+          <circle cx="42.5" cy="60.8" r="1.1" fill="#e0f2fe" opacity="0.8" />
+        </g>
+      )}
       {arms}
       {/* neck + head */}
       <rect x="45" y="47" width="10" height="10" rx="3" fill={shade} />
@@ -203,8 +329,22 @@ export function CrownTopScientist({
       <ellipse cx="68.5" cy="37" rx="4" ry="5.6" fill={base} />
       <ellipse cx="50" cy="33" rx="19" ry="21" fill={`url(#${face})`} />
       {/* side and back hair: kept for BOTH scalp styles */}
-      <path d="M31 27 Q27.5 38 32.5 48 Q35.5 42 35 31 Z" fill={hair} />
-      <path d="M69 27 Q72.5 38 67.5 48 Q64.5 42 65 31 Z" fill={hair} />
+      <path
+        d={
+          older
+            ? 'M31 27 Q27.5 38 32.5 48 Q35.5 42 35 31 Z'
+            : 'M31.5 24 Q26 37 32 49 Q36.5 42 35.6 28 Z'
+        }
+        fill={hair}
+      />
+      <path
+        d={
+          older
+            ? 'M69 27 Q72.5 38 67.5 48 Q64.5 42 65 31 Z'
+            : 'M68.5 24 Q74 37 68 49 Q63.5 42 64.4 28 Z'
+        }
+        fill={hair}
+      />
       <path d="M33 44 Q50 56 67 44 Q61 52 50 53.5 Q39 52 33 44 Z" fill={hair} opacity="0.9" />
       {scalp === 'chrome' ? (
         <g>
@@ -238,12 +378,34 @@ export function CrownTopScientist({
         </g>
       )}
       <path
-        d="M45 47 Q50 49.6 55 47"
+        d={older ? 'M45 47 Q50 49.6 55 47' : 'M44.5 46.4 Q50 50.6 55.5 46.4'}
         stroke="#6b3a2c"
         strokeWidth="1.4"
         fill="none"
         strokeLinecap="round"
       />
+      {facial === 'mustache' && (
+        <path
+          d="M43 45.6 Q46.5 42.4 50 44.4 Q53.5 42.4 57 45.6 Q53.5 45.4 50 46 Q46.5 45.4 43 45.6 Z"
+          fill={hair}
+          data-facial="mustache"
+        />
+      )}
+      {facial === 'beard' && (
+        <path
+          d="M32.6 40 Q33 52 42 54.6 Q50 57.6 58 54.6 Q67 52 67.4 40 Q64 48 58 48.6 Q55 45.2 50 45.4 Q45 45.2 42 48.6 Q36 48 32.6 40 Z"
+          fill={hair}
+          opacity="0.95"
+          data-facial="beard"
+        />
+      )}
+      {facial === 'goatee' && (
+        <path
+          d="M46 49.6 Q50 51.4 54 49.6 Q53.6 55 50 55.6 Q46.4 55 46 49.6 Z"
+          fill={hair}
+          data-facial="goatee"
+        />
+      )}
       {glasses === 'round' && (
         <g stroke="#0f172a" strokeWidth="1.5" fill="rgba(125,211,252,0.16)">
           <circle cx="43" cy="36.6" r="5.4" />

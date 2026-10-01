@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useDashboard, useNow, useSnapshot } from '@/store/hooks';
 import {
   buildVisualState,
+  CREW_NAMED_STATIONS,
   formatClock,
   PREVIEW_PRESETS,
   ROSTER,
@@ -16,7 +17,7 @@ import {
   type VisualState,
 } from './model';
 import { ForgeScene } from './scene/ForgeScene';
-import { SCENE_H, SCENE_W, STATIONS, stationBox } from './scene/stations';
+import { SCENE_H, SCENE_W, STATIONS, stationBox, type Station } from './scene/stations';
 import '@/styles/visual-floor.css';
 
 /**
@@ -133,13 +134,11 @@ export function VisualForgeFloorPage() {
               <ForgeScene mode={v.mode} />
             </div>
             {STATIONS.map((st) => {
-              const box = stationBox(st);
               const b = v.stations.find((x) => x.stationId === st.id);
               return (
                 <StationHotspot
                   key={st.id}
-                  id={st.id}
-                  box={box}
+                  st={st}
                   binding={b}
                   selected={selection === st.id}
                   onSelect={() => select(selection === st.id ? null : st.id)}
@@ -243,23 +242,32 @@ export function VisualForgeFloorPage() {
   );
 }
 
+/** Display name of a scene character (its class, persona or generation). */
+function useWho(st: Station | undefined): string {
+  const { m } = useI18n();
+  const t = m.visual.station;
+  if (!st) return t.scientist;
+  if (st.kind === 'wisp') return t.wisp;
+  if (st.kind === 'bandit') return `${t.bandit} · ${t.persona[st.look.persona]}`;
+  return st.look.generation === 'young' ? `${t.scientist} (${t.young})` : t.scientist;
+}
+
 function StationHotspot({
-  id,
-  box,
+  st,
   binding,
   selected,
   onSelect,
 }: {
-  id: string;
-  box: { x: number; y: number; w: number; h: number };
+  st: Station;
   binding: StationBinding | undefined;
   selected: boolean;
   onSelect: () => void;
 }) {
   const { m } = useI18n();
   const t = m.visual.station;
-  const kind = binding?.kind ?? 'scientist';
-  const who = t[kind];
+  const id = st.id;
+  const box = stationBox(st);
+  const who = useWho(st);
   const w = binding?.worker;
   const label = w ? t.bound(who, w.name, m.status.worker[w.state]) : t.decorative(who);
   return (
@@ -429,9 +437,13 @@ function SystemsBoard({ v, onDetails }: { v: VisualState; onDetails: () => void 
   );
 }
 
+const CREW_NAMED: readonly string[] = CREW_NAMED_STATIONS;
+
 function Detail({ selection, v }: { selection: string; v: VisualState }) {
   const { m } = useI18n();
   const t = m.visual.detail;
+  const st = STATIONS.find((x) => x.id === selection);
+  const who = useWho(st);
   if ((BOARDS as readonly string[]).includes(selection)) {
     const text =
       selection === 'mission-board'
@@ -451,15 +463,26 @@ function Detail({ selection, v }: { selection: string; v: VisualState }) {
     );
   }
   const b = v.stations.find((x) => x.stationId === selection);
-  if (!b) return <p>{t.decorative}</p>;
-  if (b.kind === 'wisp') return <p>{t.wisp}</p>;
+  const crew = st?.kind === 'bandit';
+  const named = crew && CREW_NAMED.includes(st.id);
+  if (!b || b.kind === 'wisp' || !b.worker)
+    return (
+      <div>
+        <p className="vf__detail-name">
+          <strong>{who}</strong>
+        </p>
+        <p>{b?.kind === 'wisp' ? t.wisp : t.decorative}</p>
+        {named && <p className="small">{t.named}</p>}
+        {crew && <p className="small muted">{t.wardrobe}</p>}
+      </div>
+    );
   const w = b.worker;
-  if (!w) return <p>{t.decorative}</p>;
   return (
     <div>
       <p className="vf__detail-name">
-        <strong translate="no">{w.name}</strong>
+        <strong translate="no">{w.name}</strong> <span className="muted small">{who}</span>
       </p>
+      {crew && <p className="small muted">{t.wardrobe}</p>}
       <dl className="kv">
         <div>
           <dt>{t.role}</dt>

@@ -19,7 +19,13 @@ export function WolfFigure({
     state === 'WORKING' ? 'console' : state === 'REVIEWING' ? 'inspect' : 'idle';
   return (
     <g transform="translate(1 4) scale(0.62)">
-      <SnowWolfBandit fur="snow" hoodie={a.coat} accent={a.accent} headphones activity={activity} />
+      <SnowWolfBandit
+        persona="coder"
+        fur="snow"
+        outfit={a.coat}
+        accent={a.accent}
+        activity={activity}
+      />
     </g>
   );
 }

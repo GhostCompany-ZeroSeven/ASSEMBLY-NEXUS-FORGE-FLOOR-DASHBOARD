@@ -1,8 +1,9 @@
 import { memo, type ReactNode } from 'react';
-import { ByteWisp } from '@/characters/forge/ByteWisp';
+import { BabyGhost } from '@/characters/forge/BabyGhost';
 import { CrownTopScientist } from '@/characters/forge/CrownTopScientist';
 import { SnowWolfBandit } from '@/characters/forge/SnowWolfBandit';
 import type { VisualMode } from '../model';
+import { BOLDNESS_BANNER, type HumorPhrase } from './humor';
 import { SCENE_H, SCENE_W, STATIONS, type Station } from './stations';
 import {
   Binder,
@@ -51,11 +52,17 @@ function Character({ st, mode }: { st: Station; mode: VisualMode }) {
     );
   return (
     <Place st={st}>
-      <ByteWisp
+      <BabyGhost
+        {...st.look}
         mood={mode === 'accomplished' ? 'cheer' : mode === 'red-alert' ? 'alarm' : 'calm'}
       />
     </Place>
   );
+}
+
+/** A set-dressing phrase. Only phrases from the approved pool can render. */
+function Humor({ phrase, children }: { phrase: HumorPhrase; children: ReactNode }) {
+  return <g data-humor={phrase}>{children}</g>;
 }
 
 const byId = (id: string) => STATIONS.find((s) => s.id === id)!;
@@ -586,9 +593,28 @@ function BinderShelf() {
 function Desks() {
   return (
     <g>
-      {/* left bay: monitors behind the crew */}
+      {/* left bay: monitors behind the crew; a Baby Ghost peeks over one */}
+      <g transform="translate(626 270) scale(0.44)">
+        <BabyGhost pose="peek" mark={false} />
+      </g>
       <Monitor x={428} y={300} w={150} h={84} variant="graph" />
       <Monitor x={596} y={316} w={110} h={68} variant="code" tone="#a78bfa" />
+      <Humor phrase="PAWFECT.">
+        <g transform="translate(546 372) rotate(-8)">
+          <rect x="-4" y="-9" width="50" height="14" rx="7" fill="#facc15" />
+          <text
+            x="21"
+            y="1.6"
+            textAnchor="middle"
+            fontSize="8"
+            fontWeight="800"
+            fill="#1e1b4b"
+            fontFamily={MONO}
+          >
+            PAWFECT.
+          </text>
+        </g>
+      </Humor>
       {/* right bay */}
       <Monitor x={896} y={316} w={110} h={68} variant="schematic" />
       <Monitor x={1020} y={300} w={150} h={84} variant="map" tone="#a3e635" />
@@ -655,8 +681,7 @@ function ForegroundBench() {
       <path d="M0 800 H1600" stroke="#a3e635" strokeWidth="1.6" opacity="0.6" />
       <CircuitBoard x={300} y={812} w={80} h={46} rot={-4} />
       <SolderingStation x={420} y={826} />
-      <Schematic x={560} y={814} w={110} h={64} rot={3} />
-      <PartsBin x={700} y={830} />
+      <PartsBin x={716} y={834} />
       <CameraKit x={1040} y={830} />
       <CircuitBoard x={1150} y={820} w={70} h={40} rot={6} />
       <Mug x={1240} y={834} tone="#f0abfc" />
@@ -680,6 +705,171 @@ function ForegroundBench() {
           07
         </text>
       </g>
+    </g>
+  );
+}
+
+/** Crown-Top lab banner, hung between the pillar and the sign. */
+function BoldnessBanner() {
+  return (
+    <g data-banner="boldness">
+      <path d="M432 0 V26 M548 0 V26" stroke="#475569" strokeWidth="1.2" />
+      <path
+        d="M420 26 H560 V150 L490 168 L420 150 Z"
+        fill="#0f1a2e"
+        stroke="#a3e635"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M426 32 H554 V146 L490 162 L426 146 Z"
+        fill="none"
+        stroke="#a3e635"
+        strokeWidth="0.6"
+        opacity="0.5"
+      />
+      <g transform="translate(490 52)">
+        {/* crown-top emblem: a dome with side hair and a crown */}
+        <path d="M-12 8 Q-12 -8 0 -8 Q12 -8 12 8" fill="#e2e8f0" />
+        <path
+          d="M-12 2 Q-14 8 -10 12 M12 2 Q14 8 10 12"
+          stroke="#64748b"
+          strokeWidth="2.4"
+          fill="none"
+        />
+        <path d="M-7 -10 L-5 -17 L-2 -13 L0 -19 L2 -13 L5 -17 L7 -10 Z" fill="#facc15" />
+      </g>
+      <g fontFamily={MONO} fontWeight="800" textAnchor="middle" fill="#ecfccb">
+        <text x="490" y="84" fontSize="11.5">
+          WITH BOLDNESS
+        </text>
+        <text x="490" y="99" fontSize="11.5">
+          COMES
+        </text>
+        <text x="490" y="114" fontSize="11.5" fill="#a3e635">
+          INTELLIGENCE.
+        </text>
+      </g>
+      <g
+        fontFamily="Inter Variable, sans-serif"
+        textAnchor="middle"
+        fill="#94a3b8"
+        fontStyle="italic"
+      >
+        <text x="490" y="130" fontSize="7.4">
+          {BOLDNESS_BANNER.subline}
+        </text>
+        <text x="490" y="141" fontSize="6.4">
+          {BOLDNESS_BANNER.credit}
+        </text>
+      </g>
+      <title>{BOLDNESS_BANNER.title}</title>
+    </g>
+  );
+}
+
+/** The Snow Wolf Crew DJ station (the DJ stands behind it). */
+function DjDeck() {
+  return (
+    <g>
+      <rect x="270" y="556" width="138" height="44" rx="4" fill="#111a29" stroke="#6d28d9" />
+      <ellipse cx="298" cy="563" rx="20" ry="6" fill="#0b0f16" stroke="#22d3ee" strokeWidth="1" />
+      <ellipse cx="380" cy="563" rx="20" ry="6" fill="#0b0f16" stroke="#d946ef" strokeWidth="1" />
+      <rect x="325" y="558" width="28" height="10" rx="1.5" fill="#1e293b" />
+      <g fill="#a3e635">
+        <rect x="329" y="561" width="2" height="5" className="vf-blink" />
+        <rect x="335" y="560" width="2" height="6" />
+        <rect x="341" y="562" width="2" height="4" className="vf-blink" />
+        <rect x="347" y="559" width="2" height="7" />
+      </g>
+      <Humor phrase="NEVER CHASE. ALWAYS CHEW.">
+        <g fontFamily={MONO} fontWeight="800" fontSize="8" textAnchor="middle">
+          <text x="339" y="583" fill="#f0abfc">
+            NEVER CHASE.
+          </text>
+          <text x="339" y="594" fill="#67e8f9">
+            ALWAYS CHEW.
+          </text>
+        </g>
+      </Humor>
+    </g>
+  );
+}
+
+/** Crew sign on the right server rack. */
+function PawSquadSign() {
+  return (
+    <Humor phrase="PAW SQUAD. HIGH RISK. NO APOLOGIES.">
+      <g transform="translate(1506 606)">
+        <rect width="76" height="40" rx="3" fill="#1c1917" stroke="#facc15" strokeWidth="1.2" />
+        <g fontFamily={MONO} fontWeight="800" fontSize="7.4" textAnchor="middle">
+          <text x="38" y="12" fill="#facc15">
+            PAW SQUAD.
+          </text>
+          <text x="38" y="23" fill="#f8fafc">
+            HIGH RISK.
+          </text>
+          <text x="38" y="34" fill="#f8fafc">
+            NO APOLOGIES.
+          </text>
+        </g>
+      </g>
+    </Humor>
+  );
+}
+
+/** Bench chalkboard and the milk bone jar: the case of the missing Milk Bone. */
+function MilkBoneCase() {
+  return (
+    <g>
+      <Humor phrase="TODAY'S MISSION: WHO ATE THE LAST MILK BONE?">
+        <g transform="translate(540 810) rotate(-2)">
+          <rect width="164" height="74" rx="3" fill="#7c4a24" />
+          <rect x="5" y="5" width="154" height="64" rx="2" fill="#1f3326" />
+          <g fontFamily={MONO} fontWeight="800" textAnchor="middle">
+            <text x="82" y="22" fontSize="9" fill="#a3e635">
+              TODAY&apos;S MISSION:
+            </text>
+            <text x="82" y="40" fontSize="10.5" fill="#f1f5f9">
+              WHO ATE THE LAST
+            </text>
+            <text x="82" y="56" fontSize="10.5" fill="#f1f5f9">
+              MILK BONE?
+            </text>
+          </g>
+          <path d="M18 62 q6 -3 12 0" stroke="#f1f5f9" strokeWidth="1" fill="none" opacity="0.5" />
+        </g>
+      </Humor>
+      <Humor phrase="BONE APPÉTIT.">
+        <g transform="translate(866 750)">
+          <rect
+            x="0"
+            y="6"
+            width="54"
+            height="46"
+            rx="6"
+            fill="rgba(186,230,253,0.18)"
+            stroke="#bae6fd"
+            strokeWidth="1.2"
+          />
+          <rect x="4" y="0" width="46" height="8" rx="2" fill="#475569" />
+          <g fill="#f5e6c8">
+            <rect x="8" y="38" width="18" height="5" rx="2" transform="rotate(-12 17 40)" />
+            <rect x="26" y="40" width="18" height="5" rx="2" transform="rotate(10 35 42)" />
+          </g>
+          <rect x="4" y="18" width="46" height="13" rx="2" fill="#f8fafc" />
+          <text
+            x="27"
+            y="27.6"
+            textAnchor="middle"
+            fontSize="6.4"
+            fontWeight="800"
+            fill="#1e1b4b"
+            fontFamily={MONO}
+          >
+            BONE APPÉTIT.
+          </text>
+        </g>
+      </Humor>
     </g>
   );
 }
@@ -717,6 +907,7 @@ export const ForgeScene = memo(function ForgeScene({ mode }: { mode: VisualMode 
       <BackWall />
       <CircuitSkull mode={mode} />
       <Sign />
+      <BoldnessBanner />
       <WallNotes />
       <BinderShelf />
       <Desks />
@@ -724,19 +915,26 @@ export const ForgeScene = memo(function ForgeScene({ mode }: { mode: VisualMode 
       <WorkflowStrip />
       <LeftInfrastructure />
       <RightInfrastructure />
+      <PawSquadSign />
       <FounderCommand mode={mode} />
       <Character st={byId('wisp-1')} mode={mode} />
-      <g transform="translate(610 230) scale(0.5)" opacity="0.7">
-        <ByteWisp mood={mode === 'red-alert' ? 'alarm' : 'calm'} />
-      </g>
-      {['sci-1', 'sci-2', 'sci-3', 'sci-4', 'ban-4'].map((id) => (
+      {['sci-1', 'sci-2', 'sci-3', 'sci-4', 'ban-6'].map((id) => (
         <Character key={id} st={byId(id)} mode={mode} />
       ))}
+      <DjDeck />
       <DeskFronts />
-      {['ban-1', 'ban-2', 'ban-5', 'ban-3', 'sci-5', 'sci-6'].map((id) => (
+      {/* front row, back to front */}
+      {['ban-1', 'ban-7', 'ban-2', 'ban-8', 'ban-5', 'sci-6', 'sci-7', 'sci-8', 'sci-5'].map(
+        (id) => (
+          <Character key={id} st={byId(id)} mode={mode} />
+        ),
+      )}
+      <ForegroundBench />
+      <MilkBoneCase />
+      {/* on the bench */}
+      {['ban-4', 'wisp-2', 'ban-3'].map((id) => (
         <Character key={id} st={byId(id)} mode={mode} />
       ))}
-      <ForegroundBench />
       <AlertWash mode={mode} />
     </svg>
   );
