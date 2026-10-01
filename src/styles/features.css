@@ -1620,3 +1620,21 @@ a.situation__cell:hover {
   gap: 4px 8px;
   overflow-wrap: anywhere;
 }
+
+/* Phase 9: entry to the visual Forge Floor preview (from the operational floor). */
+.vf-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px dashed #67e8f9;
+  border-radius: 999px;
+  color: #a5f3fc;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.vf-entry:hover {
+  background: rgba(103, 232, 249, 0.08);
+}

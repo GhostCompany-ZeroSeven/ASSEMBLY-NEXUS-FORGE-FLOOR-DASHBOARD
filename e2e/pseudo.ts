@@ -92,8 +92,13 @@ export async function scan(page: Page): Promise<PseudoReport> {
       const over = [...el.querySelectorAll('*')].filter(
         (k) => k.getBoundingClientRect().width > 0 && k.getBoundingClientRect().right > right,
       );
-      if (over.length && over.every((k) => /absolute|fixed/.test(getComputedStyle(k).position)))
-        continue;
+      // Text inside such a decoration (e.g. a scene nameplate) counts as the decoration.
+      const floating = (k: Element) => {
+        for (let a: Element | null = k; a && a !== el; a = a.parentElement)
+          if (/absolute|fixed/.test(getComputedStyle(a).position)) return true;
+        return false;
+      };
+      if (over.length && over.every(floating)) continue;
       // A deliberate ellipsis is fine when the title repeats the full text.
       const title = el.getAttribute('title')?.trim();
       if (title && title === (el.textContent ?? '').trim()) continue;

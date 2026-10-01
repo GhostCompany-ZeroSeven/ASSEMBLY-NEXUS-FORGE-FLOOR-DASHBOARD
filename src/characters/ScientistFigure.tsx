@@ -246,9 +246,6 @@ function Face({ appearance: a, mood }: { appearance: ScientistAppearance; mood: 
         fill="none"
         strokeLinecap="round"
       />
-      {/* cheeks */}
-      <circle cx="24" cy="27.5" r="1.8" fill="#f87171" opacity="0.25" />
-      <circle cx="40" cy="27.5" r="1.8" fill="#f87171" opacity="0.25" />
       {mouth}
     </g>
   );

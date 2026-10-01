@@ -46,6 +46,9 @@ const ROUTES = [
   '#/alerts',
   '#/activity',
   '#/settings',
+  '#/visual-floor',
+  '#/visual-floor?preview=red-alert',
+  '#/visual-floor?station=sci-1',
 ];
 
 describe('axe structural audit (demo adapter)', () => {

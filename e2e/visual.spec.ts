@@ -59,6 +59,14 @@ const DEMO: [string, string, keyof typeof VIEWPORTS][] = [
   ['approvals-desktop', '/approvals', 'desktop'],
   ['approvals-tablet', '/approvals', 'tablet'],
   ['alerts-desktop', '/alerts', 'desktop'],
+  // Phase 9: VISUAL Forge Floor preview (presentation layer; presets are labelled).
+  ['visual-floor-desktop', '/visual-floor', 'desktop'],
+  ['visual-floor-hd', '/visual-floor', 'hd'],
+  ['visual-floor-accomplished', '/visual-floor?preview=accomplished', 'hd'],
+  ['visual-floor-countdown-critical', '/visual-floor?preview=countdown-critical', 'hd'],
+  ['visual-floor-red-alert', '/visual-floor?preview=red-alert', 'hd'],
+  ['visual-floor-tablet', '/visual-floor', 'tablet'],
+  ['visual-floor-phone', '/visual-floor', 'phone'],
 ];
 
 for (const [name, route, vp] of DEMO) {

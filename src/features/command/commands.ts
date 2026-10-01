@@ -166,6 +166,13 @@ export function buildCommands(ctx: CommandContext): Command[] {
       keywords: 'data quality unknown stale partial last known why source history coverage',
       run: () => navigate(href.quality()),
     },
+    {
+      id: 'nav:visual-floor',
+      title: p.visualFloor,
+      group: 'Navigate',
+      keywords: 'visual forge floor preview scene crew bandits scientists bytewisp command center',
+      run: () => navigate(href.visual()),
+    },
   );
   // Founder attention: open gates first (navigation only; deciding stays on the gate card).
   if (config.features.approvals) {

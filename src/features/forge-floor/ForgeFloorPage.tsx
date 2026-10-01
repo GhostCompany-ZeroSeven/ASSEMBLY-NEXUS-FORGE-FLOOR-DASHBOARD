@@ -69,6 +69,10 @@ export function ForgeFloorPage() {
           <div className="page__eyebrow">{t.eyebrow}</div>
           <h1 className="page__title">{t.title}</h1>
           {forge?.motto && <p className="page__lede crew-motto">{forge.motto}</p>}
+          <a className="vf-entry" href={href.visual()}>
+            <Icon name="floor" size={14} />
+            {m.visual.enterShort}
+          </a>
         </div>
         <details className="legend-box">
           <summary>{t.legend}</summary>

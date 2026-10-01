@@ -367,7 +367,7 @@ export const assemblyNexusConfig: DashboardConfig = {
     },
     kestrel: {
       kind: 'procedural-wolf',
-      appearance: { fur: '#dbe4ee', accent: '#7dd3fc', coat: '#1e293b' },
+      appearance: { fur: '#ffffff', accent: '#a3e635', coat: '#4c1d95' },
     },
   },
   features: {
