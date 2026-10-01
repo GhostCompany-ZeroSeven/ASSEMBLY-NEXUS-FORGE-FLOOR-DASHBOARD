@@ -473,6 +473,28 @@ Architecturally, the change is this: EXACT event coverage now also requires the
 listing windows (`historyAssured`, reason `contract-unassured`). A REST backend with no declared
 profile is never EXACT. The test builds declare the mock profile.
 
+## Visual Forge Floor (Phase 9)
+
+`#/visual-floor` is a **presentation layer** and adds no data path. `buildVisualState`
+(`src/features/visual-floor/model.ts`) is a pure function of the snapshot, freshness, connection
+and clock. It maps mission, approval, worker and alert facts to:
+
+- the mission board (stages and time left)
+- the alerts board (counts by mission status; `null` means UNKNOWN when missions are unavailable)
+- system status (display states only)
+- station bindings (Snow Wolf crew to Bandit stations; everyone else to scientist stations)
+
+Fixed truths:
+
+- ANN is UNKNOWN (no connection in this build).
+- Memory is UNKNOWN.
+- TEST is UNKNOWN (the data model has no test signal).
+- Deployment is BLOCKED (not authorized).
+
+Preview presets replace only the mission board and mode, and are always reported as presets.
+The scene SVG is `aria-hidden` and `translate="no"`. Each state it shows is also stated in text
+in the panels. The scene animates only through CSS, and stops under reduced motion.
+
 ## Loading and code splitting
 
 - `main.tsx` loads the viewer's language catalog (English is bundled, Spanish is a

@@ -178,6 +178,22 @@ Findings fixed in Phase 5:
 - `e2e/phase8.spec.ts` sweeps the panel, with conflict and duplicate observations on screen, in
   English, Spanish and pseudo at 320/390/1440/2560, with axe at 1440. It found no issues.
 
+## Visual Forge Floor scene text (Phase 9)
+
+Text drawn inside the decorative scene SVG is branding and set dressing, and is not translated:
+
+- the "ASSEMBLY NEXUS / FORGE FLOOR" sign
+- the workflow strip
+- binder labels
+- the two approved Founder phrases
+- "FOUNDER #0007"
+
+It sits under `translate="no"`, uses only bundled-font glyphs, and never carries state. All
+state text is in the HUD panels and is translated (`m.visual`, en/es).
+
+The pseudo-locale scan now treats text inside an absolutely positioned decoration (the scene
+nameplates) the same as the decoration itself.
+
 ## Adding a language
 
 1. Add the code to `SUPPORTED_LOCALES` and its own name to `LOCALE_NAMES` (`locales.ts`).

@@ -135,6 +135,23 @@ the runtime states are proven by assertions in `e2e/phase7.spec.ts`, which
 does not rely on screenshots. The one baseline was regenerated alone in the
 pinned image, and all 42 then matched there twice.
 
+## Phase 9 baseline changes (reviewed before regeneration)
+
+All 42 Phase 8 baselines were run first in the pinned image. Nine differed; each diff image was
+reviewed before regeneration.
+
+| Baseline                                                                                                        | Classification          | Cause                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `forge-floor-desktop`, `-hd`, `-wide`, `-tablet`, `-phone`, `-room`, `-selected-worker`, `es-forge-floor-phone` | INTENDED_PHASE_9_CHANGE | New "Visual Forge Floor · preview" entry link under the header, which shifts the content down. The Kestrel avatar is now the Snow Wolf Bandit. Scientist cheek circles were removed |
+| `command-center-wide`                                                                                           | INTENDED_PHASE_9_CHANGE | Only the Kestrel avatar in the Snow Wolf Den (the diff shows that tile alone)                                                                                                       |
+
+Seven baselines were added:
+
+- `visual-floor-desktop`, `-hd`, `-tablet`, `-phone`
+- `visual-floor-accomplished`, `-countdown-critical`, `-red-alert` (presets, at 1920×1080)
+
+After update, all 49 matched in a separate verify run in the pinned image.
+
 ## Updating baselines
 
 Update only for an intended visual change, and review every changed PNG first.

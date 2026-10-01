@@ -10,8 +10,40 @@ _Operational continuity log. A later session should read this first._
 - **Session 5:** `4d5279e` → `c3286ba` (Founder operations intelligence, Phase 5)
 - **Session 6:** `c3286ba` → `eaae7e3` (Founder command intelligence, Phase 6)
 - **Session 7:** `eaae7e3` → `a9c6c39` (adversarial mock runtime, Phase 7)
-- **Session 8:** `a9c6c39` → adapter contract conformance (Phase 8). **Local commits only; not pushed** (push not authorized)
-- **Last updated:** 2026-09-30
+- **Session 8:** `a9c6c39` → `9a42c27` (adapter contract conformance, Phase 8; pushed later by the authorized preservation push)
+- **Session 9:** `9a42c27` → Founder visual Forge Floor preview (Phase 9). **Local commits only; not pushed** (push not authorized)
+- **Last updated:** 2026-10-01
+
+## Session 9: Founder visual Forge Floor (Phase 9)
+
+Pre-flight: branch and remote at `9a42c27`; `main` at `3a3e217`; clean tree; no AI trailers;
+Phase 8 conformance suite passing. Push, PR, merge and deploy were not authorized, so the
+commits are local only.
+
+### Delivered
+
+| Objective          | Result                                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visual layer       | `#/visual-floor`: an SVG/CSS scene with glass HUD panels over the dashboard's own data. It does not replace any view                                      |
+| Presentation model | `src/features/visual-floor/model.ts`: a bounded, read-only mapping from the snapshot. Anything not carried is UNKNOWN                                     |
+| Characters         | Crown-Top Scientists (chrome-dome and shaved-stubble variants, side and back hair kept, no cheek blush), Snow Wolf Bandits, ByteWisp                      |
+| States             | From data, countdown, critical countdown, mission accomplished and red alert. Presets are labelled "PREVIEW PRESET · NOT FROM DATA"                       |
+| Truthfulness       | ANN is UNKNOWN (not connected in this build), memory is UNKNOWN, TEST is UNKNOWN, deployment is BLOCKED (not authorized), Associates' presence is UNKNOWN |
+| Existing art       | `ScientistFigure` cheek circles removed. `WolfFigure` (gray-wolf placeholder) now draws the Snow Wolf Bandit                                              |
+| Entry              | Link on the Forge Floor page, plus the palette command "Visual Forge Floor (preview)". The sidebar is unchanged                                           |
+
+### Verification
+
+| Check                     | Result                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| format / typecheck / lint | pass / pass / pass (0 warnings)                                               |
+| Unit (Vitest)             | 592/592 (50 files)                                                            |
+| Contract conformance      | 15/15                                                                         |
+| Browser (non-visual)      | 146/146                                                                       |
+| Visual (pinned image)     | 49/49 (7 new, 9 updated after review)                                         |
+| Build                     | pass. New lazy chunk: 54.3 kB JS (14.6 kB gzip) and 9.7 kB CSS. Entry +3.5 kB |
+
+See [reports/DASHBOARD_FOUNDER_VISUAL_FORGE_FLOOR_PHASE_09_REPORT.md](reports/DASHBOARD_FOUNDER_VISUAL_FORGE_FLOOR_PHASE_09_REPORT.md).
 
 ## Session 8: adapter contract conformance (Phase 8)
 
