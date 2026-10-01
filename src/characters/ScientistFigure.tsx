@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { WorkerState } from '@/domain/types';
 import type { ScientistAppearance } from './types';
 
@@ -5,6 +6,13 @@ import type { ScientistAppearance } from './types';
  * Procedural placeholder art for the Forge crew — original design.
  * Signature trait: the Forge took their hair as payment (bald crown with a
  * shine, hair surviving only on the sides/back).
+ *
+ * Phase 11: normalized to the Crown-Top family of the visual Forge Floor:
+ * smooth shaded head, dark lab gloves, and a crown that is either `chrome`
+ * (smooth, natural) or `stubble` (shaved, subtle follicle texture). Hair is
+ * drawn only at the sides and back (groups marked `data-hair`); nothing ever
+ * covers the top, and goggles hang at the neck so the crown stays visible.
+ * No cheek marks.
  *
  * Pure SVG, no external assets. Replace via an `image` character definition.
  */
@@ -17,8 +25,28 @@ export function ScientistFigure({
 }) {
   const mood = moodFor(state);
   const dark = 'var(--char-ink, #1b2230)';
+  const glove = '#1c2230';
+  const crown = a.crown ?? 'chrome';
+  const uid = useId().replace(/:/g, '');
+  const face = `sf-face-${uid}`;
+  const cap = `sf-cap-${uid}`;
+  const dots = `sf-dots-${uid}`;
   return (
-    <g>
+    <g data-character="crown-top-avatar" data-crown={crown}>
+      <defs>
+        <radialGradient id={face} cx="0.38" cy="0.32" r="0.78">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.32" />
+          <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="1" stopColor="#000000" stopOpacity="0.2" />
+        </radialGradient>
+        <clipPath id={cap}>
+          <ellipse cx="32" cy="12.5" rx="11.5" ry="6.8" />
+        </clipPath>
+        <pattern id={dots} width="1.9" height="1.8" patternUnits="userSpaceOnUse">
+          <circle cx="0.5" cy="0.5" r="0.32" fill="rgba(40,30,24,0.6)" />
+          <circle cx="1.45" cy="1.35" r="0.28" fill="rgba(40,30,24,0.5)" />
+        </pattern>
+      </defs>
       {/* ground shadow */}
       <ellipse cx="32" cy="77" rx="15" ry="3" fill="rgba(0,0,0,0.35)" />
 
@@ -54,7 +82,7 @@ export function ScientistFigure({
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="17.5" cy="62" r="2.6" fill={a.skin} />
+      <circle cx="17.5" cy="62" r="2.6" fill={glove} />
       <path
         d="M45 45 Q50 53 47 59"
         stroke={a.coat}
@@ -62,7 +90,7 @@ export function ScientistFigure({
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="47" cy="60" r="2.6" fill={a.skin} />
+      <circle cx="47" cy="60" r="2.6" fill={glove} />
 
       <Tool tool={a.tool} accent={a.accent} />
 
@@ -77,18 +105,36 @@ export function ScientistFigure({
       <circle cx="18.6" cy="24" r="3" fill={a.skin} />
       <circle cx="45.4" cy="24" r="3" fill={a.skin} />
 
-      {/* head — the bald crown */}
+      {/* head — the bald crown, smooth-shaded like the Crown-Top family */}
       <ellipse cx="32" cy="21" rx="13.5" ry="14" fill={a.skin} />
-      {/* crown shine: payment received */}
-      <ellipse
-        cx="27"
-        cy="11"
-        rx="4.5"
-        ry="2.2"
-        fill="rgba(255,255,255,0.55)"
-        transform="rotate(-18 27 11)"
-      />
-      <ellipse cx="33.5" cy="9" rx="1.4" ry="0.8" fill="rgba(255,255,255,0.5)" />
+      <ellipse cx="32" cy="21" rx="13.5" ry="14" fill={`url(#${face})`} />
+      {crown === 'chrome' ? (
+        <g data-crown-render="chrome">
+          {/* crown shine: payment received */}
+          <ellipse
+            cx="27"
+            cy="11"
+            rx="4.5"
+            ry="2.2"
+            fill="rgba(255,255,255,0.55)"
+            transform="rotate(-18 27 11)"
+          />
+          <ellipse cx="33.5" cy="9" rx="1.4" ry="0.8" fill="rgba(255,255,255,0.5)" />
+        </g>
+      ) : (
+        <g data-crown-render="stubble" clipPath={`url(#${cap})`}>
+          <ellipse cx="32" cy="12.5" rx="11.5" ry="6.8" fill="rgba(52,40,32,0.08)" />
+          <rect x="19" y="4" width="26" height="16" fill={`url(#${dots})`} />
+          <ellipse
+            cx="28"
+            cy="10.5"
+            rx="3.6"
+            ry="1.5"
+            fill="rgba(255,255,255,0.22)"
+            transform="rotate(-18 28 10.5)"
+          />
+        </g>
+      )}
 
       {/* side hair (in front of head edges) */}
       <SideHair style={a.hairStyle} color={a.hair} />
@@ -251,29 +297,40 @@ function Face({ appearance: a, mood }: { appearance: ScientistAppearance; mood: 
   );
 }
 
+/** Hair at the BACK of the head only (below the crown line). */
 function BackHair({ style, color }: { style: ScientistAppearance['hairStyle']; color: string }) {
   switch (style) {
     case 'bun':
-      return <circle cx="45" cy="30" r="5" fill={color} />;
+      // A small low knot at the nape: back hair, never on top.
+      return (
+        <g data-hair="back">
+          <path d="M40 30 Q47 27 48 33 Q47 38 41 36 Z" fill={color} />
+        </g>
+      );
     case 'swoop':
-      return <path d="M17 24 Q18 38 32 37 Q46 38 47 24 Q44 33 32 33 Q20 33 17 24 Z" fill={color} />;
+      return (
+        <g data-hair="back">
+          <path d="M17 24 Q18 38 32 37 Q46 38 47 24 Q44 33 32 33 Q20 33 17 24 Z" fill={color} />
+        </g>
+      );
     default:
       return null;
   }
 }
 
+/** Hair at the SIDES only. The top (crown) is never covered. */
 function SideHair({ style, color }: { style: ScientistAppearance['hairStyle']; color: string }) {
   switch (style) {
     case 'wild':
       return (
-        <g fill={color}>
-          <path d="M19 14 Q9 12 12 19 Q6 22 12 26 Q8 31 16 30 Q18 22 20 17 Z" />
-          <path d="M45 14 Q55 12 52 19 Q58 22 52 26 Q56 31 48 30 Q46 22 44 17 Z" />
+        <g fill={color} data-hair="sides">
+          <path d="M19 16 Q9 14 12 20 Q6 23 12 27 Q8 31 16 30 Q18 23 20 18.5 Z" />
+          <path d="M45 16 Q55 14 52 20 Q58 23 52 27 Q56 31 48 30 Q46 23 44 18.5 Z" />
         </g>
       );
     case 'tufts':
       return (
-        <g fill={color}>
+        <g fill={color} data-hair="sides">
           <path d="M19 15 L14 13 L17 17 L13 18 L18 20 L19.5 22 Z" />
           <path d="M45 15 L50 13 L47 17 L51 18 L46 20 L44.5 22 Z" />
         </g>
@@ -283,7 +340,7 @@ function SideHair({ style, color }: { style: ScientistAppearance['hairStyle']; c
     case 'swoop':
     default:
       return (
-        <g fill={color}>
+        <g fill={color} data-hair="sides">
           <path d="M18.5 15 Q15 20 17 28 Q19 27 20 24 Q19.5 19 21 15.5 Z" />
           <path d="M45.5 15 Q49 20 47 28 Q45 27 44 24 Q44.5 19 43 15.5 Z" />
         </g>
@@ -302,14 +359,29 @@ function Eyewear({ kind, accent }: { kind: ScientistAppearance['eyewear']; accen
         </g>
       );
     case 'goggles':
-      // pushed up onto the bald crown — safety first, style second
+      // hanging at the neck (Crown-Top family): the crown stays visible
       return (
-        <g>
-          <path d="M18.8 14 Q32 8 45.2 14" stroke="#374151" strokeWidth="2.4" fill="none" />
-          <circle cx="27" cy="12.2" r="3.6" fill="#1f2937" stroke={accent} strokeWidth="1.2" />
-          <circle cx="37" cy="12.2" r="3.6" fill="#1f2937" stroke={accent} strokeWidth="1.2" />
-          <circle cx="26" cy="11.2" r="1" fill="rgba(255,255,255,0.6)" />
-          <circle cx="36" cy="11.2" r="1" fill="rgba(255,255,255,0.6)" />
+        <g data-accessory="goggles">
+          <path d="M24 37.5 Q32 43 40 37.5" stroke="#374151" strokeWidth="1.6" fill="none" />
+          <ellipse
+            cx="28"
+            cy="40"
+            rx="3.2"
+            ry="2.5"
+            fill="#1f2937"
+            stroke={accent}
+            strokeWidth="1"
+          />
+          <ellipse
+            cx="36"
+            cy="40"
+            rx="3.2"
+            ry="2.5"
+            fill="#1f2937"
+            stroke={accent}
+            strokeWidth="1"
+          />
+          <circle cx="27.2" cy="39.3" r="0.8" fill="rgba(255,255,255,0.6)" />
         </g>
       );
     case 'monocle':

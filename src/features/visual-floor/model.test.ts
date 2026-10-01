@@ -169,16 +169,16 @@ describe('visual floor presentation model', () => {
     expect(v.crew).toEqual({ forge: null, snowWolf: null });
   });
 
-  it('binds the Snow Wolf crew to bandit stations and others to scientists', () => {
-    const s = seed();
-    const b = bindStations(s);
-    for (const st of b.filter((x) => x.worker)) {
-      const w = s.workers.find((x) => x.id === st.worker!.id)!;
-      expect(st.kind).toBe(w.crewId === 'snow-wolf' ? 'bandit' : 'scientist');
-    }
-    expect(b.filter((x) => x.kind === 'wisp').every((x) => !x.worker)).toBe(true);
-    const ids = b.flatMap((x) => (x.worker ? [x.worker.id] : []));
-    expect(new Set(ids).size).toBe(ids.length);
+  it('no station is bound to a factual worker (Phase 11: characters stay separate)', () => {
+    const b = bindStations();
+    expect(b.filter((x) => x.kind === 'scientist')).toHaveLength(8);
+    expect(b.filter((x) => x.kind === 'bandit')).toHaveLength(8);
+    expect(b.filter((x) => x.kind === 'wisp')).toHaveLength(2);
+    for (const x of b) expect(Object.keys(x).sort()).toEqual(['kind', 'stationId']);
+    // The visual state is the same whatever workers the data has.
+    const v = buildVisualState(seed(), SIM, 'idle', NOW);
+    expect(v.stations).toEqual(b);
+    expect(JSON.stringify(v.stations)).not.toMatch(/w-|Juniper|Ada|Mina|Kestrel/);
   });
 
   it('roster names are names only', () => {

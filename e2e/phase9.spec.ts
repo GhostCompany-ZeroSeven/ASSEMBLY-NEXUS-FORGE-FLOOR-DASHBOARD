@@ -108,7 +108,7 @@ test('the preview state radios are keyboard operable', async ({ page }) => {
 
 test('characters are keyboard-selectable; Escape closes the details', async ({ page }) => {
   await openPaused(page, '/visual-floor');
-  const spot = page.locator('.vf__hotspot[data-bound="true"]').first();
+  const spot = page.locator('.vf__hotspot[data-station="sci-1"]');
   await spot.focus();
   await page.keyboard.press('Enter');
   const heading = page.getByRole('heading', { name: 'Details', exact: true });

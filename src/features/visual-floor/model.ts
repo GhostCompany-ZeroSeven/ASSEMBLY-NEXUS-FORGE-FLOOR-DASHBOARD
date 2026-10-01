@@ -2,7 +2,7 @@ import { selectAttentionQueue, type AttentionItem } from '@/domain/attention';
 import { displayMode } from '@/domain/provenance';
 import { redAlertActive, resourceUnavailable } from '@/domain/selectors';
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import type { Mission, MissionStatus, Worker, WorkerState } from '@/domain/types';
+import type { Mission, MissionStatus, WorkerState } from '@/domain/types';
 import type { Freshness } from '@/domain/freshness';
 
 /**
@@ -80,8 +80,6 @@ export type StationKind = 'scientist' | 'bandit' | 'wisp';
 export interface StationBinding {
   stationId: string;
   kind: StationKind;
-  /** The worker this station shows, when the data has one for it. */
-  worker?: Pick<Worker, 'id' | 'name' | 'role' | 'state' | 'currentMissionId'>;
 }
 
 /** Associates named on the preview roster. Presence is never asserted: UNKNOWN. */
@@ -255,7 +253,7 @@ function alerts(s: DashboardSnapshot): AlertBoardState {
   };
 }
 
-/** Scene stations, in the order they are bound. Eight Crown-Top scientists. */
+/** Crown-Top scientist stations (eight; role/station labelled). */
 export const SCIENTIST_STATIONS = [
   'sci-1',
   'sci-2',
@@ -266,40 +264,24 @@ export const SCIENTIST_STATIONS = [
   'sci-7',
   'sci-8',
 ] as const;
-/** Snow Wolf Crew role personas: a Snow Wolf worker in the data may be shown here. */
+/** Snow Wolf Crew role personas (Coder, Hauler, Lookout, Snack Guard). */
 export const CREW_ROLE_STATIONS = ['ban-1', 'ban-2', 'ban-3', 'ban-4'] as const;
-/** Named Snow Wolf Crew personas (Boxer, DJ, Wild Paw, Chuy): never bound to data. */
+/** Named Snow Wolf Crew personas (Boxer, DJ, Wild Paw, Chuy). */
 export const CREW_NAMED_STATIONS = ['ban-5', 'ban-6', 'ban-7', 'ban-8'] as const;
-/** Baby Ghosts: decorative mascots, never bound to data. */
+/** Baby Ghosts: decorative mascots. */
 export const WISP_STATIONS = ['wisp-1', 'wisp-2'] as const;
 
 /**
- * Bind workers to stations: the Snow Wolf crew to the crew ROLE stations,
- * others to scientists, in order. Named personas, Baby Ghosts and any
- * unmatched station stay decorative; workers beyond the stations appear only
- * in the factual views.
+ * The scene's stations. Phase 11 (Founder decision): visual characters are
+ * kept SEPARATE from factual worker records. No station is bound to a worker,
+ * so a demo worker name is never shown as a physical character; workers stay
+ * in the factual views (where e.g. a worker without a station, such as
+ * Juniper, is fully shown). Characters carry no identity or authority.
  */
-export function bindStations(s: DashboardSnapshot): StationBinding[] {
-  const pick = (w: Worker) => ({
-    id: w.id,
-    name: w.name,
-    role: w.role,
-    state: w.state,
-    currentMissionId: w.currentMissionId,
-  });
-  const wolves = s.workers.filter((w) => w.crewId === 'snow-wolf');
-  const others = s.workers.filter((w) => w.crewId !== 'snow-wolf');
+export function bindStations(): StationBinding[] {
   return [
-    ...SCIENTIST_STATIONS.map((id, i) => ({
-      stationId: id,
-      kind: 'scientist' as const,
-      worker: others[i] ? pick(others[i]) : undefined,
-    })),
-    ...CREW_ROLE_STATIONS.map((id, i) => ({
-      stationId: id,
-      kind: 'bandit' as const,
-      worker: wolves[i] ? pick(wolves[i]) : undefined,
-    })),
+    ...SCIENTIST_STATIONS.map((id) => ({ stationId: id, kind: 'scientist' as const })),
+    ...CREW_ROLE_STATIONS.map((id) => ({ stationId: id, kind: 'bandit' as const })),
     ...CREW_NAMED_STATIONS.map((id) => ({ stationId: id, kind: 'bandit' as const })),
     ...WISP_STATIONS.map((id) => ({ stationId: id, kind: 'wisp' as const })),
   ];
@@ -359,7 +341,7 @@ export function buildVisualState(
     alerts: alerts(s),
     attention,
     attentionIncomplete: !queue.complete,
-    stations: bindStations(s),
+    stations: bindStations(),
     crew: workersDown
       ? { forge: null, snowWolf: null }
       : {

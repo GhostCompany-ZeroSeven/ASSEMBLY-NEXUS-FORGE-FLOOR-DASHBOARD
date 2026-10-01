@@ -249,7 +249,8 @@ function useWho(st: Station | undefined): string {
   if (!st) return t.scientist;
   if (st.kind === 'wisp') return t.wisp;
   if (st.kind === 'bandit') return `${t.bandit} · ${t.persona[st.look.persona]}`;
-  return st.look.generation === 'young' ? `${t.scientist} (${t.young})` : t.scientist;
+  const base = `${t.scientist} · ${t.at(t.role[st.role])}`;
+  return st.look.generation === 'young' ? `${base} (${t.young})` : base;
 }
 
 function StationHotspot({
@@ -268,14 +269,15 @@ function StationHotspot({
   const id = st.id;
   const box = stationBox(st);
   const who = useWho(st);
-  const w = binding?.worker;
-  const label = w ? t.bound(who, w.name, m.status.worker[w.state]) : t.decorative(who);
+  // Visual characters are never bound to factual workers (Phase 11).
+  const label = t.decorative(who);
   return (
     <button
       type="button"
       className="vf__hotspot"
       data-station={id}
-      data-bound={w ? 'true' : 'false'}
+      data-kind={binding?.kind ?? st.kind}
+      data-bound="false"
       aria-pressed={selected}
       aria-label={label}
       title={label}
@@ -287,12 +289,9 @@ function StationHotspot({
         height: `${(box.h / SCENE_H) * 100}%`,
       }}
     >
-      {w && (
-        <span className="vf__nameplate" aria-hidden="true">
-          <span translate="no">{w.name.split(' ')[0]}</span>
-          <span className="vf__nameplate-state" data-state={w.state}>
-            {m.status.worker[w.state]}
-          </span>
+      {st.kind === 'scientist' && (
+        <span className="vf__nameplate vf__nameplate--role" aria-hidden="true" data-role={st.role}>
+          {t.role[st.role]}
         </span>
       )}
     </button>
@@ -465,53 +464,21 @@ function Detail({ selection, v }: { selection: string; v: VisualState }) {
   const b = v.stations.find((x) => x.stationId === selection);
   const crew = st?.kind === 'bandit';
   const named = crew && CREW_NAMED.includes(st.id);
-  if (!b || b.kind === 'wisp' || !b.worker)
-    return (
-      <div>
-        <p className="vf__detail-name">
-          <strong>{who}</strong>
-        </p>
-        <p>{b?.kind === 'wisp' ? t.wisp : t.decorative}</p>
-        {named && <p className="small">{t.named}</p>}
-        {crew && <p className="small muted">{t.wardrobe}</p>}
-      </div>
-    );
-  const w = b.worker;
+  const scientist = st?.kind === 'scientist';
   return (
     <div>
       <p className="vf__detail-name">
-        <strong translate="no">{w.name}</strong> <span className="muted small">{who}</span>
+        <strong>{who}</strong>
       </p>
+      <p>{b?.kind === 'wisp' ? t.wisp : t.decorative}</p>
+      {scientist && <p className="small">{t.stationNote}</p>}
+      {named && <p className="small">{t.named}</p>}
       {crew && <p className="small muted">{t.wardrobe}</p>}
-      <dl className="kv">
-        <div>
-          <dt>{t.role}</dt>
-          <dd>{w.role}</dd>
-        </div>
-        <div>
-          <dt>{t.state}</dt>
-          <dd>{m.status.worker[w.state]}</dd>
-        </div>
-        <div>
-          <dt>{t.mission}</dt>
-          <dd>
-            {w.currentMissionId ? (
-              <a
-                href={href.mission(w.currentMissionId)}
-                className="mono vf__detail-link"
-                translate="no"
-              >
-                {w.currentMissionId}
-              </a>
-            ) : (
-              t.none
-            )}
-          </dd>
-        </div>
-      </dl>
-      <a className="btn" href={href.worker(w.id)}>
-        {t.openWorker}
-      </a>
+      {b?.kind !== 'wisp' && (
+        <a className="btn" href={href.workers()}>
+          {t.openWorkers}
+        </a>
+      )}
     </div>
   );
 }

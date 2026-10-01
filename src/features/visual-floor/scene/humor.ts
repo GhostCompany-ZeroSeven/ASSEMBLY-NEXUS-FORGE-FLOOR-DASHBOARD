@@ -14,6 +14,8 @@ export const APPROVED_HUMOR = [
   'FALLS HAPPEN. LEGENDS GET UP.',
   'PAW SQUAD. HIGH RISK. NO APOLOGIES.',
   "IF YOU'RE SCARED, GO TO CHURCH.",
+  'TOO MUCH? NAH, PAWFECT.',
+  'BIG BETS, BIGGER BONES.',
 ] as const;
 
 /** The Crown-Top lab banner: playful, not presented as scientific law. */

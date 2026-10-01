@@ -631,3 +631,10 @@ li[data-status='unknown'] .vf__flow-status {
   min-height: 24px;
   line-height: 24px;
 }
+
+/* Phase 11: Crown-Top desks show ROLE/STATION labels, never worker names. */
+.vf__nameplate--role {
+  color: var(--vf-cyan, #67e8f9);
+  letter-spacing: 0.08em;
+  border-style: dashed;
+}

@@ -152,6 +152,19 @@ Seven baselines were added:
 
 After update, all 49 matched in a separate verify run in the pinned image.
 
+## Phase 11 baseline changes (reviewed before regeneration)
+
+The visual suite was run first without updating; 23 of 49 differed, each confined to avatar
+pixels or visual-floor nameplates (diffs reviewed).
+
+| Baselines                                                                                                                                                                                                                   | Classification           | Cause                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `command-center-desktop`, `command-center-wide`, `es-command-center-desktop`, `forge-floor-*` (7), `es-forge-floor-phone`, `missions-desktop`, `missions-url-filtered`, `workers-desktop`, `worker-focus`, `rest-live` (16) | INTENDED_PHASE_11_CHANGE | Factual scientist avatars normalized to the Crown-Top family (chrome/stubble crowns, shading, gloves, neck goggles) |
+| `visual-floor-*` (7)                                                                                                                                                                                                        | INTENDED_PHASE_11_CHANGE | Role/station nameplates on the Crown-Top desks; no worker names on characters                                       |
+
+All 49 matched in a separate verify run in the pinned image. See
+[reports/DASHBOARD_FOUNDER_UNIVERSE_PHASE_11_REPORT.md](reports/DASHBOARD_FOUNDER_UNIVERSE_PHASE_11_REPORT.md).
+
 ## Updating baselines
 
 Update only for an intended visual change, and review every changed PNG first.

@@ -74,6 +74,12 @@ export interface ScientistAppearance {
   facialHair: FacialHair;
   /** Eyebrow tilt: `-1` worried … `1` determined. */
   brow: -1 | 0 | 1;
+  /**
+   * Crown-Top family crown: `chrome` (smooth, naturally bald top) or `stubble`
+   * (shaved top with subtle follicle texture). Side/back hair is always kept;
+   * no hair style ever covers the top.
+   */
+  crown?: 'chrome' | 'stubble';
 }
 
 export interface WolfAppearance {

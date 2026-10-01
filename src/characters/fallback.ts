@@ -28,6 +28,8 @@ export function fallbackCharacter(id: string): CharacterDefinition {
       tool: at(TOOLS, 15),
       facialHair: 'none',
       brow: 0,
+      // Crown-Top family: smooth or shaved crown, chosen deterministically.
+      crown: (h >>> 20) % 2 ? 'stubble' : 'chrome',
     },
   };
 }

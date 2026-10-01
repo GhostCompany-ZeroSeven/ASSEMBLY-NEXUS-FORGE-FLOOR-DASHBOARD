@@ -8,9 +8,18 @@ export const SCENE_H = 900;
 
 /* ------------------------------ stations ------------------------------ */
 
+/**
+ * Role/station label of a Crown-Top desk (Phase 11, Founder decision): it
+ * names the kind of work at the station. It confers no worker or Associate
+ * identity, no authority and no runtime presence.
+ */
+export type StationRole =
+  'build' | 'test' | 'review' | 'certify' | 'research' | 'systems' | 'analysis' | 'operations';
+
 type ScientistStation = {
   id: string;
   kind: 'scientist';
+  role: StationRole;
   x: number;
   y: number;
   s: number;
@@ -41,16 +50,18 @@ export type Station = ScientistStation | BanditStation | WispStation;
  *   tops with stubble, all keeping side/back hair. Seven veterans; `sci-7` is
  *   the younger-generation Crown-Top.
  * - EIGHT Snow Wolf Crew members, each a different persona and job, each in a
- *   personal outfit with the A•N uniform vest over it. `ban-1`..`ban-4` are
- *   role personas that a Snow Wolf worker in the data may be shown as; the
- *   named personas (`ban-5`..`ban-8`) are never bound to data.
- * - Two Baby Ghosts (decorative mascots, never bound to data).
+ *   personal outfit with the A•N uniform vest over it.
+ * - Two Baby Ghost stations (plus one decorative peeker in the scene).
+ *
+ * Phase 11: no visual station is bound to a factual worker record. Crown-Top
+ * desks carry ROLE/STATION labels; crew and Baby Ghosts are characters only.
  */
 export const STATIONS: readonly Station[] = [
   // Back row, at the desks.
   {
     id: 'sci-1',
     kind: 'scientist',
+    role: 'build',
     x: 410,
     y: 416,
     s: 1.2,
@@ -67,6 +78,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-2',
     kind: 'scientist',
+    role: 'analysis',
     x: 552,
     y: 420,
     s: 1.18,
@@ -83,6 +95,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-3',
     kind: 'scientist',
+    role: 'test',
     x: 900,
     y: 416,
     s: 1.2,
@@ -99,6 +112,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-4',
     kind: 'scientist',
+    role: 'research',
     x: 1042,
     y: 420,
     s: 1.18,
@@ -116,6 +130,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-5',
     kind: 'scientist',
+    role: 'certify',
     x: 172,
     y: 602,
     s: 1.4,
@@ -131,6 +146,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-6',
     kind: 'scientist',
+    role: 'review',
     x: 1236,
     y: 596,
     s: 1.4,
@@ -148,6 +164,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-7',
     kind: 'scientist',
+    role: 'operations',
     x: 452,
     y: 604,
     s: 1.38,
@@ -163,6 +180,7 @@ export const STATIONS: readonly Station[] = [
   {
     id: 'sci-8',
     kind: 'scientist',
+    role: 'systems',
     x: 1078,
     y: 604,
     s: 1.38,

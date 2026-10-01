@@ -72,9 +72,13 @@ describe('Visual Forge Floor page', () => {
     const root = await open();
     const spots = root.querySelectorAll<HTMLButtonElement>('.vf__hotspot');
     expect(spots.length).toBeGreaterThan(8);
-    const bound = [...spots].find((b) => b.dataset.bound === 'true')!;
-    expect(bound.getAttribute('aria-label')).toMatch(/: .+, .+/);
-    bound.focus();
+    // Phase 11: every hotspot is decorative; Crown-Top desks carry role labels.
+    expect([...spots].every((b) => b.dataset.bound === 'false')).toBe(true);
+    const desk = root.querySelector<HTMLButtonElement>('.vf__hotspot[data-station="sci-1"]')!;
+    expect(desk.getAttribute('aria-label')).toBe(
+      'Crown-Top Scientist · BUILD station: decorative, not bound to data',
+    );
+    desk.focus();
     await user.keyboard('{Enter}');
     const detail = await screen.findByRole('heading', { name: 'Details' });
     expect(document.activeElement).toBe(detail);

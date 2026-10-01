@@ -251,6 +251,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'clipboard',
         facialHair: 'mustache',
         brow: 0,
+        crown: 'chrome',
       },
     },
     ada: {
@@ -265,6 +266,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'wrench',
         facialHair: 'none',
         brow: 1,
+        crown: 'stubble',
       },
     },
     otto: {
@@ -279,6 +281,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'wrench',
         facialHair: 'beard',
         brow: 1,
+        crown: 'chrome',
       },
     },
     mina: {
@@ -293,6 +296,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'magnifier',
         facialHair: 'none',
         brow: 0,
+        crown: 'stubble',
       },
     },
     cyrus: {
@@ -307,6 +311,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'shield',
         facialHair: 'goatee',
         brow: 1,
+        crown: 'chrome',
       },
     },
     pim: {
@@ -321,6 +326,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'tablet',
         facialHair: 'none',
         brow: -1,
+        crown: 'stubble',
       },
     },
     hedda: {
@@ -335,6 +341,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'stamp',
         facialHair: 'none',
         brow: 0,
+        crown: 'chrome',
       },
     },
     rook: {
@@ -349,6 +356,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'headset',
         facialHair: 'mustache',
         brow: 0,
+        crown: 'stubble',
       },
     },
     juniper: {
@@ -363,6 +371,7 @@ export const assemblyNexusConfig: DashboardConfig = {
         tool: 'flask',
         facialHair: 'none',
         brow: -1,
+        crown: 'stubble',
       },
     },
     kestrel: {
