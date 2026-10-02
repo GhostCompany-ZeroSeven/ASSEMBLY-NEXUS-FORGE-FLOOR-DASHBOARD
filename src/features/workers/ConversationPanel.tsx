@@ -1,5 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
+import { ActionClassTag } from '@/components/ActionClassTag';
 import { Icon } from '@/components/Icon';
+import { classifyOperation } from '@/domain/operational';
 import { EmptyState, SimulatedTag } from '@/components/ui';
 import { useI18n } from '@/i18n/useI18n';
 import type { Worker } from '@/domain/types';
@@ -13,7 +15,7 @@ import { useConfig, useDashboard, useSnapshot } from '@/store/hooks';
 export function ConversationPanel({ worker }: { worker: Worker }) {
   const snapshot = useSnapshot();
   const { features, governance } = useConfig();
-  const { sendWorkerMessage } = useDashboard();
+  const { sendWorkerMessage, adapter } = useDashboard();
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,10 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
   const time = i18n.time;
   const messages = snapshot.messages.filter((m) => m.workerId === worker.id);
   const enabled = features.workerMessaging && sendWorkerMessage !== null;
+  const action = classifyOperation('worker-message', {
+    mode: snapshot.provenance.mode,
+    capabilities: adapter.capabilities,
+  });
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,7 +76,12 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
             autoComplete="off"
             disabled={busy}
           />
-          <button type="submit" className="btn" disabled={busy || !draft.trim()}>
+          <button
+            type="submit"
+            className="btn"
+            disabled={busy || !draft.trim()}
+            data-action-class={action.cls}
+          >
             <Icon name="send" size={14} /> {t.send}
           </button>
         </form>
@@ -78,7 +89,9 @@ export function ConversationPanel({ worker }: { worker: Worker }) {
         <p className="muted small">{t.unsupported}</p>
       )}
       {enabled && snapshot.provenance.mode === 'demo' && (
-        <p className="muted small">{t.demoNote}</p>
+        <p className="muted small">
+          <ActionClassTag c={action} /> {t.demoNote}
+        </p>
       )}
       {error && (
         <p className="text-danger" role="alert">

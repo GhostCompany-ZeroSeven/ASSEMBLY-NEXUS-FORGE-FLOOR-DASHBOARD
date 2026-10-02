@@ -2,8 +2,10 @@ import { useId, useState } from 'react';
 import { href, withQuery } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
 import { Icon } from '@/components/Icon';
+import { ActionClassTag } from '@/components/ActionClassTag';
 import { SimulatedTag, StatusBadge } from '@/components/ui';
 import { checkDecision, isOpenForDecision } from '@/domain/governance';
+import { classifyOperation } from '@/domain/operational';
 import { findWorker } from '@/domain/selectors';
 import { APPROVAL_STATUS_META, RISK_TONE } from '@/domain/status';
 import type { ApprovalDecision, ApprovalRequest } from '@/domain/types';
@@ -38,6 +40,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const noteId = useId();
+  const actionNoteId = useId();
   const { m, rel } = useI18n();
   const t = m.gate;
   // Display text for a decision. The decision itself is always the enum value `d`.
@@ -50,6 +53,12 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   const authorityCheck = checkDecision(request, governance.humanAuthority, snapshot.workers);
   const noteRequired = pending !== null && governance.noteRequiredFor.includes(pending);
   const canDecide = adapter.capabilities.approvals && open && authorityCheck.ok;
+  // What a decision button really does here: a simulation in demo mode, a
+  // Founder-gated operation on a connected backend.
+  const action = classifyOperation('approval-decision', {
+    mode: snapshot.provenance.mode,
+    capabilities: adapter.capabilities,
+  });
 
   const submit = async (decision: ApprovalDecision) => {
     if (governance.noteRequiredFor.includes(decision) && !note.trim()) {
@@ -149,6 +158,16 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
             <dd>{rel(request.requestedAt, now)}</dd>
           </div>
           <div>
+            <dt>{m.ops.gate.expires}</dt>
+            <dd data-testid="gate-expiry">
+              {request.expiresAt ? (
+                <time dateTime={request.expiresAt}>{rel(request.expiresAt, now)}</time>
+              ) : (
+                <span className="muted">{m.ops.gate.noExpiry}</span>
+              )}
+            </dd>
+          </div>
+          <div>
             <dt>{t.authority}</dt>
             <dd>
               <strong>{request.requiredAuthority}</strong>
@@ -201,12 +220,22 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
                 className={`gate-btn gate-btn--${d.toLowerCase()}`}
                 onClick={() => choose(d)}
                 disabled={busy}
+                data-action-class={action.cls}
+                aria-describedby={action.cls === 'DEMO_SIMULATION' ? actionNoteId : undefined}
               >
                 <Icon name={DECISION_ICON[d]} size={20} />
                 {decisionLabel(d)}
               </button>
             ))}
         </div>
+      )}
+      {canDecide && pending === null && (
+        <p className="action-note small" id={actionNoteId}>
+          <ActionClassTag c={action} />{' '}
+          {action.cls === 'DEMO_SIMULATION' && (
+            <span className="muted">{m.ops.actionNote.approval}</span>
+          )}
+        </p>
       )}
 
       {canDecide && pending !== null && (

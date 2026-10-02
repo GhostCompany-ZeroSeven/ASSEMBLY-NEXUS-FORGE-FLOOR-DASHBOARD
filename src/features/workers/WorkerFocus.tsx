@@ -144,6 +144,8 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
               [t.artifacts, artifacts.length],
               [t.lastEvent, lastEventAt ? rel(lastEventAt, now) : '—'],
               [t.workerId, <span className="mono">{worker.id}</span>],
+              // The data model carries no runtime/model identity: never invented.
+              [m.ops.worker.runtime, <span className="muted">{m.ops.worker.notReported}</span>],
             ]}
           />
         </div>

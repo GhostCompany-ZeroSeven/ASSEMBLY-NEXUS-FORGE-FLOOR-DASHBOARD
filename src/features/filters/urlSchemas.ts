@@ -12,6 +12,7 @@ export const MISSION_GROUPS = [
   'all',
   'in-flight',
   'founder',
+  'review',
   'blocked',
   'queued',
   'complete',

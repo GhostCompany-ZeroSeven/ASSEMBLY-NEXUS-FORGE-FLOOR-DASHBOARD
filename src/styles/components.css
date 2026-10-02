@@ -634,3 +634,83 @@ a.stat:hover {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* ---------------- Phase 12: action safety + lifecycle ladder ---------------- */
+
+.action-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px dashed currentColor;
+  font: 600 0.72rem/1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tone-warning);
+  /* Wrap at spaces; break inside a word only when one word alone cannot fit
+     (break-word, unlike anywhere, keeps the tag's minimum width a whole word,
+     so the surrounding row wraps the tag to its own line first). */
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+.action-class[data-action-class='FOUNDER_GATED_OPERATION'] {
+  color: var(--tone-success);
+}
+.action-class[data-action-class='UNAVAILABLE'] {
+  color: var(--text-dim);
+}
+.action-note {
+  margin: 6px 0 0;
+}
+
+.ladder {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.ladder__rung {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-left-width: 4px;
+  border-radius: 8px;
+}
+.ladder__rung[data-tone='success'] {
+  border-left-color: var(--tone-success);
+}
+.ladder__rung[data-tone='active'],
+.ladder__rung[data-tone='info'] {
+  border-left-color: var(--tone-active);
+}
+.ladder__rung[data-tone='warning'] {
+  border-left-color: var(--tone-warning);
+}
+.ladder__rung[data-tone='danger'] {
+  border-left-color: var(--tone-danger);
+}
+.ladder__rung[data-tone='muted'] {
+  border-left-style: dashed;
+}
+.ladder__rung[data-state='UNKNOWN'] {
+  border-style: dashed;
+}
+.ladder__step {
+  font: 600 0.72rem/1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.ladder__state {
+  font-weight: 700;
+}
+.ladder__evidence {
+  overflow-wrap: anywhere;
+}

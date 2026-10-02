@@ -1,3 +1,4 @@
+import { HealthReportPanel } from './HealthReportPanel';
 import { useState } from 'react';
 import { href } from '@/app/router';
 import { CharacterAvatar } from '@/characters/CharacterAvatar';
@@ -11,7 +12,7 @@ import {
   pendingApprovals,
   resourceUnavailable,
 } from '@/domain/selectors';
-import { HEALTH_STATUS_META, RISK_TONE, WORKER_STATE_META } from '@/domain/status';
+import { RISK_TONE, WORKER_STATE_META } from '@/domain/status';
 import type { Mission } from '@/domain/types';
 import { ActivityStream } from '@/features/activity/ActivityStream';
 import { AlertCard } from '@/features/alerts/AlertCard';
@@ -35,7 +36,7 @@ export function CommandCenter() {
   const snapshot = useSnapshot();
   const config = useConfig();
   const now = useNow(5000);
-  const { m, rel, num } = useI18n();
+  const { m, rel } = useI18n();
   const t = m.command;
   const featured = featuredMission(snapshot.missions);
   const gates = pendingApprovals(snapshot);
@@ -48,7 +49,6 @@ export function CommandCenter() {
     .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
     .slice(0, 3);
   const [selected, setSelected] = useState<string | null>(null);
-  const health = HEALTH_STATUS_META[snapshot.health.status];
   // A failed fetch is not "nothing": empty panels say the data is unavailable instead.
   const missionsMissing = resourceUnavailable(snapshot, 'missions');
   useFocusTarget();
@@ -201,27 +201,7 @@ export function CommandCenter() {
         </Panel>
 
         <div className="stack">
-          <Panel title={t.health} id="health" tone={health.tone} focusId="health">
-            <div className="health">
-              <StatusBadge tone={health.tone} size="lg">
-                {m.status.health[snapshot.health.status]}
-              </StatusBadge>
-              <span className="small muted">{t.checked(rel(snapshot.health.checkedAt, now))}</span>
-            </div>
-            <ul className="health-list">
-              {snapshot.health.components.map((c) => (
-                <li key={c.id} data-status={c.status}>
-                  <StatusBadge tone={HEALTH_STATUS_META[c.status].tone} size="sm">
-                    {c.label}
-                  </StatusBadge>
-                  <span className="small muted">{c.detail}</span>
-                  {typeof c.latencyMs === 'number' && (
-                    <span className="mono small">{m.common.milliseconds(num(c.latencyMs))}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </Panel>
+          <HealthReportPanel title={t.health} />
 
           <Panel title={t.crew} actions={<MoreLink href={href.workers()}>{t.roster}</MoreLink>}>
             {snapshot.workers.length === 0 ? (

@@ -88,9 +88,12 @@ for (const [name, vp] of Object.entries(VIEWPORTS)) {
   });
 }
 
-test('axe (WCAG 2.2 AA incl. contrast and lang) on every surface in Spanish', async ({ page }) => {
-  await spanish(page);
-  for (const route of ROUTES) {
+// One test per surface: the same audit, each with its own time budget. (A
+// single test auditing every surface ran at ~24s of its 30s budget alone and
+// timed out under the parallel full suite; Phase 15 root-cause fix.)
+for (const route of ROUTES) {
+  test(`axe (WCAG 2.2 AA incl. contrast and lang) in Spanish: ${route}`, async ({ page }) => {
+    await spanish(page);
     await page.goto(`/?demo=paused#${route}`);
     await page.locator('[data-surface="ready"]').waitFor();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
@@ -103,8 +106,8 @@ test('axe (WCAG 2.2 AA incl. contrast and lang) on every surface in Spanish', as
       r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
       route,
     ).toEqual([]);
-  }
-});
+  });
+}
 
 test('switching language updates <html lang> without a page reload or reconnect', async ({
   page,

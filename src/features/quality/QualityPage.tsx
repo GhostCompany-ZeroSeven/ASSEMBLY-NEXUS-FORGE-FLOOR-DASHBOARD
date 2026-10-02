@@ -5,6 +5,7 @@ import { KeyValue, Panel } from '@/components/ui';
 import { computeDigest } from '@/domain/digest';
 import { selectDataQuality } from '@/domain/dataQuality';
 import { selectFreshness } from '@/domain/freshness';
+import { classifySource, selectConnectionClaim } from '@/domain/operational';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { useI18n } from '@/i18n/useI18n';
 import { useDashboard, useLastView, useMissionViews, useNow, useSnapshot } from '@/store/hooks';
@@ -25,6 +26,8 @@ export function QualityPage() {
   useFocusTarget();
   const freshness = selectFreshness(snapshot, status, now);
   const r = selectDataQuality(snapshot, freshness, status, now);
+  const claim = selectConnectionClaim(freshness);
+  const sourceClass = classifySource(snapshot.provenance);
   const digest = computeDigest(snapshot, lastView.baseline);
   const time = (iso: string | undefined, fallback: string): ReactNode =>
     iso ? (
@@ -71,6 +74,26 @@ export function QualityPage() {
                 r.transport ? m.provenance.transport[r.transport] : m.common.notReported,
               ],
               [t.connection, m.connection[r.connection] ?? r.connection],
+              [
+                m.ops.source.title,
+                <span data-source-class={sourceClass}>
+                  <strong>{m.ops.source[sourceClass]}</strong>{' '}
+                  <span className="muted">{m.ops.source.note[sourceClass]}</span>
+                </span>,
+              ],
+              [
+                m.ops.claim.title,
+                <span data-claim={claim.claim}>
+                  <strong>{m.ops.claim[claim.claim]}</strong>{' '}
+                  <span className="muted">
+                    {m.ops.claim.note[claim.claim]}
+                    {claim.reasons.length > 0 &&
+                      ` ${m.ops.claim.because(
+                        claim.reasons.map((q) => m.provenance.qualifier[q]).join(', '),
+                      )}`}
+                  </span>
+                </span>,
+              ],
             ]}
           />
         </Panel>

@@ -47,7 +47,15 @@ export function missionAwaitsFounder(m: Mission, s: Pick<DashboardSnapshot, 'app
 /* --------------------------------- Missions -------------------------------- */
 
 export type MissionGroup =
-  'all' | 'in-flight' | 'founder' | 'blocked' | 'queued' | 'complete' | 'failed' | 'unknown';
+  | 'all'
+  | 'in-flight'
+  | 'founder'
+  | 'review'
+  | 'blocked'
+  | 'queued'
+  | 'complete'
+  | 'failed'
+  | 'unknown';
 export type MissionSort = 'status' | 'priority' | 'newest' | 'elapsed' | 'id' | 'activity';
 export type MissionSince = 'all' | 'new' | 'changed';
 
@@ -94,6 +102,16 @@ export function missionMatchesGroup(
       return isMissionInFlight(m);
     case 'founder':
       return missionAwaitsFounder(m, s) && m.status !== 'COMPLETE' && m.status !== 'FAILED';
+    case 'review':
+      // Waiting on a review (requested or in progress); finished missions never count.
+      return (
+        m.status !== 'COMPLETE' &&
+        m.status !== 'FAILED' &&
+        m.status !== 'CANCELLED' &&
+        (m.status === 'WAITING_REVIEW' ||
+          m.review.status === 'REQUESTED' ||
+          m.review.status === 'IN_REVIEW')
+      );
     case 'blocked':
       return m.status === 'BLOCKED';
     case 'queued':

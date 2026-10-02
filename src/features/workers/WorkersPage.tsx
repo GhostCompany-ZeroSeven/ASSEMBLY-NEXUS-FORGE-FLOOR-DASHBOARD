@@ -47,6 +47,9 @@ export function WorkersPage() {
         <div>
           <div className="page__eyebrow">{t.eyebrow}</div>
           <h1 className="page__title">{t.title}</h1>
+          <p className="page__lede" data-testid="worker-not-associate">
+            {m.ops.worker.notAssociate}
+          </p>
         </div>
       </header>
       <FilterBar

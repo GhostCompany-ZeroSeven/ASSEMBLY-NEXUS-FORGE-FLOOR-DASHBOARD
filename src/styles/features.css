@@ -569,8 +569,9 @@
 }
 .alert-card__foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   font-size: 12px;
   margin-top: 6px;
 }

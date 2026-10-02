@@ -24,6 +24,7 @@ import { useMissionBaseline } from '@/hooks/useMissionBaseline';
 import { MissionChangesPanel } from './MissionChangesPanel';
 import { MissionEvidencePanel } from './MissionEvidencePanel';
 import { MissionInstrument } from './MissionInstrument';
+import { MissionLifecyclePanel } from './MissionLifecyclePanel';
 import { MissionResultPanel } from './MissionResultPanel';
 import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { useWorkerRoom } from '@/hooks/useWorkerRoom';
@@ -163,6 +164,8 @@ function MissionCommand({ missionId }: { missionId: string }) {
             ]}
           />
         </Panel>
+
+        <MissionLifecyclePanel mission={mission} />
 
         <Panel
           id="mission-attention"

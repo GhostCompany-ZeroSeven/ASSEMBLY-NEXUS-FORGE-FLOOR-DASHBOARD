@@ -16,7 +16,15 @@ import { useSimulation } from '@/hooks/useSimulation';
 import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
 import { createSurfaces, usePrefetchSurfaces } from './surfaces';
 import { Suspense, SurfaceErrorBoundary, SurfaceLoading, SurfaceReady } from './SurfaceParts';
-import { href, navigate, parseHashQuery, routeKey, useRoute, type Route } from './router';
+import {
+  href,
+  navigate,
+  parseHashQuery,
+  routeKey,
+  useRoute,
+  withQuery,
+  type Route,
+} from './router';
 
 // Dialogs are small and load eagerly on purpose. If lazy, the frame turns `inert`
 // before the dialog mounts, focus falls to <body>, keystrokes typed right after
@@ -248,7 +256,7 @@ export function Shell() {
 
           <a
             className="topbar__health"
-            href={href.command()}
+            href={withQuery(href.command(), { focus: 'health' })}
             aria-label={m.shell.health(m.status.health[snapshot.health.status])}
           >
             <Icon name="health" size={16} />

@@ -2,7 +2,7 @@ import { selectAttentionQueue, type AttentionItem } from '@/domain/attention';
 import { displayMode } from '@/domain/provenance';
 import { redAlertActive, resourceUnavailable } from '@/domain/selectors';
 import type { DashboardSnapshot } from '@/domain/snapshot';
-import type { Mission, MissionStatus, WorkerState } from '@/domain/types';
+import type { Mission, MissionStatus } from '@/domain/types';
 import type { Freshness } from '@/domain/freshness';
 
 /**
@@ -217,16 +217,12 @@ function provenanceOf(
   return env && /mock|e2e|test/.test(env) ? 'MOCK' : 'BACKEND';
 }
 
-function systems(s: DashboardSnapshot, state: Freshness): SystemStatus[] {
-  const workersDown = resourceUnavailable(s, 'workers');
-  const busy: WorkerState[] = ['WORKING', 'PLANNING', 'REVIEWING', 'CERTIFYING', 'WAITING'];
-  const associates: SystemStatus = workersDown
-    ? { row: 'associates', state: 'UNKNOWN', basis: 'data' }
-    : {
-        row: 'associates',
-        state: s.workers.some((w) => busy.includes(w.state)) ? 'ONLINE' : 'STANDBY',
-        basis: 'data',
-      };
+function systems(state: Freshness): SystemStatus[] {
+  // WORKER ≠ ASSOCIATE (Phase 15 truthfulness fix): worker activity says
+  // nothing about Associate runtime presence, and this build has no Associate
+  // data source, so the row is UNKNOWN whatever the workers are doing.
+  // Worker activity is shown, labelled as worker data, in the roster panel.
+  const associates: SystemStatus = { row: 'associates', state: 'UNKNOWN', basis: 'not-connected' };
   return [
     // This build has no Assembly Nexus connection, whatever the data source is.
     { row: 'ann', state: 'UNKNOWN', basis: 'not-connected' },
@@ -337,7 +333,7 @@ export function buildVisualState(
   const workersDown = resourceUnavailable(s, 'workers');
   const base = {
     provenance: provenanceOf(s, connection),
-    systems: systems(s, freshness),
+    systems: systems(freshness),
     alerts: alerts(s),
     attention,
     attentionIncomplete: !queue.complete,

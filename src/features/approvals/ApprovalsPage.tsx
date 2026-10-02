@@ -48,6 +48,10 @@ export function ApprovalsPage() {
           <p className="page__lede">
             {t.ledeOnly} <strong>{governance.humanAuthority}</strong> {t.ledeRest}
           </p>
+          <p className="small muted" data-testid="gate-view-note">
+            {m.ops.gate.viewNote} <strong>{governance.humanAuthority}</strong>{' '}
+            {m.ops.gate.viewNoteRest}
+          </p>
         </div>
       </header>
 

@@ -21,6 +21,7 @@ import { useMissionMarkers } from './useMissionMarkers';
 const GROUPS: MissionGroup[] = [
   'all',
   'founder',
+  'review',
   'in-flight',
   'blocked',
   'queued',

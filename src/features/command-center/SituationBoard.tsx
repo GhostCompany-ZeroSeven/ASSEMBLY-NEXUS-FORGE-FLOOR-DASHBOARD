@@ -97,9 +97,15 @@ export function SituationBoard() {
         icon="health"
         tone={backendTone}
         answer={
-          s.backend.connection === 'error' ? t.unavailable : m.status.health[s.backend.health]
+          s.backend.connection === 'error'
+            ? t.unavailable
+            : display === 'demo'
+              ? t.simulatedHealth(m.status.health[s.backend.health])
+              : m.status.health[s.backend.health]
         }
         detail={
+          // Demo health is produced by the simulation: never presented as a backend's.
+          (display === 'demo' && t.demoHealth) ||
           [
             s.backend.connection !== 'connected' &&
               t.connectionWord(m.connection[s.backend.connection] ?? s.backend.connection),
@@ -107,7 +113,8 @@ export function SituationBoard() {
             s.backend.partial && t.partial,
           ]
             .filter(Boolean)
-            .join(' · ') || t.allChecked
+            .join(' · ') ||
+          t.allChecked
         }
         href={withQuery(href.command(), { focus: 'health' })}
       />

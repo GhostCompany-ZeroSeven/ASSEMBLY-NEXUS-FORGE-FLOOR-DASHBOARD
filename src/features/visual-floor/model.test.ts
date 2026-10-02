@@ -163,6 +163,16 @@ describe('visual floor presentation model', () => {
     expect(v.board.stages.every((x) => x.status === 'unknown')).toBe(true);
   });
 
+  it('Associates are never ONLINE from worker activity (worker ≠ Associate)', () => {
+    const v = buildVisualState(seed(), SIM, 'idle', NOW);
+    expect(seed().workers.some((w) => w.state === 'WORKING')).toBe(true);
+    expect(v.systems.find((x) => x.row === 'associates')).toEqual({
+      row: 'associates',
+      state: 'UNKNOWN',
+      basis: 'not-connected',
+    });
+  });
+
   it('unavailable workers give UNKNOWN associates and crew counts', () => {
     const v = buildVisualState(down(seed(), 'workers'), SIM, 'idle', NOW);
     expect(v.systems.find((x) => x.row === 'associates')!.state).toBe('UNKNOWN');
