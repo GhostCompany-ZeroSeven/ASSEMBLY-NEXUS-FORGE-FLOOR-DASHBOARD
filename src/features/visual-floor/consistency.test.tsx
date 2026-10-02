@@ -194,11 +194,19 @@ describe('Phase 11: factual scientist avatars join the Crown-Top family', () => 
 });
 
 describe('Phase 11: branding and prohibited phrase', () => {
-  it('uses A•N (never A.N) on the visual floor and keeps the A•N uniform', async () => {
+  it('uses A•N (never A.N) and keeps approved Snow Wolves decorative', async () => {
     await open('#/visual-floor');
     expect(document.body.textContent).not.toMatch(/\bA\.N\b/);
-    for (const c of document.querySelectorAll('.vf__art [data-character="snow-wolf"]'))
-      expect(c.querySelector('[data-layer="an-uniform"]')!.textContent).toContain('A•N');
+    const crew = [
+      ...document.querySelectorAll<SVGElement>('.vf__art [data-character="snow-wolf"]'),
+    ];
+    expect(crew).toHaveLength(8);
+    expect(new Set(crew.map((c) => c.dataset.founderAsset)).size).toBe(8);
+    for (const c of crew) {
+      expect(c.dataset.decorative).toBe('true');
+      expect(c.dataset.factualBinding).toBe('NONE');
+      expect(c.dataset.authorityBinding).toBe('NONE');
+    }
   });
 
   it('no variant of the rejected phrase appears on any surface', async () => {

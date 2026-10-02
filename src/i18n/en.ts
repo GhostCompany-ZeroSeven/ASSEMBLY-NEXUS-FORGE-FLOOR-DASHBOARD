@@ -1298,7 +1298,7 @@ export const en = {
     station: {
       scientist: 'Crown-Top Scientist',
       bandit: 'Snow Wolf Crew',
-      wisp: 'Baby Ghost',
+      wisp: '07 Ghost Sprite',
       young: 'younger generation',
       at: (role: string) => `${role} station`,
       role: {
@@ -1328,8 +1328,8 @@ export const en = {
       close: 'Close details',
       openMission: 'Open mission',
       decorative: 'This character is set dressing. No worker in the current data is bound to it.',
-      wisp: "Baby Ghost is the lab's tiny digital mascot: decoration only. Its glow shows the scene mode; it is not a worker, a runtime or a fact.",
-      wardrobe: 'Personal outfit, with the A•N uniform vest worn over it.',
+      wisp: 'The small blue 07 Ghost Sprite is separate from the Founder-approved Baby Ghost. It is decoration only, not a worker, a runtime or a fact.',
+      wardrobe: 'Approved knitted balaclava, personal outfit and role props; decorative only.',
       named: 'A named Snow Wolf Crew character. Never bound to data.',
       stationNote:
         'The station label names the kind of work at this desk. It is not a worker, an Associate or an authority, and says nothing about who is working. Factual workers and their states are in the Workers view.',

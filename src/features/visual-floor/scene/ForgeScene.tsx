@@ -1,8 +1,12 @@
 import { memo, type ReactNode } from 'react';
 import { BabyGhost } from '@/characters/forge/BabyGhost';
-import { CrownTopScientist } from '@/characters/forge/CrownTopScientist';
-import { SnowWolfBandit } from '@/characters/forge/SnowWolfBandit';
 import type { VisualMode } from '../model';
+import {
+  BABY_GHOST_CHARACTER_ASSET,
+  BABY_GHOST_FOCAL_ASSET,
+  CROWN_TOP_STATION_ASSETS,
+  SNOW_WOLF_STATION_ASSETS,
+} from './founderAssets';
 import { BOLDNESS_BANNER, type HumorPhrase } from './humor';
 import { SCENE_H, SCENE_W, STATIONS, type Station } from './stations';
 import {
@@ -37,25 +41,49 @@ function Place({ st, children }: { st: Station; children: ReactNode }) {
   );
 }
 
-function Character({ st, mode }: { st: Station; mode: VisualMode }) {
-  if (st.kind === 'scientist')
-    return (
-      <Place st={st}>
-        <CrownTopScientist {...st.look} />
-      </Place>
-    );
-  if (st.kind === 'bandit')
-    return (
-      <Place st={st}>
-        <SnowWolfBandit {...st.look} />
-      </Place>
-    );
+function CanonCharacter({ st }: { st: Station }) {
+  if (st.kind === 'wisp') return null;
+  const asset =
+    st.kind === 'scientist' ? CROWN_TOP_STATION_ASSETS[st.id] : SNOW_WOLF_STATION_ASSETS[st.id];
+  if (!asset) return null;
+  const scientist = st.kind === 'scientist';
   return (
     <Place st={st}>
-      <BabyGhost
-        {...st.look}
-        mood={mode === 'accomplished' ? 'cheer' : mode === 'red-alert' ? 'alarm' : 'calm'}
+      <image
+        className={`vf-canon-character vf-canon-character--${scientist ? 'crown-top' : 'snow-wolf'}`}
+        href={asset.src}
+        x={scientist ? -14 : -10}
+        y={scientist ? -12 : -8}
+        width={scientist ? 128 : 120}
+        height={scientist ? 170 : 140}
+        preserveAspectRatio="xMidYMax meet"
+        data-character={scientist ? 'crown-top' : 'snow-wolf'}
+        data-founder-asset={asset.identity}
+        data-persona={asset.persona}
+        data-decorative="true"
+        data-factual-binding="NONE"
+        data-authority-binding="NONE"
       />
+    </Place>
+  );
+}
+
+function Character({ st, mode }: { st: Station; mode: VisualMode }) {
+  if (st.kind !== 'wisp') return <CanonCharacter st={st} />;
+  return (
+    <Place st={st}>
+      <g
+        data-character="07-ghost-sprite"
+        data-canonical-baby-ghost="false"
+        data-decorative="true"
+        data-factual-binding="NONE"
+        data-authority-binding="NONE"
+      >
+        <BabyGhost
+          {...st.look}
+          mood={mode === 'accomplished' ? 'cheer' : mode === 'red-alert' ? 'alarm' : 'calm'}
+        />
+      </g>
     </Place>
   );
 }
@@ -162,57 +190,77 @@ function BackWall() {
   );
 }
 
-/** Large circuit skull / ghost motif embedded in the wall architecture. */
-function CircuitSkull({ mode }: { mode: VisualMode }) {
-  const tone = mode === 'red-alert' ? '#f43f5e' : mode === 'accomplished' ? '#a3e635' : '#8b5cf6';
+/** Founder-approved Sacred Cyber Skull background installation. */
+function SacredSkullFocal({ mode }: { mode: VisualMode }) {
+  const tone = mode === 'red-alert' ? '#fb7185' : mode === 'accomplished' ? '#a3e635' : '#a855f7';
   return (
-    <g transform="translate(800 268) scale(1.12)" opacity="0.95">
-      <g stroke={tone} strokeWidth="2.2" fill="none" filter="url(#vf-soft)">
-        {/* cranium */}
-        <path d="M-150 30 Q-160 -110 0 -122 Q160 -110 150 30 Q148 70 112 88 L104 128 H-104 L-112 88 Q-148 70 -150 30 Z" />
-        {/* eye sockets */}
-        <path d="M-96 -6 Q-60 -40 -24 -6 Q-30 34 -64 36 Q-98 34 -96 -6 Z" />
-        <path d="M96 -6 Q60 -40 24 -6 Q30 34 64 36 Q98 34 96 -6 Z" />
-        {/* nose */}
-        <path d="M0 30 L-16 66 H16 Z" />
-        {/* teeth */}
-        <path d="M-80 104 H80 M-60 88 V128 M-30 88 V128 M0 88 V128 M30 88 V128 M60 88 V128" />
-      </g>
-      {/* circuitry inside */}
-      <g stroke={tone} strokeWidth="1" fill="none" opacity="0.65" className="vf-pulse">
-        <path d="M-140 -20 H-110 L-96 -40 V-80 H-40 L-20 -100" />
-        <path d="M140 -20 H110 L96 -40 V-80 H40 L20 -100" />
-        <path d="M-130 60 H-90 L-70 76 H-40" />
-        <path d="M130 60 H90 L70 76 H40" />
-        <path d="M0 -122 V-60 L-12 -48 V10" />
-      </g>
-      <g fill="#ecfeff">
-        <circle cx="-60" cy="2" r="9" fill={tone} opacity="0.35" className="vf-node" />
-        <circle cx="60" cy="2" r="9" fill={tone} opacity="0.35" className="vf-node" />
-        <circle cx="-60" cy="2" r="3.4" />
-        <circle cx="60" cy="2" r="3.4" />
-        {[
-          [-96, -80],
-          [96, -80],
-          [-20, -100],
-          [20, -100],
-          [-40, 76],
-          [40, 76],
-          [-12, 10],
-        ].map(([x, y]) => (
-          <circle key={`${x}${y}`} cx={x} cy={y} r="2.6" fill={tone} />
-        ))}
-      </g>
-      {/* ghost circuitry halo */}
-      <path
-        d="M-190 120 Q-200 -170 0 -178 Q200 -170 190 120"
-        stroke="#22d3ee"
-        strokeWidth="1"
-        fill="none"
-        opacity="0.35"
-        strokeDasharray="6 8"
+    <g
+      className="vf-canon-skull"
+      data-founder-focal="sacred-cyber-skull"
+      data-founder-asset="BABY_GHOST_AND_SACRED_CYBER_SKULL"
+      data-decorative="true"
+      data-factual-binding="NONE"
+      data-authority-binding="NONE"
+    >
+      <rect
+        x="638"
+        y="148"
+        width="324"
+        height="354"
+        rx="26"
+        fill="#03050a"
+        stroke={tone}
+        strokeWidth="3"
+        opacity="0.96"
+        filter="url(#vf-soft)"
       />
+      <image
+        className="vf-canon-focal__image"
+        href={BABY_GHOST_FOCAL_ASSET}
+        x="646"
+        y="156"
+        width="308"
+        height="338"
+        preserveAspectRatio="xMidYMid slice"
+      />
+      <rect
+        x="646"
+        y="156"
+        width="308"
+        height="338"
+        rx="19"
+        fill="none"
+        stroke="#22d3ee"
+        strokeWidth="1.5"
+        opacity="0.72"
+      />
+      <g fill="none" stroke={tone} strokeWidth="2" className="vf-pulse" opacity="0.8">
+        <path d="M626 190 H610 V250 M974 190 H990 V250" />
+        <path d="M626 460 H610 V400 M974 460 H990 V400" />
+      </g>
     </g>
+  );
+}
+
+/** Canonical lime Baby Ghost, staged in front of and beside the Founder chair. */
+function CanonicalBabyGhost() {
+  return (
+    <image
+      className="vf-canon-baby-ghost"
+      href={BABY_GHOST_CHARACTER_ASSET}
+      x="646"
+      y="278"
+      width="190"
+      height="212"
+      preserveAspectRatio="xMidYMid meet"
+      data-character="baby-ghost-canon"
+      data-founder-focal-part="canonical-baby-ghost"
+      data-founder-asset="BABY_GHOST"
+      data-canonical-baby-ghost="true"
+      data-decorative="true"
+      data-factual-binding="NONE"
+      data-authority-binding="NONE"
+    />
   );
 }
 
@@ -309,7 +357,7 @@ function CrownMark({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
 function FounderCommand({ mode }: { mode: VisualMode }) {
   const rim = mode === 'red-alert' ? '#f43f5e' : mode === 'accomplished' ? '#a3e635' : '#d946ef';
   return (
-    <g>
+    <g data-founder-station="FOUNDER_0007">
       <ellipse cx="800" cy="556" rx="210" ry="46" fill="url(#vf-dais)" />
       <ellipse
         cx="800"
@@ -905,7 +953,7 @@ export const ForgeScene = memo(function ForgeScene({ mode }: { mode: VisualMode 
     >
       <Defs />
       <BackWall />
-      <CircuitSkull mode={mode} />
+      <SacredSkullFocal mode={mode} />
       <Sign />
       <BoldnessBanner />
       <WallNotes />
@@ -917,6 +965,7 @@ export const ForgeScene = memo(function ForgeScene({ mode }: { mode: VisualMode 
       <RightInfrastructure />
       <PawSquadSign />
       <FounderCommand mode={mode} />
+      <CanonicalBabyGhost />
       <Character st={byId('wisp-1')} mode={mode} />
       {['sci-1', 'sci-2', 'sci-3', 'sci-4', 'ban-6'].map((id) => (
         <Character key={id} st={byId(id)} mode={mode} />

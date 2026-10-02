@@ -268,7 +268,7 @@ export const SCIENTIST_STATIONS = [
 export const CREW_ROLE_STATIONS = ['ban-1', 'ban-2', 'ban-3', 'ban-4'] as const;
 /** Named Snow Wolf Crew personas (Boxer, DJ, Wild Paw, Chuy). */
 export const CREW_NAMED_STATIONS = ['ban-5', 'ban-6', 'ban-7', 'ban-8'] as const;
-/** Baby Ghosts: decorative mascots. */
+/** Small blue 07 Ghost Sprites: decorative and distinct from Baby Ghost. */
 export const WISP_STATIONS = ['wisp-1', 'wisp-2'] as const;
 
 /**

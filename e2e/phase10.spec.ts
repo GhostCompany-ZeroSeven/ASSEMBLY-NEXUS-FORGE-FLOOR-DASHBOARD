@@ -4,9 +4,9 @@ import { collectErrors, openPaused } from './helpers';
 import { openPseudo, scan } from './pseudo';
 
 /**
- * Phase 10 browser checks: the Founder universe (Baby Ghost, Snow Wolf Crew,
- * eight Crown-Tops, banner, humor) renders in a real browser, its characters
- * are keyboard-reachable and accessible, and nothing overflows in en or
+ * Browser checks for the Founder universe (approved Baby Ghost/skull focal,
+ * Snow Wolf Crew, eight Crown-Tops, banner and humor). Decorative hotspots are
+ * keyboard-reachable and accessible, and nothing overflows in en or
  * pseudo-locale. Phase 9 states/firewall/motion stay covered by phase9.spec.
  */
 
@@ -17,7 +17,7 @@ async function axe(page: Page) {
   return r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
 
-test('universe renders: 8 Crown-Tops (1 young), 8 crew personas, Baby Ghosts, banner', async ({
+test('universe renders: 8 approved Crown-Tops, 8 crew, Baby Ghost/skull focal and sprites', async ({
   page,
 }) => {
   const errors = collectErrors(page);
@@ -25,9 +25,27 @@ test('universe renders: 8 Crown-Tops (1 young), 8 crew personas, Baby Ghosts, ba
   await openPaused(page, '/visual-floor');
   const svg = page.locator('.vf__art svg');
   await expect(svg.locator('[data-character="crown-top"]')).toHaveCount(8);
-  await expect(svg.locator('[data-character="crown-top"][data-generation="young"]')).toHaveCount(1);
+  await expect(svg.locator('[data-founder-asset="CROWN_TOP_04"]')).toHaveCount(1);
+  const shadesII = svg.locator('[data-founder-asset="CROWN_TOP_07"]');
+  await expect(shadesII).toHaveCount(1);
+  await expect(shadesII).toHaveAttribute(
+    'href',
+    /crown-top-scientist-07-shades-ii-transparent\.webp$/,
+  );
   await expect(svg.locator('[data-character="snow-wolf"]')).toHaveCount(8);
-  await expect(svg.locator('[data-character="baby-ghost"]')).toHaveCount(3);
+  await expect(svg.locator('[data-founder-focal="sacred-cyber-skull"]')).toHaveCount(1);
+  const canonicalBaby = svg.locator('[data-character="baby-ghost-canon"]');
+  await expect(canonicalBaby).toHaveCount(1);
+  await expect(canonicalBaby).toHaveAttribute('href', /baby-ghost-transparent\.webp$/);
+  await expect(canonicalBaby).toHaveAttribute('data-canonical-baby-ghost', 'true');
+  const babyBox = await canonicalBaby.boundingBox();
+  expect(babyBox).not.toBeNull();
+  expect(babyBox!.width).toBeGreaterThan(100);
+  expect(babyBox!.height).toBeGreaterThan(100);
+  await expect(svg.locator('[data-character="07-ghost-sprite"]')).toHaveCount(2);
+  await expect(
+    svg.locator('[data-character="07-ghost-sprite"][data-canonical-baby-ghost="false"]'),
+  ).toHaveCount(2);
   await expect(svg.locator('[data-banner="boldness"]')).toBeVisible();
   // Every principal character is actually on screen (inside the scene box).
   const box = (await page.locator('.vf__canvas').boundingBox())!;
@@ -43,20 +61,23 @@ test('universe renders: 8 Crown-Tops (1 young), 8 crew personas, Baby Ghosts, ba
   expect(errors).toEqual([]);
 });
 
-test('Baby Ghost and crew are keyboard-selectable with truthful details; axe clean', async ({
+test('07 Ghost Sprite and crew are keyboard-selectable with truthful details; axe clean', async ({
   page,
 }) => {
   await openPaused(page, '/visual-floor');
   await page.locator('.vf__hotspot[data-station="wisp-1"]').focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.vf__detail')).toContainText('Baby Ghost');
+  await expect(page.locator('.vf__detail')).toContainText('07 Ghost Sprite');
+  await expect(page.locator('.vf__detail')).toContainText(
+    'separate from the Founder-approved Baby Ghost',
+  );
   await expect(page.locator('.vf__detail')).toContainText('not a worker, a runtime or a fact');
   expect(await axe(page)).toEqual([]);
   await page.keyboard.press('Escape');
   await page.locator('.vf__hotspot[data-station="ban-5"]').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.vf__detail')).toContainText('Snow Wolf Crew · Boxer');
-  await expect(page.locator('.vf__detail')).toContainText('A•N uniform vest worn over it');
+  await expect(page.locator('.vf__detail')).toContainText('Approved knitted balaclava');
   expect(await axe(page)).toEqual([]);
 });
 
@@ -84,4 +105,17 @@ test('pseudo-locale: persona labels translated, no clipping or overflow', async 
     }
   }
   expect(problems).toEqual([]);
+});
+
+test('narrow view starts on the intentional Founder focal frame and retains factual panels', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPaused(page, '/visual-floor');
+  const stage = page.locator('.vf__stage-scroll');
+  await expect.poll(() => stage.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  await expect(page.locator('[data-character="baby-ghost-canon"]')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Current mission' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Alerts board' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'System status' })).toBeVisible();
 });

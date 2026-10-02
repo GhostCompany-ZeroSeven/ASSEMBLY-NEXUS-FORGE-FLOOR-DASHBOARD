@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -7,12 +7,13 @@ import { App } from '@/app/App';
 import { assemblyNexusConfig } from '@/config/assemblyNexus.config';
 import { testAdapter } from '@/test/fixtures';
 import { waitForSurface } from '@/test/render';
+import { INTEGRATED_FOUNDER_ASSET_PATHS } from './scene/founderAssets';
 import { APPROVED_HUMOR, BOLDNESS_BANNER } from './scene/humor';
 
 /**
- * Phase 10: the Founder's Assembly Nexus character universe on the visual
- * Forge Floor (Baby Ghost, Snow Wolf Crew with A•N uniforms over personal
- * outfits, eight Crown-Top scientists across generations, banner, humor).
+ * Founder-approved character universe on the visual Forge Floor. The rendered
+ * images are immutable decorative assets and remain separate from every
+ * factual worker and authority record.
  */
 
 async function open(hash = '#/visual-floor') {
@@ -27,80 +28,88 @@ const all = (root: ParentNode, sel: string) => [...root.querySelectorAll<SVGElem
 const PROHIBITED = ['AT', 'LEAST', 'I', 'TRIED'].join(' ');
 
 describe('Assembly Nexus character universe', () => {
-  it('has exactly eight Crown-Top scientists, mixing natural-bald and shaved-stubble crowns', async () => {
+  it('renders exactly eight distinct approved Crown-Top assets, including Mr. Shades', async () => {
     const svg = await open();
-    const sci = all(svg, '[data-character="crown-top"]');
+    const sci = all(svg, '[data-character="crown-top"][data-founder-asset]');
     expect(sci).toHaveLength(8);
-    const chrome = sci.filter((s) => s.dataset.crown === 'chrome').length;
-    const stubble = sci.filter((s) => s.dataset.crown === 'stubble').length;
-    expect(chrome + stubble).toBe(8);
-    expect(chrome).toBeGreaterThanOrEqual(3);
-    expect(stubble).toBeGreaterThanOrEqual(3);
+    expect(new Set(sci.map((s) => s.dataset.founderAsset)).size).toBe(8);
+    expect(sci.map((s) => s.dataset.founderAsset).sort()).toEqual(
+      Array.from({ length: 8 }, (_, i) => `CROWN_TOP_${String(i + 1).padStart(2, '0')}`),
+    );
+    const shades = sci.find((s) => s.dataset.founderAsset === 'CROWN_TOP_04')!;
+    expect(shades.getAttribute('href')).toContain('crown-top-scientist-04-transparent.webp');
+    for (const s of sci) {
+      expect(s.dataset.factualBinding).toBe('NONE');
+      expect(s.dataset.authorityBinding).toBe('NONE');
+    }
   });
 
-  it('has one younger-generation Crown-Top among veterans, with the same crown-top cut', async () => {
+  it('renders all eight approved Snow Wolf identities as distinct decorative Chihuahuas', async () => {
     const svg = await open();
-    const sci = all(svg, '[data-character="crown-top"]');
-    const young = sci.filter((s) => s.dataset.generation === 'young');
-    expect(young).toHaveLength(1);
-    expect(sci.filter((s) => s.dataset.generation === 'veteran')).toHaveLength(7);
-    expect(['chrome', 'stubble']).toContain(young[0]!.dataset.crown);
-  });
-
-  it('draws no cheek blush circles on any scientist', async () => {
-    const svg = await open();
-    for (const s of all(svg, '[data-character="crown-top"]'))
-      for (const c of s.querySelectorAll('circle'))
-        expect(['#f87171', '#fca5a5', '#fb7185', '#f9a8d4']).not.toContain(
-          c.getAttribute('fill')?.toLowerCase(),
-        );
-  });
-
-  it('has an individual Snow Wolf Crew: distinct personas incl. Boxer, DJ, Wild Paw and Chuy', async () => {
-    const svg = await open();
-    const crew = all(svg, '[data-character="snow-wolf"]');
+    const crew = all(svg, '[data-character="snow-wolf"][data-founder-asset]');
     expect(crew).toHaveLength(8);
     const personas = crew.map((c) => c.dataset.persona);
     expect(new Set(personas).size).toBe(8);
-    for (const p of ['boxer', 'dj', 'wild-paw', 'chuy']) expect(personas).toContain(p);
-    const boxer = crew.find((c) => c.dataset.persona === 'boxer')!;
-    expect(boxer.querySelectorAll('[data-accessory="boxing-glove"]')).toHaveLength(2);
-    expect(
-      crew.find((c) => c.dataset.persona === 'dj')!.querySelector('[data-accessory="headphones"]'),
-    ).toBeTruthy();
-    expect(
-      crew.find((c) => c.dataset.persona === 'chuy')!.querySelector('[data-accessory="crown"]'),
-    ).toBeTruthy();
-  });
-
-  it('crew wear the A•N uniform OVER a visible personal outfit', async () => {
-    const svg = await open();
-    const crew = all(svg, '[data-character="snow-wolf"]');
+    for (const p of [
+      'chuy',
+      'boxer',
+      'dj',
+      'wild-paw',
+      'coder',
+      'hauler',
+      'lookout',
+      'snack-guard',
+    ])
+      expect(personas).toContain(p);
     for (const c of crew) {
-      const personal = c.querySelector('[data-layer="personal"]');
-      const uniform = c.querySelector('[data-layer="an-uniform"]');
-      expect(personal && uniform).toBeTruthy();
-      // The uniform is drawn after (over) the personal layer.
-      expect(
-        personal!.compareDocumentPosition(uniform!) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(uniform!.textContent).toContain('A•N');
-      expect(c.dataset.outfit).not.toBe(c.dataset.uniform);
+      expect(c.dataset.factualBinding).toBe('NONE');
+      expect(c.dataset.authorityBinding).toBe('NONE');
     }
-    // Personal outfits differ: not clones.
-    expect(new Set(crew.map((c) => c.dataset.outfit)).size).toBeGreaterThanOrEqual(6);
   });
 
-  it('shows Baby Ghost (decorative, never bound to data)', async () => {
+  it('keeps canonical Baby Ghost distinct from the two small blue 07 Ghost Sprites', async () => {
     const svg = await open();
-    expect(all(svg, '[data-character="baby-ghost"]').length).toBeGreaterThanOrEqual(2);
+    const skull = svg.querySelector<SVGElement>('[data-founder-focal="sacred-cyber-skull"]')!;
+    expect(skull.dataset.founderAsset).toBe('BABY_GHOST_AND_SACRED_CYBER_SKULL');
+    expect(skull.querySelector('image')!.getAttribute('href')).toContain(
+      'baby-ghost-sacred-cyber-skull.webp',
+    );
+    const baby = svg.querySelector<SVGElement>('[data-character="baby-ghost-canon"]')!;
+    expect(baby.getAttribute('href')).toContain('baby-ghost-transparent.webp');
+    expect(baby.dataset.canonicalBabyGhost).toBe('true');
+    expect(baby.dataset.factualBinding).toBe('NONE');
+    expect(baby.dataset.authorityBinding).toBe('NONE');
+    expect(skull.dataset.factualBinding).toBe('NONE');
+    expect(skull.dataset.authorityBinding).toBe('NONE');
+    const sprites = all(svg, '[data-character="07-ghost-sprite"]');
+    expect(sprites).toHaveLength(2);
+    for (const sprite of sprites) expect(sprite.dataset.canonicalBabyGhost).toBe('false');
     const ghostSpots = [...document.querySelectorAll<HTMLElement>('.vf__hotspot')].filter((b) =>
       b.dataset.station?.startsWith('wisp'),
     );
     expect(ghostSpots.length).toBe(2);
     for (const b of ghostSpots) {
       expect(b.dataset.bound).toBe('false');
-      expect(b.getAttribute('aria-label')).toBe('Baby Ghost: decorative, not bound to data');
+      expect(b.getAttribute('aria-label')).toBe('07 Ghost Sprite: decorative, not bound to data');
+    }
+  });
+
+  it('resolves every preserved manifest path and every integrated approved asset path', () => {
+    const manifest = JSON.parse(
+      readFileSync('public/assets/founder-universe/manifest.json', 'utf8'),
+    ) as { assets: { relative_path: string }[] };
+    expect(manifest.assets).toHaveLength(42);
+    for (const record of manifest.assets) expect(existsSync(record.relative_path)).toBe(true);
+    const preserved = new Set(manifest.assets.map((record) => `/${record.relative_path.slice(7)}`));
+    const authorizedDerivative =
+      '/assets/founder-universe/crown-top/crown-top-scientist-07-shades-ii-transparent.webp';
+    expect(INTEGRATED_FOUNDER_ASSET_PATHS).toHaveLength(18);
+    for (const path of INTEGRATED_FOUNDER_ASSET_PATHS) {
+      if (path === authorizedDerivative) {
+        expect(existsSync(`public${path}`)).toBe(true);
+      } else {
+        expect(preserved.has(path)).toBe(true);
+      }
     }
   });
 
@@ -123,7 +132,7 @@ describe('Assembly Nexus character universe', () => {
     await user.keyboard('{Enter}');
     const detail = document.querySelector('.vf__detail')!;
     expect(detail.textContent).toContain('Snow Wolf Crew · Chuy');
-    expect(detail.textContent).toContain('A•N uniform vest worn over it');
+    expect(detail.textContent).toContain('Approved knitted balaclava');
     expect(detail.textContent).toContain('Never bound to data');
     expect(screen.getByRole('heading', { name: 'Details' })).toBeTruthy();
   });

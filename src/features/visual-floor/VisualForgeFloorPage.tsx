@@ -60,6 +60,7 @@ export function VisualForgeFloorPage() {
     presetElapsedMs: now - openedAt,
   });
   const detailRef = useRef<HTMLHeadingElement>(null);
+  const stageScrollRef = useRef<HTMLDivElement>(null);
 
   const setQuery = (patch: Record<string, string | undefined>) =>
     replaceHashQuery({
@@ -81,6 +82,17 @@ export function VisualForgeFloorPage() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
+
+  useEffect(() => {
+    const stage = stageScrollRef.current;
+    if (
+      !stage ||
+      typeof window.matchMedia !== 'function' ||
+      !window.matchMedia('(max-width: 640px)').matches
+    )
+      return;
+    stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+  }, []);
 
   return (
     <div className="page vf" data-mode={v.mode} data-source={v.source}>
@@ -128,7 +140,13 @@ export function VisualForgeFloorPage() {
       <p className="vf__firewall small">{t.firewall}</p>
 
       <div className="vf__stage-wrap">
-        <div className="vf__stage-scroll" role="region" aria-label={t.sceneLabel} tabIndex={0}>
+        <div
+          className="vf__stage-scroll"
+          role="region"
+          aria-label={t.sceneLabel}
+          tabIndex={0}
+          ref={stageScrollRef}
+        >
           <div className="vf__canvas" style={{ aspectRatio: `${SCENE_W} / ${SCENE_H}` }}>
             <div className="vf__art" translate="no">
               <ForgeScene mode={v.mode} />

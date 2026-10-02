@@ -46,15 +46,13 @@ export type Station = ScientistStation | BanditStation | WispStation;
 /**
  * Character placement: the principal ensemble.
  *
- * - EIGHT Crown-Top scientists: four natural chrome domes and four shaved
- *   tops with stubble, all keeping side/back hair. Seven veterans; `sci-7` is
- *   the younger-generation Crown-Top.
- * - EIGHT Snow Wolf Crew members, each a different persona and job, each in a
- *   personal outfit with the A•N uniform vest over it.
- * - Two Baby Ghost stations (plus one decorative peeker in the scene).
+ * - EIGHT Founder-approved Crown-Top scientist assets, retaining their
+ *   individual hair, eyewear, pose, expression and tool variation.
+ * - EIGHT Founder-approved Snow Wolf Crew assets, one per canonical persona.
+ * - Two small blue 07 Ghost Sprites, explicitly distinct from Baby Ghost.
  *
  * Phase 11: no visual station is bound to a factual worker record. Crown-Top
- * desks carry ROLE/STATION labels; crew and Baby Ghosts are characters only.
+ * desks carry ROLE/STATION labels; crew and sprites are decorative only.
  */
 export const STATIONS: readonly Station[] = [
   // Back row, at the desks.
@@ -62,9 +60,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-1',
     kind: 'scientist',
     role: 'build',
-    x: 410,
-    y: 416,
-    s: 1.2,
+    x: 430,
+    y: 424,
+    s: 1.05,
     look: {
       scalp: 'chrome',
       skin: 'light',
@@ -79,9 +77,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-2',
     kind: 'scientist',
     role: 'analysis',
-    x: 552,
-    y: 420,
-    s: 1.18,
+    x: 580,
+    y: 428,
+    s: 1.05,
     look: {
       scalp: 'stubble',
       skin: 'tan',
@@ -96,9 +94,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-3',
     kind: 'scientist',
     role: 'test',
-    x: 900,
-    y: 416,
-    s: 1.2,
+    x: 1000,
+    y: 424,
+    s: 1.05,
     look: {
       scalp: 'chrome',
       skin: 'medium',
@@ -113,9 +111,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-4',
     kind: 'scientist',
     role: 'research',
-    x: 1042,
-    y: 420,
-    s: 1.18,
+    x: 1100,
+    y: 460,
+    s: 0.94,
     look: {
       scalp: 'stubble',
       skin: 'light',
@@ -131,9 +129,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-5',
     kind: 'scientist',
     role: 'certify',
-    x: 172,
-    y: 602,
-    s: 1.4,
+    x: 150,
+    y: 620,
+    s: 1.24,
     look: {
       scalp: 'stubble',
       skin: 'deep',
@@ -147,9 +145,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-6',
     kind: 'scientist',
     role: 'review',
-    x: 1236,
-    y: 596,
-    s: 1.4,
+    x: 1280,
+    y: 620,
+    s: 1.24,
     look: {
       scalp: 'chrome',
       skin: 'medium',
@@ -165,9 +163,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-7',
     kind: 'scientist',
     role: 'operations',
-    x: 452,
-    y: 604,
-    s: 1.38,
+    x: 460,
+    y: 620,
+    s: 1.22,
     look: {
       scalp: 'stubble',
       skin: 'medium',
@@ -181,9 +179,9 @@ export const STATIONS: readonly Station[] = [
     id: 'sci-8',
     kind: 'scientist',
     role: 'systems',
-    x: 1078,
-    y: 604,
-    s: 1.38,
+    x: 1080,
+    y: 620,
+    s: 1.22,
     look: {
       scalp: 'chrome',
       skin: 'deep',
@@ -196,66 +194,66 @@ export const STATIONS: readonly Station[] = [
     },
   },
   // Snow Wolf Crew: role personas (bindable).
-  { id: 'ban-1', kind: 'bandit', x: 92, y: 520, s: 1.25, look: { persona: 'coder', fur: 'snow' } },
+  { id: 'ban-1', kind: 'bandit', x: 54, y: 536, s: 1.02, look: { persona: 'coder', fur: 'snow' } },
   {
     id: 'ban-2',
     kind: 'bandit',
-    x: 604,
-    y: 642,
-    s: 1.28,
+    x: 610,
+    y: 676,
+    s: 0.98,
     look: { persona: 'hauler', fur: 'cream', accent: '#22d3ee' },
   },
   {
     id: 'ban-3',
     kind: 'bandit',
-    x: 1494,
-    y: 690,
-    s: 0.92,
+    x: 1510,
+    y: 720,
+    s: 0.78,
     look: { persona: 'lookout', fur: 'fawn', facing: -1 },
   },
   {
     id: 'ban-4',
     kind: 'bandit',
-    x: 770,
-    y: 700,
-    s: 0.86,
+    x: 758,
+    y: 722,
+    s: 0.72,
     look: { persona: 'snack-guard', fur: 'cream', accent: '#facc15' },
   },
   // Snow Wolf Crew: named personas (never bound to data).
   {
     id: 'ban-5',
     kind: 'bandit',
-    x: 880,
-    y: 650,
-    s: 1.3,
+    x: 900,
+    y: 684,
+    s: 1.05,
     look: { persona: 'boxer', fur: 'fawn', accent: '#facc15' },
   },
   {
     id: 'ban-6',
     kind: 'bandit',
-    x: 290,
-    y: 446,
-    s: 1.12,
+    x: 300,
+    y: 470,
+    s: 0.94,
     look: { persona: 'dj', fur: 'snow', accent: '#22d3ee' },
   },
   {
     id: 'ban-7',
     kind: 'bandit',
-    x: 1366,
-    y: 600,
-    s: 1.26,
+    x: 1430,
+    y: 640,
+    s: 1.0,
     look: { persona: 'wild-paw', fur: 'cream', accent: '#f0abfc' },
   },
   {
     id: 'ban-8',
     kind: 'bandit',
-    x: 318,
-    y: 664,
-    s: 1.14,
+    x: 326,
+    y: 690,
+    s: 0.94,
     look: { persona: 'chuy', fur: 'snow', accent: '#facc15' },
   },
-  // Baby Ghosts.
-  { id: 'wisp-1', kind: 'wisp', x: 896, y: 188, s: 0.86, look: { pose: 'point' } },
+  // Small blue 07 Ghost Sprites (not Baby Ghost).
+  { id: 'wisp-1', kind: 'wisp', x: 1060, y: 214, s: 0.66, look: { pose: 'point' } },
   { id: 'wisp-2', kind: 'wisp', x: 818, y: 648, s: 0.5, look: { pose: 'bone', mark: false } },
 ];
 

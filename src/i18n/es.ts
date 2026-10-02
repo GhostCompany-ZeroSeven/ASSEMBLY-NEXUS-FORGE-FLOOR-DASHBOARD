@@ -1284,7 +1284,7 @@ export const es: Messages = {
     station: {
       scientist: 'Científico Crown-Top',
       bandit: 'Snow Wolf Crew',
-      wisp: 'Baby Ghost',
+      wisp: 'Sprite fantasma 07',
       young: 'nueva generación',
       at: (role) => `estación ${role}`,
       role: {
@@ -1315,8 +1315,9 @@ export const es: Messages = {
       openMission: 'Abrir misión',
       decorative:
         'Este personaje es decorado. Ningún trabajador de los datos actuales está vinculado a él.',
-      wisp: 'Baby Ghost es la pequeña mascota digital del laboratorio: solo decoración. Su brillo muestra el modo de la escena; no es un trabajador, ni un runtime, ni un hecho.',
-      wardrobe: 'Ropa personal, con el chaleco del uniforme A•N encima.',
+      wisp: 'El pequeño sprite fantasma 07 azul es distinto del Baby Ghost aprobado por el Founder. Es solo decoración, no un trabajador, un runtime ni un hecho.',
+      wardrobe:
+        'Pasamontañas tejido, atuendo personal y accesorios de rol aprobados; solo decoración.',
       named: 'Un personaje con nombre de la Snow Wolf Crew. Nunca vinculado a datos.',
       stationNote:
         'La etiqueta de estación nombra el tipo de trabajo de este puesto. No es un trabajador, ni un Asociado, ni una autoridad, y no indica quién trabaja. Los trabajadores reales y sus estados están en la vista Trabajadores.',
