@@ -59,7 +59,7 @@ export function WorkerCard({
         <div className="worker-card__id">
           <h3 className="worker-card__name">{worker.name}</h3>
           <div className="worker-card__role">
-            {worker.role}
+            {worker.role ?? m.common.roleUnknown}
             {crew && <span className="muted"> · {crew.label}</span>}
           </div>
           <div className="worker-card__state">

@@ -32,6 +32,7 @@ export const en = {
   common: {
     yes: 'Yes',
     no: 'No',
+    roleUnknown: 'Role not reported',
     none: 'none',
     unknown: 'unknown',
     unavailable: 'unavailable',
@@ -232,6 +233,7 @@ export const en = {
       IN_REVIEW: 'In review',
       PASSED: 'Review passed',
       FAILED: 'Review failed',
+      UNKNOWN: 'Review unknown',
     } satisfies Record<ReviewStatus, string>,
     approval: {
       PENDING: 'Awaiting decision',
@@ -247,6 +249,7 @@ export const en = {
       NOTICE: 'Notice',
       WARNING: 'Warning',
       CRITICAL: 'Critical',
+      UNKNOWN: 'Severity not stated',
     } satisfies Record<AlertSeverity, string>,
     health: {
       NOMINAL: 'Nominal',
@@ -268,18 +271,21 @@ export const en = {
       IN_PROGRESS: 'IN PROGRESS',
       CERTIFIED: 'CERTIFIED',
       REJECTED: 'REJECTED',
+      UNKNOWN: 'UNKNOWN',
     } satisfies Record<CertificationStatus, string>,
     priority: {
       low: 'low',
       normal: 'normal',
       high: 'high',
       critical: 'critical',
+      unknown: 'not stated',
     } satisfies Record<Mission['priority'], string>,
     risk: {
       low: 'low',
       medium: 'medium',
       high: 'high',
       critical: 'critical',
+      unknown: 'not stated',
     } satisfies Record<RiskLevel, string>,
     outcome: {
       SUCCESS: 'SUCCESS',
@@ -676,6 +682,7 @@ export const en = {
     risk: 'Risk',
     reversible: 'Reversible',
     irreversible: 'No — irreversible',
+    reversibleUnknown: 'Not stated — confirm as irreversible',
     requested: 'Requested',
     authority: 'Decision authority',
     requestedBy: 'Requested by',
@@ -685,6 +692,8 @@ export const en = {
     grantsNothing: 'Requesting approval grants no authority.',
     decidedBy: (who: string) => ` by ${who}`,
     simulated: 'Simulated — no backend received this decision',
+    sourceAsserted: 'Reported by the data source — not independently verified',
+    authorityNotRecognised: 'Not stated or not recognised — cannot be decided here',
     decide: (id: string) => `Decide ${id}`,
     confirmGroup: 'Confirm decision',
     confirm: 'Confirm:',

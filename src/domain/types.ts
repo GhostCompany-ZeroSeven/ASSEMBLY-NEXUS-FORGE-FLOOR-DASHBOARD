@@ -102,7 +102,8 @@ export interface AuthorityGrant {
 export interface Worker {
   id: string;
   name: string;
-  role: string;
+  /** Role as reported by the source. Absent = unknown (never inferred from the name). */
+  role?: string;
   /** Crew/team the worker belongs to (e.g. `forge`, `snow-wolf`). */
   crewId: string;
   /** Character/avatar key resolved through the character registry. */
@@ -178,7 +179,14 @@ export interface Artifact {
   createdAt: ISODateString;
 }
 
-export type ReviewStatus = 'NOT_REQUESTED' | 'REQUESTED' | 'IN_REVIEW' | 'PASSED' | 'FAILED';
+export type ReviewStatus =
+  | 'NOT_REQUESTED'
+  | 'REQUESTED'
+  | 'IN_REVIEW'
+  | 'PASSED'
+  | 'FAILED'
+  /** The source gave no (valid) review evidence. Never shown as "not requested". */
+  | 'UNKNOWN';
 
 export interface Review {
   id: string;
@@ -192,7 +200,16 @@ export interface Review {
 }
 
 export type CertificationStatus =
-  'NOT_REQUIRED' | 'PENDING' | 'IN_PROGRESS' | 'CERTIFIED' | 'REJECTED';
+  | 'NOT_REQUIRED'
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'CERTIFIED'
+  | 'REJECTED'
+  /**
+   * The source gave no (valid) certification evidence. Never inferred from
+   * completion, review, results or progress.
+   */
+  | 'UNKNOWN';
 
 /**
  * Estimate of the mission duration. Only present when the backend provides
@@ -223,7 +240,8 @@ export interface Mission {
   title: string;
   objective: string;
   status: MissionStatus;
-  priority: 'low' | 'normal' | 'high' | 'critical';
+  /** `unknown`: the source stated no priority (never shown as "normal"). */
+  priority: 'low' | 'normal' | 'high' | 'critical' | 'unknown';
   assignedWorkerIds: string[];
   createdAt: ISODateString;
   startedAt?: ISODateString;
@@ -258,7 +276,8 @@ export type ApprovalStatus =
   /** Unrecognised backend status. Cannot be decided from the dashboard. */
   | 'UNKNOWN';
 
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+/** `unknown`: the source did not state a risk. Never guessed for a nicer UI. */
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical' | 'unknown';
 
 export interface ApprovalRequest {
   id: string;
@@ -267,8 +286,11 @@ export interface ApprovalRequest {
   action: string;
   rationale: string;
   risk: RiskLevel;
-  /** Whether the action can be undone after it is carried out. */
-  reversible: boolean;
+  /**
+   * Whether the action can be undone after it is carried out. `null` = the
+   * source did not say (shown as unknown and confirmed like an irreversible action).
+   */
+  reversible: boolean | null;
   missionId?: string;
   /** Worker that asked. A request is never an authority grant by itself. */
   requestedBy: string;
@@ -290,14 +312,27 @@ export interface ApprovalDecisionRecord {
    * `simulated` — recorded locally by a demo adapter; no backend received it.
    */
   delivery: 'delivered' | 'simulated';
+  /**
+   * `source-asserted`: the decision was REPORTED by a data source and passed
+   * structural checks only. Nothing has authenticated it (no trusted
+   * transport, no signature). The UI must say so. Absent = this dashboard
+   * submitted the decision itself (the existing REST/demo meaning).
+   */
+  assurance?: 'source-asserted';
 }
 
 /* ------------------------------------------------------------------------- */
 /* Alerts                                                                    */
 /* ------------------------------------------------------------------------- */
 
+/** Severities a source can state (filter chips list these). */
 export const ALERT_SEVERITIES = ['INFO', 'NOTICE', 'WARNING', 'CRITICAL'] as const;
-export type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
+/**
+ * `UNKNOWN`: the source stated no recognisable severity. Shown neutrally and
+ * ranked with WARNING (never as the safest), never silently turned into a
+ * known severity.
+ */
+export type AlertSeverity = (typeof ALERT_SEVERITIES)[number] | 'UNKNOWN';
 
 export interface Alert {
   id: string;

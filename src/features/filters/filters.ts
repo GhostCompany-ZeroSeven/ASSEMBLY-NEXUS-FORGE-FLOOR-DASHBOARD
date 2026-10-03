@@ -86,6 +86,7 @@ export interface MissionListContext {
 const PRIORITY_RANK: Record<Mission['priority'], number> = {
   critical: 0,
   high: 1,
+  unknown: 1, // an unstated priority is never sorted below a stated normal one
   normal: 2,
   low: 3,
 };
@@ -301,7 +302,14 @@ export const DEFAULT_APPROVAL_FILTER: ApprovalFilter = {
   risk: 'all',
   sort: 'oldest',
 };
-const RISK_RANK: Record<RiskLevel, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+// An unstated risk sorts with critical: never below a stated one.
+const RISK_RANK: Record<RiskLevel, number> = {
+  critical: 0,
+  unknown: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
 
 export function approvalMatchesView(a: ApprovalRequest, v: ApprovalView): boolean {
   switch (v) {
@@ -359,6 +367,7 @@ export const DEFAULT_ALERT_FILTER: AlertFilter = {
 const SEVERITY_RANK: Record<AlertSeverity, number> = {
   CRITICAL: 0,
   WARNING: 1,
+  UNKNOWN: 1, // never sorted as the least severe
   NOTICE: 2,
   INFO: 3,
 };

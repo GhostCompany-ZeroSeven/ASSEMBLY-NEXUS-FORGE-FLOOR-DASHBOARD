@@ -21,6 +21,16 @@ export async function loadAdapter(config: AdapterConfig): Promise<DashboardAdapt
       const { RestAdapter } = await import('./rest/RestAdapter');
       return new RestAdapter(config.rest);
     }
+    case 'ann-mock': {
+      const [{ AnnAdapter }, { MockAnnFeedSource }] = await Promise.all([
+        import('./ann/AnnAdapter'),
+        import('./ann/mockFeed'),
+      ]);
+      return new AnnAdapter(
+        new MockAnnFeedSource(config.variant ?? 'normal', config.humanAuthority),
+        { humanAuthority: config.humanAuthority },
+      );
+    }
     case 'custom':
       return customAdapter(config.id);
   }

@@ -151,8 +151,15 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           </div>
           <div>
             <dt>{t.reversible}</dt>
-            <dd className={request.reversible ? '' : 'text-danger'}>
-              {request.reversible ? m.common.yes : t.irreversible}
+            <dd
+              className={request.reversible === true ? '' : 'text-danger'}
+              data-reversible={request.reversible === null ? 'unknown' : String(request.reversible)}
+            >
+              {request.reversible === true
+                ? m.common.yes
+                : request.reversible === null
+                  ? t.reversibleUnknown
+                  : t.irreversible}
             </dd>
           </div>
           <div>
@@ -172,7 +179,13 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           <div>
             <dt>{t.authority}</dt>
             <dd>
-              <strong>{request.requiredAuthority}</strong>
+              {request.requiredAuthority ? (
+                <strong>{request.requiredAuthority}</strong>
+              ) : (
+                <span className="muted" data-authority="not-recognised">
+                  {t.authorityNotRecognised}
+                </span>
+              )}
             </dd>
           </div>
         </dl>
@@ -190,7 +203,9 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
             ) : (
               request.requestedBy
             )}
-            {requester && <span className="muted"> · {requester.role}</span>}
+            {requester && (
+              <span className="muted"> · {requester.role ?? m.common.roleUnknown}</span>
+            )}
           </div>
           <div className="gate__authority-note">
             <Icon name="shield" size={12} /> {t.capabilities}{' '}
@@ -205,6 +220,12 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           <strong>{decisionLabel(request.decision.decision)}</strong>
           {t.decidedBy(request.decision.decidedBy)} · {rel(request.decision.decidedAt, now)}
           {request.decision.delivery === 'simulated' && <SimulatedTag>{t.simulated}</SimulatedTag>}
+          {request.decision.delivery !== 'simulated' &&
+            request.decision.assurance === 'source-asserted' && (
+              <span className="gate__assurance" data-assurance="source-asserted">
+                {t.sourceAsserted}
+              </span>
+            )}
           {request.decision.note && (
             <p className="gate__decision-note">“{request.decision.note}”</p>
           )}
@@ -250,7 +271,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           <p>
             {t.confirm} <strong>{governance.humanAuthority}</strong> {t.will}{' '}
             <strong>{m.decision.verb[pending]}</strong> “{request.title}”.
-            {!request.reversible && pending === 'APPROVE' && (
+            {request.reversible !== true && pending === 'APPROVE' && (
               <strong className="text-danger">{t.cannotUndo}</strong>
             )}
           </p>

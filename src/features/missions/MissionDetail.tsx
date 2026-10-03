@@ -256,7 +256,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
                     <span>
                       <strong>{w.name}</strong>
                       <span className="muted small">
-                        {w.role}
+                        {w.role ?? m.common.roleUnknown}
                         {roomOf(w.id) && t.atRoom(roomOf(w.id)!.label)}
                       </span>
                     </span>

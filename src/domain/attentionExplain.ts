@@ -45,7 +45,7 @@ export type Fact =
   | { key: 'requiredAuthority'; value: string | null }
   | { key: 'requestedBy'; value: string }
   | { key: 'risk'; value: string }
-  | { key: 'reversible'; value: boolean }
+  | { key: 'reversible'; value: boolean | null }
   | { key: 'humanActionRequired'; value: boolean }
   | { key: 'acknowledged'; value: boolean }
   | { key: 'severity'; value: string }

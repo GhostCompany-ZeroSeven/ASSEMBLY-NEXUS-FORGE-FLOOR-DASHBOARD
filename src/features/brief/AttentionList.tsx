@@ -130,6 +130,7 @@ function Explanation({
       case 'freshness':
         return freshnessCodeText(m, f.value);
       case 'reversible':
+        return f.value === null ? m.common.unknown : f.value ? m.common.yes : m.common.no;
       case 'humanActionRequired':
       case 'acknowledged':
         return f.value ? m.common.yes : m.common.no;

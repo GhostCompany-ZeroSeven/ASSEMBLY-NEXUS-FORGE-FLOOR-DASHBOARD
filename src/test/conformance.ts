@@ -14,6 +14,11 @@ export interface ConformanceSubject {
   humanAuthority: string;
   /** Re-read state from the adapter after an action (for adapters that need a refresh). */
   settle?: () => Promise<void>;
+  /**
+   * Read-only adapters (e.g. ANN v1) can deliver no decision at all: every
+   * submission, even a valid human one, must be rejected.
+   */
+  readOnly?: boolean;
 }
 
 /** Structural invariants every snapshot must satisfy, whatever the adapter. */
@@ -147,6 +152,18 @@ export function describeAdapterConformance(
       it('records a valid human decision with honest delivery', async () => {
         const s = await make();
         await s.adapter.connect();
+        if (s.readOnly) {
+          expect(s.adapter.capabilities.approvals).toBe(false);
+          expect(s.adapter.capabilities.alertAcknowledgement).toBe(false);
+          await expect(
+            s.adapter.submitApprovalDecision({
+              approvalId: s.pendingApprovalId,
+              decision: 'HOLD',
+              decidedBy: s.humanAuthority,
+            }),
+          ).rejects.toThrow();
+          return;
+        }
         const rec = await s.adapter.submitApprovalDecision({
           approvalId: s.pendingApprovalId,
           decision: 'HOLD',

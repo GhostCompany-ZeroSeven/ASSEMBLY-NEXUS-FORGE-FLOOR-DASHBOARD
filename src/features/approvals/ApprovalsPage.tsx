@@ -78,7 +78,7 @@ export function ApprovalsPage() {
               onChange={(risk) => set({ risk })}
               options={[
                 { value: 'all', label: t.anyRisk },
-                ...(['critical', 'high', 'medium', 'low'] as const).map((r) => ({
+                ...(['critical', 'high', 'medium', 'low', 'unknown'] as const).map((r) => ({
                   value: r,
                   label: cap(m.status.risk[r]),
                 })),

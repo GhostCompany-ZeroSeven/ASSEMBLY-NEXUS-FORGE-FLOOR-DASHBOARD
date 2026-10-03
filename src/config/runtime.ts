@@ -4,6 +4,7 @@ import type { AdapterConfig, DashboardConfig } from './types';
  * Optional build-time override for local development and testing:
  *
  *   VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://localhost:8787 npm run dev
+ *   VITE_FORGE_ADAPTER=ann-mock npm run dev   (read-only ANN v1 over the simulated mock feed)
  *   (+ VITE_FORGE_REST_STREAM=/stream to enable the optional SSE stream)
  *
  * Vite inlines `VITE_*` variables into the client bundle, so they must NEVER
@@ -29,6 +30,17 @@ export function withEnvOverrides(
         ...(flags.includes('stress') ? { scale: 'stress' as const } : {}),
         ...(flags.includes('paused') ? { autoRun: false } : {}),
       },
+    };
+  }
+  // Read-only ANN v1 adapter over the SIMULATED mock feed (development review only).
+  // The decision authority comes from this deployment's governance, never the feed.
+  if (env.VITE_FORGE_ADAPTER === 'ann-mock') {
+    // Review-only mock variants: ?ann=stale | unknown | unavailable (anything else: normal).
+    const v = new URLSearchParams(search).get('ann');
+    const variant = v === 'stale' || v === 'unknown' || v === 'unavailable' ? v : 'normal';
+    return {
+      ...config,
+      adapter: { kind: 'ann-mock', variant, humanAuthority: config.governance.humanAuthority },
     };
   }
   if (env.VITE_FORGE_ADAPTER !== 'rest') return config;

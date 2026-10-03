@@ -308,16 +308,16 @@ registerAdapter('my-backend', () => new MyAdapter(/* … */));
 
 ## ANN adapter readiness: what the UI never guesses
 
-A future ANN adapter (ANN / ADA / ALPHA / Forge systems → adapter → normalized snapshot → UI)
-plugs into the same `DashboardAdapter` contract. Nothing about it is implemented here, and no
-live ANN connection exists. These fields are **source truth**: the adapter must report them, and
-when it does not, the UI shows UNKNOWN / NOT REPORTED and never derives them:
+ANN / ADA / ALPHA / Forge systems → ANN adapter → normalized snapshot → UI. The ANN dashboard
+feed contract v1 (below) implements this boundary against a **simulated mock feed only**; no live
+ANN connection exists. These fields are **source truth**: the adapter must report them, and when it
+does not, the UI shows UNKNOWN / NOT REPORTED and never derives them:
 
 | Field                         | Never derived from                                | When missing or invalid                        |
 | ----------------------------- | ------------------------------------------------- | ---------------------------------------------- |
 | Mission ordinal               | array index, count, timestamp, sort order         | UNKNOWN; mission shown by its source id        |
 | Approval decision / authority | viewing, opening, worker capability, demo actions | gate stays pending; demo decisions "simulated" |
-| Certification                 | review state, completion, artifacts               | not certified                                  |
+| Certification                 | review state, completion, artifacts               | UNKNOWN (never certified)                      |
 | Health                        | "no error seen", a rendered page, demo simulation | UNKNOWN (neutral), never lime                  |
 | Live / connected              | demo data, cached data                            | SIMULATED / DISCONNECTED / LAST KNOWN          |
 | Elapsed / remaining time      | estimate guesses, `now` for a finished mission    | dashes + "not reported" / "inconsistent"       |
@@ -329,3 +329,175 @@ for data-backed positive outcomes. `connected` (turquoise) only says data is flo
 simulated "nominal" is simulated amber. Tests: `src/domain/truthfulColour.test.ts`,
 `src/app/truthfulHealth.test.tsx`, `src/app/hostileData.test.tsx` (malformed data on every
 route).
+
+## ANN dashboard feed contract v1 (`src/adapters/ann/`)
+
+**Status: contract + read-only adapter + deterministic SIMULATED mock feed. Not connected to any
+Assembly Nexus system. Not production-ready. No transport is implemented.** The Local Demo
+Simulation is a separate adapter and is unchanged.
+
+The chain of distinctions this module keeps explicit, in code and in the UI:
+
+> schema validity ≠ source authenticity ≠ Founder authority ≠ certification ≠ mission completion ≠
+> successful deployment, and display ≠ reality.
+
+The dashboard, the adapter, the normalizer and (in future) the transport are **not authority**. A
+feed is evidence presented to the dashboard; conforming to the schema does not make it trustworthy.
+
+| Module          | Responsibility                                                                    |
+| --------------- | --------------------------------------------------------------------------------- |
+| `contract.ts`   | version, wire shape, enums, bounds, error codes, the `AnnFeedSource` interface    |
+| `normalize.ts`  | the ONE normalization boundary: `normalizeAnnFeed(raw, { now, humanAuthority })`  |
+| `AnnAdapter.ts` | read-only `DashboardAdapter` over any `AnnFeedSource`                             |
+| `mockFeed.ts`   | deterministic simulated v1 envelope (`normal`, `stale`, `unknown`, `unavailable`) |
+
+Select it with `adapter: { kind: 'ann-mock', humanAuthority }` or, in development,
+`VITE_FORGE_ADAPTER=ann-mock npm run dev` (review variants: `?ann=stale|unknown|unavailable`). The
+browser suite builds it with `npm run build:e2e-ann` (`.env.e2e-ann`) and serves it on port 4177.
+
+**Version.** `contract` must equal `assembly-nexus.dashboard-feed.v1` exactly. Missing, unknown or
+near-miss versions are rejected (`UNSUPPORTED_CONTRACT`). No negotiation, no downgrade.
+
+**Envelope.** Required: `contract`, `source { id, kind }`, `snapshot { id, generatedAt }`,
+`sourceMode`. Collections `missions`, `workers`, `approvals`, `alerts`, `activity`: a missing or
+non-array collection is **unavailable** (shown as UNKNOWN), an empty array is a valid empty
+collection. `health` missing = health UNKNOWN. **Unknown properties are ignored**: normalization
+reads only the documented fields and builds fresh objects, so an extra property cannot reach the
+model or change any decision. The input is first deep-copied into null-prototype objects (own
+enumerable keys, JSON-like values only, bounded size and depth): keys such as `__proto__`,
+`constructor` or `prototype` are inert data, inherited or polluted properties are never read, and a
+record with a replaced prototype or a non-plain value is unreadable (dropped and counted).
+
+**Source mode.** Exact strings only (no trimming, no case folding). `SIMULATED` (shown as
+simulated), `LIVE` (a **source claim**, not proof: shown as live only once a future transport
+verifies the connection; this adapter never verifies, so LIVE displays as not verified),
+`UNKNOWN` (rejected: the dashboard will not show data it cannot classify as live or simulated).
+Missing or unrecognised modes are rejected; nothing becomes LIVE. A mock or the Local Demo
+Simulation declaring LIVE is rejected as contradictory. The adapter reports a separate trust state
+(`AnnAdapter.trust()`): `sourceMode` (the claim), `transport` (`IN_MEMORY_MOCK` | `UNVERIFIED`),
+`snapshotAuthenticity` and `decisionAuthenticity` (always `NOT_ESTABLISHED` in v1).
+
+**Missions.** `id` is the opaque source identity (routing). `ordinal` is accepted only as a
+non-negative safe integer from the source; strings, fractions, negatives and duplicates are
+UNKNOWN (the mission is shown by its id). Lifecycle values must match exactly; anything else is
+UNKNOWN. `COMPLETE`/`FAILED` need a valid completion time; a completion time on a running mission
+is a contradiction (UNKNOWN). Progress is percent 0..100 and never implies completion. Estimates
+outside (0, 400 days] are ignored ("No estimate"). An unstated priority is `unknown` (shown "not
+stated", sorted with high), never "normal".
+
+**Certification and review.** Explicit only. Missing evidence is UNKNOWN. `CERTIFIED`/`REJECTED`
+need a decider and time; `CERTIFIED` is accepted only on a `COMPLETE` mission. Completion, a passed
+review, a SUCCESS result or 100% progress never certify.
+
+**Authority.** v1 carries no authority grants (capabilities never become authority). Who may
+decide comes from the deployment's `governance.humanAuthority`, never from feed text: a request's
+`requiredAuthority` is kept only when it is exactly that authority; anything else ("ROOT",
+"FOUNDER VERIFIED", "NO APPROVAL REQUIRED", a near-miss) is not displayed, the request cannot be
+decided, and any decision on it is rejected. A Founder decision is accepted only when
+`authority: "FOUNDER"`, the decider is exactly (no trimming, case or Unicode tolerance) the
+configured authority, the decider is neither the requester nor any worker, the decision is at or
+after the request (same source clock, no skew), and any `approvalId`/`missionId` it carries matches
+its request. Otherwise `APPROVED`/`DENIED` become UNKNOWN; a decision on a PENDING request is
+ignored.
+
+Worker records and requests whose name, id or role **folds** to contain the reserved authority or
+the word "founder" are dropped as impersonation. Folding (NFKC, invisible characters removed,
+common Cyrillic/Greek lookalikes mapped, "zero"/"seven" spelled out, punctuation and spacing
+dropped, leading zeros dropped) is used ONLY to reject: "Founder #007", "Founder Zero Seven",
+"Fоunder" (Cyrillic о) and "Co-Founder" are all caught. It is deliberately broad (fail closed); it
+is not a universal confusables engine (residual: exotic scripts not in the small lookalike map).
+
+**Structural validity is not authenticity.** v1 has no trusted transport and no signatures. An
+accepted decision is a structurally valid, **source-asserted** Founder decision
+(`assurance: "source-asserted"`; `delivery: "simulated"` for simulated feeds). The UI labels a
+non-simulated one "Reported by the data source — not independently verified". The dashboard never
+claims it verified a Founder decision. Risk, reversibility and expiry not stated stay unknown
+(`risk: "unknown"`, `reversible: null`); unknown reversibility is confirmed like an irreversible
+action.
+
+**Health.** NOMINAL needs a current report time, at least one component, and every component
+NOMINAL. Missing, null, empty, unparseable, stale (> 5 min) or self-contradictory health (overall
+better than its worst component) is UNKNOWN. A CRITICAL overall with nominal components stays
+CRITICAL (conservative). No alerts, a reachable source or (in future) transport success never mean
+healthy.
+
+**Freshness and time.** All judgements use the injected evaluation time, never a hidden clock. A
+snapshot older than 120 s is marked STALE (the existing stale banner and amber health rules apply);
+exactly 120 s is still fresh. A snapshot more than 60 s in the future is rejected (exactly 60 s is
+accepted). A record time later than its snapshot (+60 s) is invalid. Times from the same source are
+compared without skew (completion before start, decision before request: invalid by even 1 ms).
+Certification evidence does not expire in v1: it is a historical fact, current as of the snapshot,
+and the snapshot's own freshness governs.
+
+**Activity.** History only: `worker.assigned`, `work.started`, `task.completed`,
+`review.requested`. Activity can never carry approval, certification, outcome, health or alert
+claims; such entries are dropped and free text is never interpreted.
+
+**Contradictions.** Security-sensitive (identity, authority, envelope mode): reject the feed or
+the record. Presentation contradictions: keep the safe subset, the disputed field is UNKNOWN.
+Duplicate ids drop every copy, and a collection with unreadable records is marked incomplete.
+
+**Bounds.** missions 2 000, workers 1 000, approvals 1 000, alerts 1 000, health components 200:
+exactly the bound is accepted, one more rejects the whole feed (hidden records could hide a gate or
+a failure; a trimmed snapshot is never shown as complete). Activity (history only) keeps the newest
+500 and says it was truncated. Identifiers are never truncated: an id longer than 200 characters,
+padded, or with control characters is not an identity (truncation could make two ids collide).
+Presentation text is bounded (titles 300, names/roles 120, other text 2 000) and rendered as text.
+
+**Alerts.** An unstated or unrecognised severity is `UNKNOWN`: neutral, ranked with WARNING, never
+INFO and never silently turned into a stated severity; the alert is kept.
+
+**Errors.** `UNSUPPORTED_CONTRACT`, `MALFORMED_ENVELOPE`, `CONTRADICTORY_ENVELOPE`,
+`SOURCE_MODE_UNKNOWN`, `RESOURCE_LIMIT`, `SOURCE_UNAVAILABLE`, `READ_ONLY`. A failed load shows
+the dashboard's error state, never an empty healthy dashboard. Transport error text never reaches
+the UI.
+
+**Read-only.** The adapter cannot decide approvals, acknowledge alerts, message workers, dispatch
+work, certify, deploy or write back to ANN. It runs no timers and no polling; `refresh()` re-reads
+once when called.
+
+Tests: `src/adapters/ann/normalize.test.ts` (contract and hostile matrix),
+`src/adapters/ann/hardening.test.tsx` (impersonation, self-approval, certification, ordinal, health,
+source-mode and malformed-value tables, object shape, string/collection/time bounds, store-level
+read-only), `src/adapters/ann/AnnAdapter.test.ts`, the shared conformance suite (read-only
+variant), `src/app/annIntegration.test.tsx` and the browser suite `e2e/ann.spec.ts`.
+
+### Future read-only transport trust contract (design only; nothing below is implemented)
+
+Trust ladder, kept separate from `sourceMode`:
+
+| Level                | Means                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `SIMULATED`          | data produced by a mock/demo; nothing real                                              |
+| `UNVERIFIED`         | bytes arrived from somewhere; who sent them is not established (v1 for any real source) |
+| `TRANSPORT_VERIFIED` | the channel's peer is proven to be the expected endpoint (e.g. mutually authenticated)  |
+| `SNAPSHOT_SIGNED`    | the snapshot is signed by a key bound to the ANN source and verifies (freshly)          |
+| `DECISION_SIGNED`    | an individual Founder decision is signed by a key held only by the Founder and verifies |
+
+**A. Connectivity proves** only that a channel delivered bytes, and (with an authenticated channel)
+which endpoint sent them, at about when.
+**B. It does not prove** that the content is true, that the endpoint is the authoritative ANN
+store, that any Founder decision was made by the Founder, health, certification, or freshness of
+the facts inside. HTTP 200 is not healthy.
+**C. Source identity (a verified signature over the snapshot) proves** the snapshot was produced by
+the holder of the ANN source key and was not altered in transit.
+**D. It does not prove** the ANN source's facts are right, nor that a decision inside it was made by
+the Founder (the source could relay or invent one).
+**E. Calling a Founder decision authenticated requires** a signature over the decision record
+(decision, request id, mission id, decided-at, nonce/sequence) by a key bound to the Founder
+identity (held by the Founder, not by ANN), verified by the dashboard against a pinned public key
+configured by the deployment, not fresher than a bound, and not replayed.
+**F. Attach authenticity to both:** the snapshot (source integrity and freshness) and each decision
+(Founder authenticity). Neither substitutes for the other.
+**G. Stale evidence** (expired signature validity, old snapshot, unknown key) drops the level back
+to `UNVERIFIED` for display; it never upgrades and is never cached as verified.
+**H. UI:** simulated → existing SIMULATED badge; live-but-unverified → "not verified" (today's
+`disconnected`/source-asserted labels); transport verified → live, decisions still "reported by
+the source"; decision signed → the only state in which a decision may be shown as authenticated.
+**I. Layers:** channel verification belongs to the transport; signature verification and the
+trust level per snapshot/decision are produced at the normalization boundary (pure, given verified
+inputs and pinned keys) and carried in the normalized domain (`AnnTrust`, decision `assurance`).
+Components only render the level; they never compute it.
+**J. Smallest safe next step:** a read-only local transport that reports `UNVERIFIED` honestly
+(load + parse + the existing normalizer, no write path, no credentials), with the trust fields
+plumbed to the UI. Signatures are a later, separate, Founder-gated mission.

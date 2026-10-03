@@ -114,7 +114,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           <div className="page__eyebrow">{crew?.label ?? worker.crewId}</div>
           <h1 className="focus__name">{worker.name}</h1>
           <div className="focus__role">
-            {worker.role}
+            {worker.role ?? m.common.roleUnknown}
             {home && <span className="muted"> · {t.station(home.label)}</span>}
             {current && (
               <>

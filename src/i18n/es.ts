@@ -11,6 +11,7 @@ export const es: Messages = {
   common: {
     yes: 'Sí',
     no: 'No',
+    roleUnknown: 'Rol no informado',
     none: 'ninguno',
     unknown: 'desconocido',
     unavailable: 'no disponible',
@@ -212,6 +213,7 @@ export const es: Messages = {
       IN_REVIEW: 'En revisión',
       PASSED: 'Revisión aprobada',
       FAILED: 'Revisión rechazada',
+      UNKNOWN: 'Revisión desconocida',
     },
     approval: {
       PENDING: 'Esperando decisión',
@@ -227,6 +229,7 @@ export const es: Messages = {
       NOTICE: 'Aviso',
       WARNING: 'Advertencia',
       CRITICAL: 'Crítica',
+      UNKNOWN: 'Gravedad no indicada',
     },
     health: {
       NOMINAL: 'Nominal',
@@ -248,18 +251,21 @@ export const es: Messages = {
       IN_PROGRESS: 'EN CURSO',
       CERTIFIED: 'CERTIFICADA',
       REJECTED: 'RECHAZADA',
+      UNKNOWN: 'DESCONOCIDA',
     },
     priority: {
       low: 'baja',
       normal: 'normal',
       high: 'alta',
       critical: 'crítica',
+      unknown: 'no indicada',
     },
     risk: {
       low: 'bajo',
       medium: 'medio',
       high: 'alto',
       critical: 'crítico',
+      unknown: 'no indicado',
     },
     outcome: {
       SUCCESS: 'ÉXITO',
@@ -649,6 +655,7 @@ export const es: Messages = {
     risk: 'Riesgo',
     reversible: 'Reversible',
     irreversible: 'No — irreversible',
+    reversibleUnknown: 'No indicado — confirmar como irreversible',
     requested: 'Solicitada',
     authority: 'Autoridad que decide',
     requestedBy: 'Solicitada por',
@@ -658,6 +665,8 @@ export const es: Messages = {
     grantsNothing: 'Solicitar una aprobación no concede ninguna autoridad.',
     decidedBy: (who) => ` por ${who}`,
     simulated: 'Simulada — ningún backend recibió esta decisión',
+    sourceAsserted: 'Informada por la fuente de datos — no verificada de forma independiente',
+    authorityNotRecognised: 'No indicada o no reconocida — no se puede decidir aquí',
     decide: (id) => `Decidir ${id}`,
     confirmGroup: 'Confirmar decisión',
     confirm: 'Confirmar:',

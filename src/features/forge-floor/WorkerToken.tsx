@@ -58,7 +58,7 @@ export function WorkerToken({
       onClick={() => onSelect(worker.id)}
       aria-pressed={selected}
       aria-label={[
-        `${worker.name}, ${worker.role}`,
+        `${worker.name}, ${worker.role ?? m.common.roleUnknown}`,
         stateText,
         worker.currentMissionId ? m.floor.tokenMission(worker.currentMissionId) : undefined,
         roomLabel ? m.floor.tokenIn(roomLabel) : undefined,

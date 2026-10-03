@@ -187,6 +187,7 @@ function reviewRung(m: Mission): LadderRung {
       IN_REVIEW: 'IN_PROGRESS',
       PASSED: 'DONE',
       FAILED: 'FAILED',
+      UNKNOWN: 'UNKNOWN',
     } as const
   )[m.review.status];
   return { step: 'review', state: state ?? 'UNKNOWN', evidence: [m.review.id] };
@@ -200,6 +201,7 @@ function certificationRung(m: Mission): LadderRung {
       IN_PROGRESS: 'IN_PROGRESS',
       CERTIFIED: 'DONE',
       REJECTED: 'FAILED',
+      UNKNOWN: 'UNKNOWN',
     } as const
   )[m.certification];
   return { step: 'certification', state: state ?? 'UNKNOWN', evidence: [] };

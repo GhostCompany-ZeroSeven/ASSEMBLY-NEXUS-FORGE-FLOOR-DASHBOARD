@@ -443,6 +443,15 @@
   color: var(--text-dim);
   font-style: italic;
 }
+/* A decision REPORTED by a source and not independently verified: neutral, never approval green. */
+.gate__assurance {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border: 1px dashed var(--tone-neutral);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
 .gate__buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

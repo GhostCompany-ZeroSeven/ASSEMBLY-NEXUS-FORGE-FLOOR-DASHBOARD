@@ -2,6 +2,7 @@ node_modules
 dist
 dist-e2e-rest
 dist-e2e-runtime
+dist-e2e-ann
 coverage
 *.local
 .env
@@ -11,6 +12,8 @@ coverage
 !.env.e2e-rest
 # Test-only build mode (no secrets): same-origin REST/SSE mock for the Phase 7 runtime suite.
 !.env.e2e-runtime
+# Test-only build mode (no secrets): read-only ANN v1 adapter over the simulated mock feed.
+!.env.e2e-ann
 .DS_Store
 *.tsbuildinfo
 playwright-report

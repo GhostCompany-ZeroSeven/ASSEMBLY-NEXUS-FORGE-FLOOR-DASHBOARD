@@ -101,7 +101,7 @@ describe('approval and alert filters', () => {
     expect(filterAlerts(s.alerts, { ...A, q: 'runner' })).toHaveLength(1);
   });
   it('alert sorting: severity first by default; newest/oldest are exact reverses', () => {
-    const rank = { CRITICAL: 0, WARNING: 1, NOTICE: 2, INFO: 3 } as const;
+    const rank = { CRITICAL: 0, WARNING: 1, UNKNOWN: 1, NOTICE: 2, INFO: 3 } as const;
     const bySeverity = filterAlerts(s.alerts, DEFAULT_ALERT_FILTER).map((a) => rank[a.severity]);
     expect(bySeverity).toEqual([...bySeverity].sort((a, b) => a - b));
     const newest = filterAlerts(s.alerts, { ...DEFAULT_ALERT_FILTER, sort: 'newest' });

@@ -41,6 +41,13 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
+      // ANN v1 build (`--mode e2e-ann`): read-only adapter over the in-memory simulated mock feed.
+      command: 'npx vite preview --outDir dist-e2e-ann --port 4177 --strictPort',
+      url: 'http://localhost:4177',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    {
       command: 'node scripts/mock-runtime-server.ts',
       url: 'http://localhost:4176/__mock/state',
       reuseExistingServer: !process.env.CI,

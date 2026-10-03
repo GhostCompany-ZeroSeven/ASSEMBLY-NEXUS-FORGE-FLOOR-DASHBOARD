@@ -192,4 +192,14 @@ export type AdapterConfig =
     }
   /** Generic REST backend. Never put credentials here; see docs/ADAPTERS.md. */
   | { kind: 'rest'; rest: RestAdapterConfig }
+  /**
+   * Read-only ANN v1 adapter over the deterministic SIMULATED mock feed. No
+   * Assembly Nexus system is connected. `humanAuthority` must equal
+   * `governance.humanAuthority`: decisions naming anyone else are rejected.
+   */
+  | {
+      kind: 'ann-mock';
+      variant?: 'normal' | 'stale' | 'unknown' | 'unavailable';
+      humanAuthority: string;
+    }
   | { kind: 'custom'; id: string };

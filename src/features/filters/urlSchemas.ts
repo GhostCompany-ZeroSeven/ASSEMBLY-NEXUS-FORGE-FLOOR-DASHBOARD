@@ -26,7 +26,7 @@ export const PRIORITIES = ['all', 'low', 'normal', 'high', 'critical'] as const;
 export const MISSION_SCHEMA: Schema<MissionFilter> = {
   q: { key: 'q', codec: text },
   group: { key: 'group', codec: oneOf(MISSION_GROUPS) },
-  priority: { key: 'priority', codec: oneOf(PRIORITIES) },
+  priority: { key: 'priority', codec: oneOf([...PRIORITIES, 'unknown'] as const) },
   workerId: { key: 'worker', codec: idOrAll },
   sort: { key: 'sort', codec: oneOf(MISSION_SORTS) },
   since: { key: 'since', codec: oneOf(MISSION_SINCE) },
@@ -56,13 +56,16 @@ export const WORKER_SCHEMA: Schema<WorkerFilter> = {
 export const APPROVAL_SCHEMA: Schema<ApprovalFilter> = {
   q: { key: 'q', codec: text },
   view: { key: 'view', codec: oneOf(['open', 'held', 'decided', 'unknown', 'all'] as const) },
-  risk: { key: 'risk', codec: oneOf(['all', 'low', 'medium', 'high', 'critical'] as const) },
+  risk: {
+    key: 'risk',
+    codec: oneOf(['all', 'low', 'medium', 'high', 'critical', 'unknown'] as const),
+  },
   sort: { key: 'sort', codec: oneOf(['oldest', 'risk', 'newest'] as const) },
 };
 
 export const ALERT_SCHEMA: Schema<AlertFilter> = {
   q: { key: 'q', codec: text },
-  severity: { key: 'severity', codec: oneOf(['ALL', ...ALERT_SEVERITIES] as const) },
+  severity: { key: 'severity', codec: oneOf(['ALL', ...ALERT_SEVERITIES, 'UNKNOWN'] as const) },
   humanOnly: { key: 'human', codec: flag },
   sort: { key: 'sort', codec: oneOf(['severity', 'newest', 'oldest'] as const) },
 };

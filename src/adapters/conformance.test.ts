@@ -1,4 +1,6 @@
 import { restTestAdapter } from '@/test/adapters';
+import { AnnAdapter } from './ann/AnnAdapter';
+import { MockAnnFeedSource } from './ann/mockFeed';
 import { describeAdapterConformance } from '@/test/conformance';
 import { testAdapter } from '@/test/fixtures';
 
@@ -23,3 +25,16 @@ describeAdapterConformance('RestAdapter (in-memory backend)', () => {
     },
   };
 });
+
+const FIXED = Date.parse('2026-09-30T12:00:00Z');
+describeAdapterConformance('AnnAdapter (read-only, simulated mock feed)', () => ({
+  adapter: new AnnAdapter(new MockAnnFeedSource('normal', 'Founder #0007', () => FIXED), {
+    humanAuthority: 'Founder #0007',
+    now: () => FIXED,
+  }),
+  expectedDelivery: 'simulated',
+  pendingApprovalId: 'ann-apr-031',
+  decidedApprovalId: 'ann-apr-030',
+  humanAuthority: 'Founder #0007',
+  readOnly: true,
+}));

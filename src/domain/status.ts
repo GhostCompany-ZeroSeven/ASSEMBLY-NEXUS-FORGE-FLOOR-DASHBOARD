@@ -101,6 +101,7 @@ export const REVIEW_STATUS_META: Record<ReviewStatus, StatusMeta> = {
   IN_REVIEW: { label: 'In review', tone: 'progress', description: '' },
   PASSED: { label: 'Review passed', tone: 'success', description: '' },
   FAILED: { label: 'Review failed', tone: 'danger', description: '' },
+  UNKNOWN: { label: 'Review unknown', tone: 'neutral', description: '' },
 };
 
 export const APPROVAL_STATUS_META: Record<ApprovalStatus, StatusMeta> = {
@@ -122,6 +123,8 @@ export const ALERT_SEVERITY_META: Record<AlertSeverity, StatusMeta & { rank: num
   NOTICE: { label: 'Notice', tone: 'progress', description: 'Worth a look.', rank: 1 },
   WARNING: { label: 'Warning', tone: 'warning', description: 'Needs attention soon.', rank: 2 },
   CRITICAL: { label: 'Critical', tone: 'danger', description: 'Needs attention now.', rank: 3 },
+  // Unknown is neutral in colour but never ranked below a stated WARNING.
+  UNKNOWN: { label: 'Severity not stated', tone: 'neutral', description: 'Not stated.', rank: 2 },
 };
 
 export const HEALTH_STATUS_META: Record<HealthStatus, StatusMeta> = {
@@ -222,6 +225,7 @@ export const RISK_TONE: Record<RiskLevel, Tone> = {
   medium: 'warning',
   high: 'danger',
   critical: 'danger',
+  unknown: 'neutral',
 };
 
 export const CERT_TONE: Record<CertificationStatus, Tone> = {
@@ -230,4 +234,5 @@ export const CERT_TONE: Record<CertificationStatus, Tone> = {
   IN_PROGRESS: 'progress',
   CERTIFIED: 'success',
   REJECTED: 'danger',
+  UNKNOWN: 'neutral',
 };
