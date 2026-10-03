@@ -14,8 +14,22 @@ import { WORKER_STATES } from './types';
  * Semantic tone used by the design system. Components map tones to colors via
  * CSS tokens, so themes can restyle every status consistently.
  */
+/**
+ * Semantic colour roles. `success` is reserved for data-backed positive
+ * outcomes (completed, approved, passed, nominal from a real report);
+ * `connected` means only that data is flowing (live, reachable), which says
+ * nothing about health.
+ */
 export type Tone =
-  'neutral' | 'info' | 'active' | 'progress' | 'success' | 'warning' | 'danger' | 'muted';
+  | 'neutral'
+  | 'info'
+  | 'active'
+  | 'progress'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'muted'
+  | 'connected';
 
 export interface StatusMeta {
   label: string;
@@ -52,7 +66,7 @@ export const WORKER_STATE_META: Record<WorkerState, StatusMeta> = {
   STOPPED: { label: 'Stopped', tone: 'neutral', description: 'Halted by an operator.' },
   UNKNOWN: {
     label: 'Unknown state',
-    tone: 'warning',
+    tone: 'neutral',
     description: 'The data source reported a state this dashboard does not recognise.',
   },
 };
@@ -76,7 +90,7 @@ export const MISSION_STATUS_META: Record<MissionStatus, StatusMeta> = {
   CANCELLED: { label: 'Cancelled', tone: 'neutral', description: 'Stopped before completion.' },
   UNKNOWN: {
     label: 'Unknown status',
-    tone: 'warning',
+    tone: 'neutral',
     description: 'The data source reported an unrecognised mission status.',
   },
 };
@@ -98,7 +112,7 @@ export const APPROVAL_STATUS_META: Record<ApprovalStatus, StatusMeta> = {
   WITHDRAWN: { label: 'Withdrawn', tone: 'muted', description: '' },
   UNKNOWN: {
     label: 'Unknown status',
-    tone: 'warning',
+    tone: 'neutral',
     description: 'Unrecognised approval status. It cannot be decided from here.',
   },
 };
@@ -116,6 +130,27 @@ export const HEALTH_STATUS_META: Record<HealthStatus, StatusMeta> = {
   CRITICAL: { label: 'Critical', tone: 'danger', description: '' },
   UNKNOWN: { label: 'Unknown', tone: 'muted', description: '' },
 };
+
+/**
+ * The one rule for colouring a health status (Command Center cell, health
+ * panel, anywhere else): lime only for a NOMINAL report that is current,
+ * complete, over a working connection, and not simulated. A lost connection
+ * or a critical report is red; stale, partial, degraded or reconnecting is
+ * amber; a simulated "nominal" is simulated amber, never real-looking green.
+ */
+export function healthTone(h: {
+  status: HealthStatus;
+  connection?: string;
+  stale?: boolean;
+  partial?: boolean;
+  simulated?: boolean;
+}): Tone {
+  if (h.connection === 'error' || h.status === 'CRITICAL') return 'danger';
+  if (h.stale || h.partial || h.status === 'DEGRADED' || h.connection === 'reconnecting')
+    return 'warning';
+  if (h.status === 'NOMINAL' && h.simulated) return 'warning';
+  return HEALTH_STATUS_META[h.status]?.tone ?? 'muted';
+}
 
 /** Map of raw backend state strings → normalized worker states. */
 export type WorkerStateMapping = Record<string, WorkerState>;
@@ -181,8 +216,9 @@ function normalizeKey(raw: string): string {
     .replace(/[\s-]+/g, '_');
 }
 
+/** Risk is an assessment of a request, never an outcome: low risk is not lime. */
 export const RISK_TONE: Record<RiskLevel, Tone> = {
-  low: 'success',
+  low: 'info',
   medium: 'warning',
   high: 'danger',
   critical: 'danger',

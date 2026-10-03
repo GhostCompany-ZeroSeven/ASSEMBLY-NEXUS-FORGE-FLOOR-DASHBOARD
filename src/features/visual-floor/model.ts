@@ -4,6 +4,7 @@ import { redAlertActive, resourceUnavailable } from '@/domain/selectors';
 import type { DashboardSnapshot } from '@/domain/snapshot';
 import type { Mission, MissionStatus } from '@/domain/types';
 import type { Freshness } from '@/domain/freshness';
+import { missionTiming } from '@/domain/time';
 
 /**
  * Presentation model for the VISUAL Forge Floor preview.
@@ -180,14 +181,13 @@ export function missionStages(m: Mission, s: DashboardSnapshot): MissionBoardSta
 /** Time left from the mission's own start and estimate; UNKNOWN otherwise. */
 export function missionTimer(m: Mission, nowMs: number): MissionBoardState['timer'] {
   if (m.status === 'COMPLETE') return { kind: 'done' };
-  const start = m.startedAt ? Date.parse(m.startedAt) : NaN;
-  const dur = m.estimate?.durationMs;
-  if (m.status !== 'ACTIVE' || Number.isNaN(start) || typeof dur !== 'number')
+  // The same timing rules as every other mission clock (bad estimates and
+  // contradictory timestamps are UNKNOWN, never a made-up countdown).
+  const t = missionTiming(m, nowMs);
+  if (m.status !== 'ACTIVE' || t.elapsedMs === null || t.remainingMs === null)
     return { kind: 'unknown' };
-  const left = start + dur - nowMs;
-  return left < 0
-    ? { kind: 'overdue', ms: -left }
-    : { kind: 'time-left', ms: left, critical: left <= CRITICAL_MS };
+  if (t.overrun) return { kind: 'overdue', ms: t.elapsedMs - m.estimate!.durationMs };
+  return { kind: 'time-left', ms: t.remainingMs, critical: t.remainingMs <= CRITICAL_MS };
 }
 
 /** The mission the board features: explicit id, else a timed active one, else the most advanced. */
@@ -387,11 +387,5 @@ export function buildVisualState(
   };
 }
 
-/** HH:MM:SS (hours may exceed 24). */
-export function formatClock(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const mnt = Math.floor((total % 3600) / 60);
-  const sec = total % 60;
-  return [h, mnt, sec].map((n) => String(n).padStart(2, '0')).join(':');
-}
+/** HH:MM:SS (hours may exceed 24); one shared implementation (non-finite → dashes). */
+export { formatClock } from '@/domain/time';

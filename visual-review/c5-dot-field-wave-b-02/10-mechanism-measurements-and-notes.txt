@@ -1,0 +1,43 @@
+NEXUS AMBIENT DOT FIELD: Wave B, C5 dot-field mechanism (recovered reference)
+
+MECHANISM (locked values, as implemented)
+  Fixed lattice, spacing 34 CSS px; cols = ceil(W/34), rows = ceil(H/34), inclusive.
+  Dot (col,row) is always at (col*34, row*34). Positions are computed, never stored.
+  Pointer: current position only (no velocity, history, smoothing, interpolation).
+  Influence radius 150 px; k = 1 - d/150 (d <= 150), else rest.
+  Rest: #161B26, r 1.0, alpha 1.0, no blur.
+  Lit glow: r 1.5+3.5k, alpha 0.90k, blur sigma 6.0k.  Lit core: r 1.0+1.6k, alpha 0.25+0.75k.
+  Max: core 2.6 px, glow 5.0 px, sigma 6.
+  Palette UV #B14CFF, LIME #9DFF3C, CYAN #3CE6FF (Wave A palette tokens --nx-field-*).
+  Colour: phase = ((col*3 + row*5)/8 + t) mod 1, index = floor(phase*3) mod 3; t linear 0->1 per 8 s; snaps.
+  Compositing: normal source-over; no additive blending.
+
+BLUR MAPPING (documented)
+  Flutter MaskFilter.blur(normal, sigma) = Gaussian with standard deviation sigma.
+  Canvas shadowBlur is specified as 2*sigma, so glow uses shadowBlur = 2 * sigma (exact, not exaggerated).
+  Glows are pre-rendered per colour at 64 k-levels (radius error <= 0.03 px) to avoid per-frame allocation.
+
+FORGE FLOOR ADAPTATIONS (not C5 behaviour)
+  Pointer exit: leaving the surface (side nav, top bar, window, tab blur) returns the field to rest at once.
+  Reduced motion (system or Settings) / ?field=reduced: 8 s colour cycle frozen at t = 0; proximity response stays direct.
+  Touch: no illumination (mouse/pen only) pending review; no finger-following.
+  Availability: OFF by default; config environment.ambientField + review toggle ?field=full / ?field=reduced; Command Center only.
+  Lattice origin: top-left of the visible main area (below the top bar, right of the side nav).
+  Ground: the dashboard keeps its own background (#06090E); the reference ground #07080B is recorded as a token but not applied.
+
+COMPOSITION DIFFERENCE FROM C5 (for Founder review; not compensated)
+  Forge Floor panels are opaque, so the field shows in the header strip, the gutters between panels and the page margins.
+  The Command Center page title/eyebrow sit on the background (not in a panel): lit dots can appear behind that heading text.
+
+MEASUREMENTS (headless Chromium, software rendering, 1440x900)
+  Lattice 962 dots; ~62 lit at an interior pointer (theory pi*150^2/34^2 = 61).
+  At rest: 0 frames drawn (no animation loop at all).
+  Lit, colour cycle running: 0.378 ms/frame @ 60 fps (DPR 1), 0.331 ms (DPR 2).
+  Pointer sweeping: 0.367 ms/frame (DPR 1), 0.379 ms (DPR 2). Long tasks: 0.
+  Renderer chunk 2.2 kB gzip, loaded only when the field is on.
+
+LOCAL REVIEW
+  npm run build && npx vite preview
+  http://localhost:4173/#/?field=full      (FULL)
+  http://localhost:4173/#/?field=reduced   (colour cycle frozen)
+  http://localhost:4173/#/                  (OFF, default)

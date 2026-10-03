@@ -68,6 +68,11 @@ export class DemoAdapter implements DashboardAdapter {
   private queue: Beat[] = [];
   private rng: () => number;
   private idCounter = 0;
+  /**
+   * The simulated store's lifetime mission sequence: the next ordinal to
+   * assign (seed missions hold 139–148, the opening script creates 149). It
+   * only increases; a reset re-creates the whole simulated store from seed.
+   */
   private missionCounter = 150;
   private timer: unknown = null;
   private running = false;

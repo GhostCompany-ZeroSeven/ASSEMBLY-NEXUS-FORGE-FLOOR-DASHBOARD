@@ -15,7 +15,7 @@ export function FreshnessLine({ freshness }: { freshness: Freshness }) {
   const { m } = useI18n();
   const tone: Tone =
     freshness.source === 'LIVE'
-      ? 'success'
+      ? 'connected'
       : freshness.source === 'DISCONNECTED'
         ? 'danger'
         : 'warning';

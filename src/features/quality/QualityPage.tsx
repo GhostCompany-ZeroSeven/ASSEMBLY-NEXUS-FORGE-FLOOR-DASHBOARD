@@ -52,7 +52,7 @@ export function QualityPage() {
       </header>
 
       <div className="grid grid--settings">
-        <Panel title={t.source} focusId="source">
+        <Panel family="systems" title={t.source} focusId="source">
           <KeyValue
             items={[
               [t.adapter, <span translate="no">{r.adapterLabel}</span>],
@@ -98,7 +98,7 @@ export function QualityPage() {
           />
         </Panel>
 
-        <Panel title={t.freshness} focusId="freshness">
+        <Panel family="systems" title={t.freshness} focusId="freshness">
           <KeyValue
             items={[
               [
@@ -119,7 +119,7 @@ export function QualityPage() {
           />
         </Panel>
 
-        <Panel title={t.resources} focusId="resources">
+        <Panel family="systems" title={t.resources} focusId="resources">
           <ul className="quality__resources">
             {r.resources.map((x) => (
               <li key={x.name} data-available={x.available ? 'true' : 'false'}>
@@ -131,7 +131,7 @@ export function QualityPage() {
           </ul>
         </Panel>
 
-        <Panel title={t.history} focusId="history">
+        <Panel family="systems" title={t.history} focusId="history">
           <KeyValue
             items={[
               [t.history, t.retained(num(r.history.retained), num(r.history.capacity))],
@@ -187,7 +187,7 @@ export function QualityPage() {
           </ul>
         </Panel>
 
-        <Panel title={t.issuesTitle} className="span-2" focusId="issues">
+        <Panel family="systems" title={t.issuesTitle} className="span-2" focusId="issues">
           {r.issues.length === 0 ? (
             <p className="brief__calm">{t.noIssues}</p>
           ) : (
@@ -211,7 +211,7 @@ export function QualityPage() {
           {r.moreIssues > 0 && <p className="small muted">{t.moreIssues(num(r.moreIssues))}</p>}
         </Panel>
 
-        <Panel title={t.storage} className="span-2" focusId="storage">
+        <Panel family="systems" title={t.storage} className="span-2" focusId="storage">
           <KeyValue
             items={[
               [t.globalView, t.storageState[lastView.storage]],

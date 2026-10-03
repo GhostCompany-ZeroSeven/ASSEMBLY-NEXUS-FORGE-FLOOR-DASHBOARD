@@ -40,6 +40,7 @@ import {
   normalizeEvent,
   normalizeHealth,
   normalizeMission,
+  rejectDuplicateOrdinals,
   normalizeWorker,
 } from './normalize';
 import { normalizeStreamEvent } from './stream';
@@ -407,10 +408,13 @@ export class RestAdapter implements DashboardAdapter {
           const list = listFrom(data, 'missions', log);
           if (!list) failed.add(name);
           else
-            next.missions = dedupe(
-              list.map((x, i) => normalizeMission(x, i, log)),
+            next.missions = rejectDuplicateOrdinals(
+              dedupe(
+                list.map((x, i) => normalizeMission(x, i, log)),
+                log,
+                'missions',
+              ),
               log,
-              'missions',
             );
           break;
         }

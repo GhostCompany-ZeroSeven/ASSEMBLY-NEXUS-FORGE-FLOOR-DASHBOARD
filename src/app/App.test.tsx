@@ -26,9 +26,12 @@ describe('App', () => {
   it('shows the full branding hierarchy verbatim', async () => {
     await renderAt('#/');
     const list = screen.getByRole('list', { name: 'Identity hierarchy' });
-    for (const line of assemblyNexusConfig.branding.hierarchy) {
-      expect(within(list).getByText(line)).toBeInTheDocument();
-    }
+    // Exact text, in reading order (symbols are styled spans inside the lines).
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(assemblyNexusConfig.branding.hierarchy);
   });
 
   it('requires confirmation before approving, then records a simulated decision', async () => {

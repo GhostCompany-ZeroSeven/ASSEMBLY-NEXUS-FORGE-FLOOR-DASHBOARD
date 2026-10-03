@@ -25,26 +25,122 @@
 [data-tone='danger'][data-tone] {
   --tone: var(--tone-danger);
 }
+[data-tone='connected'][data-tone] {
+  --tone: var(--tone-connectivity);
+}
 
-/* ---- Panel ------------------------------------------------------------- */
+/* ---- Panel (Nexus Signature) -------------------------------------------
+ * Dark interior, 1px luminous family frame, a short glowing top rail, a
+ * header separator trace, tick marks and a corner bracket. The frame colour
+ * is the panel's FAMILY (information architecture, set explicitly by the
+ * caller); a truthful `tone` re-lights only the rail.
+ */
 .panel {
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--line);
+  --fam: var(--family-neutral);
+  --rail: var(--fam);
+  background:
+    radial-gradient(
+      420px 90px at 0 0,
+      color-mix(in srgb, var(--fam) 10%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--fam) 55%, transparent);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow:
+    inset 0 0 22px -14px color-mix(in srgb, var(--fam) 55%, transparent),
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 0 32px -14px color-mix(in srgb, var(--fam) 70%, transparent);
   min-width: 0;
   position: relative;
 }
+.panel[data-family='ops'] {
+  --fam: var(--family-ops);
+}
+.panel[data-family='floor'] {
+  --fam: var(--family-floor);
+}
+.panel[data-family='signal'] {
+  --fam: var(--family-signal);
+}
+.panel[data-family='review'] {
+  --fam: var(--family-review);
+}
+.panel[data-family='systems'] {
+  --fam: var(--family-systems);
+}
+.panel[data-family='founder'] {
+  --fam: var(--family-founder);
+}
+.panel[data-family='neutral'] {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
 .panel[data-tone] {
-  border-top: 2px solid color-mix(in srgb, var(--tone) 70%, transparent);
+  --rail: var(--tone);
+}
+/* Top rail: the panel's one concentrated light source. */
+.panel::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: -1px;
+  width: min(120px, 40%);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--rail);
+  box-shadow:
+    0 0 10px var(--rail),
+    0 0 2px var(--rail);
+  pointer-events: none;
+}
+.panel[data-family='neutral']:not([data-tone])::before {
+  opacity: 0.45;
+  box-shadow: none;
+}
+/* Corner bracket (HUD geometry). */
+.panel::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid color-mix(in srgb, var(--fam) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--fam) 70%, transparent);
+  pointer-events: none;
 }
 .panel__header {
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 4px 12px;
-  padding: 12px var(--space) 0;
+  padding: 12px var(--space) 8px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--fam) 45%, transparent),
+      transparent 70%
+    )
+    1;
+}
+/* Technical trace: a small tick ruler at the header's top right. */
+.panel__header::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 6px;
+  width: 44px;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--fam) 70%, transparent) 0 1px,
+    transparent 1px 6px
+  );
+  opacity: 0.8;
+  pointer-events: none;
 }
 .panel__eyebrow {
   font-size: 11px;
@@ -53,10 +149,26 @@
   color: var(--text-faint);
 }
 .panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
   font-weight: 650;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--fam) 75%, white);
+}
+/* Family core dot: a small light, not a status. */
+.panel__title::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fam);
+  box-shadow: 0 0 8px var(--fam);
+  flex-shrink: 0;
+}
+.panel[data-family='neutral'] .panel__title {
   color: var(--text-dim);
 }
 .panel__actions {
@@ -66,6 +178,9 @@
 }
 .panel__body {
   padding: 12px var(--space) var(--space);
+}
+.panel__header + .panel__body {
+  padding-top: 10px;
 }
 
 /* ---- Badge ------------------------------------------------------------- */
@@ -197,11 +312,11 @@
   background:
     radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.1) 1px, transparent 1.5px) 0 0 / 6px
       6px,
-    #03060a;
+    var(--surface-void);
   border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--line-strong));
   box-shadow:
     inset 0 0 18px rgba(0, 0, 0, 0.8),
-    0 0 0 3px #0a0f16,
+    0 0 0 3px var(--instrument-bezel),
     0 0 0 4px var(--line);
   line-height: 1;
 }
@@ -310,9 +425,9 @@ a.stat:hover {
   background: transparent;
 }
 .btn--danger {
-  background: #9f1239;
-  border-color: #fb7185;
-  color: #fff;
+  background: var(--danger-strong);
+  border-color: var(--danger-soft);
+  color: var(--on-danger);
 }
 .icon-btn {
   display: inline-grid;
@@ -344,7 +459,7 @@ a.stat:hover {
   color: var(--text-dim);
 }
 .chip--hot {
-  color: #fb7185;
+  color: var(--danger-soft);
   border-color: color-mix(in srgb, var(--tone-danger) 40%, transparent);
   text-transform: uppercase;
 }
@@ -352,8 +467,8 @@ a.stat:hover {
   color: var(--tone-info);
 }
 .chip--auth {
-  color: var(--tone-warning);
-  border-color: color-mix(in srgb, var(--tone-warning) 50%, transparent);
+  color: var(--tone-founder);
+  border-color: color-mix(in srgb, var(--tone-founder) 50%, transparent);
 }
 .chip--noauth {
   color: var(--text-faint);
@@ -373,8 +488,12 @@ a.stat:hover {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #0b0f16;
-  background: repeating-linear-gradient(135deg, #fbbf24 0 6px, #f59e0b 6px 12px);
+  color: var(--on-simulated);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--simulated-stripe-a) 0 6px,
+    var(--simulated-stripe-b) 6px 12px
+  );
 }
 
 .empty {
@@ -513,9 +632,9 @@ a.stat:hover {
 
 /* Deep-link landing highlight (see useFocusTarget). Static outline: no motion needed. */
 [data-targeted='true'] {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus) 18%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 18%, transparent);
 }
 .palette__status {
   color: var(--text);
@@ -647,7 +766,7 @@ a.stat:hover {
   font: 600 0.72rem/1.5 var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--tone-warning);
+  color: var(--tone-simulated);
   /* Wrap at spaces; break inside a word only when one word alone cannot fit
      (break-word, unlike anywhere, keeps the tag's minimum width a whole word,
      so the surrounding row wraps the tag to its own line first). */
@@ -655,8 +774,9 @@ a.stat:hover {
   overflow-wrap: break-word;
   max-width: 100%;
 }
+/* Founder-gated is authority still OWED, never a positive state: amber. */
 .action-class[data-action-class='FOUNDER_GATED_OPERATION'] {
-  color: var(--tone-success);
+  color: var(--tone-founder);
 }
 .action-class[data-action-class='UNAVAILABLE'] {
   color: var(--text-dim);
@@ -713,4 +833,9 @@ a.stat:hover {
 }
 .ladder__evidence {
   overflow-wrap: anywhere;
+}
+
+/* Mission number: the lifetime ordinal, with where it comes from. */
+.mission-number__note {
+  display: block;
 }

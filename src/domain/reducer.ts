@@ -1,4 +1,5 @@
 import type { DashboardEvent } from './events';
+import { isOrdinal } from './missionNumber';
 import { MAX_EVENTS, MAX_MESSAGES, type DashboardSnapshot } from './snapshot';
 import type { ApprovalDecision, ApprovalStatus, Mission, Worker } from './types';
 
@@ -42,9 +43,15 @@ const DECISION_STATUS: Record<ApprovalDecision, ApprovalStatus> = {
 
 function reduceDomain(s: DashboardSnapshot, e: DashboardEvent): DashboardSnapshot {
   switch (e.kind) {
-    case 'mission.created':
-      if (s.missions.some((m) => m.id === e.payload.mission.id)) return s;
-      return { ...s, missions: [...s.missions, e.payload.mission] };
+    case 'mission.created': {
+      const created = e.payload.mission;
+      if (s.missions.some((m) => m.id === created.id)) return s;
+      // Ordinals are never reused: a new mission claiming a number another
+      // mission already holds is shown with an unknown number instead.
+      const reused =
+        isOrdinal(created.ordinal) && s.missions.some((m) => m.ordinal === created.ordinal);
+      return { ...s, missions: [...s.missions, reused ? { ...created, ordinal: null } : created] };
+    }
 
     case 'worker.assigned': {
       if (!e.workerId || !e.missionId) return s;

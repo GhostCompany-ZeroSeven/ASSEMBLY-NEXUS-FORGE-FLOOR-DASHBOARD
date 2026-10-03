@@ -12,6 +12,7 @@ import type { ApprovalDecision, ApprovalRequest } from '@/domain/types';
 import { refusalText } from '@/i18n/refusal';
 import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 const DECISION_ICON: Record<ApprovalDecision, 'check' | 'x' | 'hold'> = {
   APPROVE: 'check',
@@ -28,6 +29,7 @@ const DECISION_ICON: Record<ApprovalDecision, 'check' | 'x' | 'hold'> = {
  */
 export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
   const snapshot = useSnapshot();
+  const missionRef = useMissionLabel();
   // Only alerts that explicitly name this gate as affected (no inferred links).
   const relatedAlerts = snapshot.alerts.filter((al) =>
     al.affected.some((x) => x.kind === 'approval' && x.id === request.id),
@@ -102,7 +104,7 @@ export function ApprovalGateCard({ request }: { request: ApprovalRequest }) {
           <span className="mono">{request.id}</span>
           {request.missionId && (
             <a className="mono" href={href.mission(request.missionId)}>
-              {request.missionId}
+              {missionRef(request.missionId)}
             </a>
           )}
           <a className="target small" href={withQuery(href.activity(), { approval: request.id })}>

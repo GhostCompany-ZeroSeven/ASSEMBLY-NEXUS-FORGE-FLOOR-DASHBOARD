@@ -5,17 +5,19 @@ import { useI18n } from '@/i18n/useI18n';
 import { formatClock, missionTiming, toMs } from '@/domain/time';
 import type { Mission } from '@/domain/types';
 import { useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 /** MISSION COMPLETE / MISSION FAILED results panel. */
 export function MissionResultPanel({ mission }: { mission: Mission }) {
+  const missionRef = useMissionLabel();
   const simulated = useSnapshot().provenance.mode === 'demo';
   const { m } = useI18n();
   const c = m.result;
   if (!mission.result || (mission.status !== 'COMPLETE' && mission.status !== 'FAILED'))
     return null;
   const success = mission.status === 'COMPLETE';
-  // Finished missions have completedAt, so the clock argument is unused.
-  const t = missionTiming(mission, toMs(mission.completedAt) ?? 0);
+  // A finished mission's duration comes from its reported end time only.
+  const t = missionTiming(mission, toMs(mission.completedAt) ?? Number.NaN, { finished: true });
   const r = mission.result;
 
   return (
@@ -29,7 +31,7 @@ export function MissionResultPanel({ mission }: { mission: Mission }) {
       </div>
       <div className="result__main">
         <div className="result__eyebrow">
-          {mission.id}
+          {missionRef(mission)}
           {simulated && <SimulatedTag>{c.simulated}</SimulatedTag>}
         </div>
         <h2 className="result__title" id={`result-${mission.id}`}>

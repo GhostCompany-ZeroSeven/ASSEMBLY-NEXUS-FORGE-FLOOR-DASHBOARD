@@ -30,6 +30,8 @@ import { useFocusTarget } from '@/hooks/useFocusTarget';
 import { useWorkerRoom } from '@/hooks/useWorkerRoom';
 import { AlertCard } from '@/features/alerts/AlertCard';
 import { useI18n } from '@/i18n/useI18n';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
+import { missionNumber, resolveNumbering } from '@/domain/missionNumber';
 
 const TASK_TONE: Record<TaskStatus, Tone> = {
   PENDING: 'muted',
@@ -53,8 +55,9 @@ export function MissionDetail({ missionId }: { missionId: string }) {
  */
 function MissionCommand({ missionId }: { missionId: string }) {
   const snapshot = useSnapshot();
+  const missionRef = useMissionLabel();
   const { status } = useDashboard();
-  const { governance } = useConfig();
+  const { governance, missionNumbering } = useConfig();
   const now = useNow(5000);
   const { m, rel } = useI18n();
   const t = m.mission;
@@ -103,6 +106,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
   }
 
   const meta = MISSION_STATUS_META[mission.status];
+  const number = missionNumber(mission, resolveNumbering(missionNumbering));
   const workers = mission.assignedWorkerIds
     .map((id) => snapshot.workers.find((w) => w.id === id))
     .filter((w) => w !== undefined);
@@ -120,7 +124,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
       </a>
       <header className="page__header">
         <div>
-          <div className="page__eyebrow mono">{mission.id}</div>
+          <div className="page__eyebrow mono">{missionRef(mission)}</div>
           <h1 className="page__title">{mission.title}</h1>
           <p className="page__lede">{mission.objective}</p>
         </div>
@@ -133,14 +137,23 @@ function MissionCommand({ missionId }: { missionId: string }) {
       <MissionResultPanel mission={mission} />
 
       <div className="grid grid--mission">
-        <Panel title={t.instrumentation} className="span-2" tone={meta.tone}>
+        <Panel family="ops" title={t.instrumentation} className="span-2" tone={meta.tone}>
           <MissionInstrument mission={mission} size="xl" />
           <ProgressBar value={mission.progress} tone={meta.tone} label={t.progress} />
         </Panel>
 
-        <Panel title={t.record}>
+        <Panel family="ops" title={t.record}>
           <KeyValue
             items={[
+              [
+                t.number,
+                <span data-testid="mission-number" data-ordinal={mission.ordinal ?? 'unknown'}>
+                  <span className="mono">{number ?? t.numberUnknown}</span>
+                  <span className="small muted mission-number__note">
+                    {snapshot.provenance.mode === 'demo' ? t.numberDemo : t.numberNote}
+                  </span>
+                </span>,
+              ],
               [
                 t.status,
                 <StatusBadge tone={meta.tone}>{m.status.mission[mission.status]}</StatusBadge>,
@@ -168,6 +181,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
         <MissionLifecyclePanel mission={mission} />
 
         <Panel
+          family="founder"
           id="mission-attention"
           focusId="attention"
           title={m.missionView.attentionTitle}
@@ -193,7 +207,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
         <div className="span-2 mission-changes-slot">{changesPanel}</div>
 
         {approvals.length > 0 && (
-          <Panel title={t.gates} className="span-3">
+          <Panel family="founder" title={t.gates} className="span-3">
             <div className="gate-list">
               {approvals.map((a) => (
                 <ApprovalGateCard key={a.id} request={a} />
@@ -203,6 +217,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
         )}
 
         <Panel
+          family="signal"
           title={t.timeline}
           className="span-3"
           actions={
@@ -220,7 +235,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
         </Panel>
 
         {alerts.length > 0 && (
-          <Panel title={t.alerts(alerts.length)} className="span-3">
+          <Panel family="signal" title={t.alerts(alerts.length)} className="span-3">
             <div className="stack">
               {alerts.map((al) => (
                 <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
@@ -229,7 +244,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
           </Panel>
         )}
 
-        <Panel title={t.crew}>
+        <Panel family="floor" title={t.crew}>
           {workers.length === 0 ? (
             <EmptyState title={t.unassigned} />
           ) : (
@@ -262,7 +277,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
           )}
         </Panel>
 
-        <Panel title={t.tasks} className="span-2">
+        <Panel family="ops" title={t.tasks} className="span-2">
           {mission.tasks.length === 0 ? (
             <EmptyState title={t.noTasks} />
           ) : (
@@ -288,7 +303,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
           )}
         </Panel>
 
-        <Panel title={t.dependencies}>
+        <Panel family="ops" title={t.dependencies}>
           {deps.length === 0 ? (
             <EmptyState title={t.noDependencies} />
           ) : (
@@ -317,7 +332,7 @@ function MissionCommand({ missionId }: { missionId: string }) {
           now={now}
         />
 
-        <Panel title={t.review}>
+        <Panel family="review" title={t.review}>
           <KeyValue
             items={[
               [t.status, m.status.review[mission.review.status]],

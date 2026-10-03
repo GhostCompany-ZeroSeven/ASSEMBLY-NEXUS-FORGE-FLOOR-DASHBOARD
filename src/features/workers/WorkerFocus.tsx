@@ -24,6 +24,7 @@ import { MissionInstrument } from '@/features/missions/MissionInstrument';
 import { useConfig, useNow, useSnapshot } from '@/store/hooks';
 import { ConversationPanel } from './ConversationPanel';
 import { WorkerCard } from './WorkerCard';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 /**
  * Full-screen worker inspection/interaction view. Escape returns to the
@@ -31,6 +32,7 @@ import { WorkerCard } from './WorkerCard';
  */
 export function WorkerFocus({ workerId }: { workerId: string }) {
   const snapshot = useSnapshot();
+  const missionRef = useMissionLabel();
   const { crews, floor } = useConfig();
   const now = useNow(1000);
   const { m, rel } = useI18n();
@@ -152,11 +154,11 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
       </header>
 
       <div className="grid grid--focus">
-        <Panel title={t.currentJob} className="span-2">
+        <Panel family="ops" title={t.currentJob} className="span-2">
           {mission ? (
             <>
               <a href={href.mission(mission.id)} className="focus__mission-link">
-                <span className="mono">{mission.id}</span> {mission.title}
+                <span className="mono">{missionRef(mission)}</span> {mission.title}
               </a>
               <p className="muted">{mission.objective}</p>
               <MissionInstrument mission={mission} size="md" />
@@ -177,15 +179,15 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           )}
         </Panel>
 
-        <Panel title={t.statusCard}>
+        <Panel family="floor" title={t.statusCard}>
           <WorkerCard worker={worker} />
         </Panel>
 
-        <Panel title={t.conversation} className="span-2">
+        <Panel family="signal" title={t.conversation} className="span-2">
           <ConversationPanel worker={worker} />
         </Panel>
 
-        <Panel title={t.blockers}>
+        <Panel family="signal" title={t.blockers}>
           {worker.blockers.length === 0 && (!mission || mission.dependsOn.length === 0) ? (
             <EmptyState title={t.nothingBlocking} />
           ) : (
@@ -209,6 +211,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
         </Panel>
 
         <Panel
+          family="signal"
           title={t.timeline}
           className="span-2"
           actions={
@@ -220,7 +223,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
           <ActivityStream filter={{ workerId: worker.id, includeLowSignal: true }} limit={80} />
         </Panel>
 
-        <Panel title={t.artifactsTitle(artifacts.length)}>
+        <Panel family="ops" title={t.artifactsTitle(artifacts.length)}>
           {artifacts.length === 0 ? (
             <EmptyState title={t.noArtifacts} />
           ) : (
@@ -230,7 +233,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
                   <Icon name="artifact" size={13} />{' '}
                   <a href={withQuery(href.mission(a.missionId), { focus: a.id })}>{a.title}</a>{' '}
                   <span className="chip">{m.status.artifact[a.kind]}</span>{' '}
-                  <span className="small muted mono">{a.missionId}</span>
+                  <span className="small muted mono">{missionRef(a.missionId)}</span>
                 </li>
               ))}
             </ul>
@@ -238,7 +241,11 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
         </Panel>
 
         {alerts.length > 0 && (
-          <Panel title={t.alerts(worker.name.split(' ')[0]!, alerts.length)} className="span-3">
+          <Panel
+            family="signal"
+            title={t.alerts(worker.name.split(' ')[0]!, alerts.length)}
+            className="span-3"
+          >
             <div className="stack">
               {alerts.map((al) => (
                 <AlertCard key={al.id} alert={al} compact={!!al.resolvedAt} />
@@ -248,7 +255,7 @@ export function WorkerFocus({ workerId }: { workerId: string }) {
         )}
 
         {approvals.length > 0 && (
-          <Panel title={t.approvals} className="span-3">
+          <Panel family="founder" title={t.approvals} className="span-3">
             <div className="gate-list">
               {approvals.map((a) => (
                 <ApprovalGateCard key={a.id} request={a} />

@@ -8,6 +8,7 @@ import { formatClock, missionTiming } from '@/domain/time';
 import type { Mission } from '@/domain/types';
 import { useI18n } from '@/i18n/useI18n';
 import { useNow, useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 export function MissionCard({
   mission,
@@ -19,9 +20,15 @@ export function MissionCard({
 }) {
   const snapshot = useSnapshot();
   const now = useNow(1000);
+  const missionRef = useMissionLabel();
   const { m } = useI18n();
   const meta = MISSION_STATUS_META[mission.status];
-  const t = missionTiming(mission, now);
+  const t = missionTiming(mission, now, {
+    finished:
+      mission.status === 'COMPLETE' ||
+      mission.status === 'FAILED' ||
+      mission.status === 'CANCELLED',
+  });
   const workers = mission.assignedWorkerIds
     .map((id) => snapshot.workers.find((w) => w.id === id))
     .filter((w) => w !== undefined);
@@ -36,7 +43,7 @@ export function MissionCard({
       <div className="mission-card__rail" aria-hidden="true" />
       <div className="mission-card__main">
         <div className="mission-card__top">
-          <span className="mono mission-card__id">{mission.id}</span>
+          <span className="mono mission-card__id">{missionRef(mission)}</span>
           <StatusBadge tone={meta.tone} size="sm" pulse={mission.status === 'ACTIVE'}>
             {m.status.mission[mission.status]}
           </StatusBadge>

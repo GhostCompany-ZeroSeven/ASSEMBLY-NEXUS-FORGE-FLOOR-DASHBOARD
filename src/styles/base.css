@@ -18,10 +18,18 @@ body {
 
 body {
   min-height: 100vh;
+  /* Nexus foundation: faint UV / cyan atmosphere over the 34px technical grid
+     (the same pitch as the ambient dot lattice). */
   background-image:
+    radial-gradient(1200px 500px at 70% -10%, var(--bg-wash-a), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, var(--bg-wash-b), transparent 60%),
     linear-gradient(var(--bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size:
+    auto,
+    auto,
+    34px 34px,
+    34px 34px;
   background-attachment: fixed;
 }
 
@@ -53,7 +61,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -113,7 +121,7 @@ textarea {
   top: -40px;
   z-index: 100;
   background: var(--accent);
-  color: #000;
+  color: var(--on-accent);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
 }

@@ -87,7 +87,7 @@ export function AlertsPage() {
         </Panel>
       ) : (
         <>
-          <Panel title={t.open(open.length)}>
+          <Panel family="signal" title={t.open(open.length)}>
             {open.length === 0 ? (
               <EmptyState title={t.noOpenMatch}>{t.allResolved}</EmptyState>
             ) : (
@@ -98,7 +98,7 @@ export function AlertsPage() {
               </div>
             )}
           </Panel>
-          <Panel title={t.resolved(resolved.length)}>
+          <Panel family="signal" title={t.resolved(resolved.length)}>
             {resolved.length === 0 ? (
               <EmptyState title={t.nothingResolved} />
             ) : (

@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react';
 import { href, withQuery } from '@/app/router';
 import { Icon, type IconName } from '@/components/Icon';
-import { HEALTH_STATUS_META, type Tone } from '@/domain/status';
+import { healthTone, type Tone } from '@/domain/status';
 import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useDashboard, useNow, useSnapshot } from '@/store/hooks';
 import { selectSituation, type SituationResource } from './situation';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 const DATA_TONE: Record<string, Tone> = {
   demo: 'warning',
-  live: 'success',
+  live: 'connected',
   disconnected: 'danger',
   replay: 'progress',
 };
@@ -19,6 +20,7 @@ const DATA_TONE: Record<string, Tone> = {
  */
 export function SituationBoard() {
   const snapshot = useSnapshot();
+  const missionRef = useMissionLabel();
   const { status } = useDashboard();
   const { governance } = useConfig();
   const now = useNow(5000);
@@ -34,16 +36,13 @@ export function SituationBoard() {
   const missionsMissing = missing('missions');
   const display = s.data.display as keyof typeof t.data;
   const data = t.data[display];
-  const health = HEALTH_STATUS_META[s.backend.health];
-  const backendTone: Tone =
-    s.backend.connection === 'error' || s.backend.health === 'CRITICAL'
-      ? 'danger'
-      : s.backend.stale ||
-          s.backend.partial ||
-          s.backend.health === 'DEGRADED' ||
-          s.backend.connection === 'reconnecting'
-        ? 'warning'
-        : health.tone;
+  const backendTone = healthTone({
+    status: s.backend.health,
+    connection: s.backend.connection,
+    stale: s.backend.stale,
+    partial: s.backend.partial,
+    simulated: display === 'demo',
+  });
   const blockedAny = s.blocked.workers + s.blocked.missions > 0;
 
   return (
@@ -54,7 +53,8 @@ export function SituationBoard() {
       <Cell
         q={t.needs(governance.humanAuthority)}
         icon="gate"
-        tone={founderCount > 0 || founderMissing.length ? 'warning' : 'success'}
+        // "Nothing waiting" is calm, not a lime all-clear (it may be stale).
+        tone={founderCount > 0 || founderMissing.length ? 'warning' : 'muted'}
         answer={
           founderCount > 0
             ? t.items(founderCount, founderMissing.length > 0)
@@ -172,7 +172,7 @@ export function SituationBoard() {
             ? unknown(missionsMissing)
             : s.failed.latest
               ? t.latest(
-                  s.failed.latest.id,
+                  missionRef(s.failed.latest),
                   s.failed.latest.title,
                   s.failed.latest.completedAt ? rel(s.failed.latest.completedAt, now) : undefined,
                 )
@@ -186,7 +186,7 @@ export function SituationBoard() {
         tone={s.completed.latest ? 'success' : missionsMissing.length ? 'warning' : 'muted'}
         answer={
           s.completed.latest
-            ? s.completed.latest.id
+            ? missionRef(s.completed.latest)
             : missionsMissing.length
               ? t.unknown
               : t.nothingYet

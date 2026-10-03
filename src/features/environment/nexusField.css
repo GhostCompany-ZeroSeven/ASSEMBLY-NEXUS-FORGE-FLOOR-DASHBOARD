@@ -1,0 +1,62 @@
+/*
+ * Nexus ambient dot field (C5 visual signature). Loaded only with the field's
+ * own chunk, so the default (OFF) dashboard carries none of these rules.
+ * One environmental layer over the visible main area (placed by the
+ * component), stacked behind the page content: panels (opaque surfaces) hide
+ * it, so it shows in the gaps between modules, never over text or controls.
+ */
+.page--field {
+  position: relative;
+  isolation: isolate;
+}
+.nx-field {
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+ * Circular cursor (approved C5 treatment): a 12px instrument reticle with a
+ * 2px centre, shown only over the field's open space for a fine pointer.
+ * Never over text or controls (the native cursor returns there), never
+ * receives input, and is absent on touch.
+ */
+.nx-reticle {
+  position: fixed;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(230, 251, 255, 0.92);
+  box-shadow: 0 0 6px rgba(60, 230, 255, 0.35);
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  will-change: transform;
+}
+.nx-reticle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+  border-radius: 50%;
+  background: rgba(230, 251, 255, 0.95);
+}
+.nx-reticle[data-visible='true'] {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .page--field[data-reticle='on'] {
+    cursor: none;
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .nx-reticle {
+    display: none;
+  }
+}

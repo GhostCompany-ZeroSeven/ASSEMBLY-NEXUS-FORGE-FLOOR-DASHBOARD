@@ -32,7 +32,13 @@ export function MissionLifecyclePanel({ mission }: { mission: Mission }) {
   const t = m.ops.ladder;
   const rungs = missionLifecycle(mission, snapshot);
   return (
-    <Panel title={t.title} className="span-3" focusId="lifecycle" id="mission-lifecycle">
+    <Panel
+      family="ops"
+      title={t.title}
+      className="span-3"
+      focusId="lifecycle"
+      id="mission-lifecycle"
+    >
       <p className="small muted">{t.lede}</p>
       <ol className="ladder">
         {rungs.map((r) => {

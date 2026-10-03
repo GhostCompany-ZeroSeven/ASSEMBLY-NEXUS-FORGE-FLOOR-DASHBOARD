@@ -27,7 +27,7 @@
       color-mix(in srgb, var(--accent-2) 8%, transparent),
       transparent 60%
     ),
-    #04070b;
+    var(--floor-bg);
   overflow: hidden;
   isolation: isolate;
 }
@@ -85,10 +85,10 @@
 .room[data-kind='founder-gate']::before {
   background:
     var(--room-floor), linear-gradient(180deg, rgba(60, 42, 8, 0.55), rgba(12, 18, 27, 0.96));
-  border-color: color-mix(in srgb, var(--tone-warning) 40%, var(--line-strong));
+  border-color: color-mix(in srgb, var(--tone-founder) 40%, var(--line-strong));
 }
 .room[data-gate-waiting='true']::before {
-  border-color: var(--tone-warning);
+  border-color: var(--tone-founder);
   box-shadow:
     inset 0 0 36px rgba(251, 191, 36, 0.14),
     0 0 0 1px rgba(251, 191, 36, 0.3);
@@ -138,8 +138,8 @@
   border-radius: 3px;
   font-size: 10px;
   font-weight: 700;
-  color: #1a1200;
-  background: var(--tone-warning);
+  color: var(--on-founder);
+  background: var(--tone-founder);
   white-space: nowrap;
 }
 .room__tag {
@@ -147,7 +147,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #7dd3fc;
+  color: var(--crew-den);
 }
 .room__equipment {
   position: absolute;
@@ -181,7 +181,7 @@
   gap: 6px;
   align-items: center;
   font-size: 11px;
-  color: #7dd3fc;
+  color: var(--crew-den);
   opacity: 0.8;
 }
 .floor--compact .room__equipment {
@@ -604,11 +604,11 @@
   line-height: 1.5;
 }
 .token[data-founder] .token__state {
-  color: #1a1200;
-  background: var(--tone-warning);
+  color: var(--on-founder);
+  background: var(--tone-founder);
 }
 .token[data-founder] .token__plate {
-  border-color: var(--tone-warning);
+  border-color: var(--tone-founder);
 }
 
 /* Every state has a glyph bubble now; keep it compact. */
@@ -690,7 +690,7 @@
 }
 .room[data-kind='founder-gate'] .room__label,
 .room[data-kind='founder-gate'] .room__label--button {
-  color: var(--tone-warning);
+  color: var(--tone-founder);
 }
 
 .floor__movement {

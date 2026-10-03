@@ -148,6 +148,7 @@ function AttentionPanel({
   const records = items.filter((i) => i.source !== 'data');
   return (
     <Panel
+      family="founder"
       id="brief-attention"
       focusId="attention"
       title={t.title}
@@ -203,6 +204,7 @@ function DigestPanel({ digest, now }: { digest: Digest; now: number }) {
 
   return (
     <Panel
+      family="signal"
       id="brief-digest"
       focusId="digest"
       title={t.title}
@@ -341,6 +343,7 @@ function ProblemsPanel({
   };
   return (
     <Panel
+      family="systems"
       id="brief-problems"
       focusId="problems"
       title={t.title}

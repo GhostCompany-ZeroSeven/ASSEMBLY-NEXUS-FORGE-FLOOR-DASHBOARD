@@ -80,3 +80,51 @@ describe('selectors', () => {
     expect(redAlertActive(s)).toBe(false);
   });
 });
+
+describe('mission timing hardening (Nexus Signature operational campaign)', () => {
+  const now = Date.parse('2026-09-30T12:00:00Z');
+  const iso = (ms: number) => new Date(ms).toISOString();
+
+  it('never renders NaN: a non-finite duration is dashes', () => {
+    expect(formatClock(Number.NaN)).toBe('--:--:--');
+    expect(formatClock(Number.POSITIVE_INFINITY)).toBe('--:--:--');
+  });
+
+  it('a missing, zero, negative or non-finite estimate is NO estimate (never 00:00:00 left)', () => {
+    for (const durationMs of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const t = missionTiming({ startedAt: iso(now - 60_000), estimate: { durationMs } }, now);
+      expect(t.remainingMs, String(durationMs)).toBeNull();
+      expect(t.overrun).toBe(false);
+      expect(t.elapsedMs).toBe(60_000);
+    }
+  });
+
+  it('an end before the start is inconsistent, not a zero duration', () => {
+    const t = missionTiming({ startedAt: iso(now), completedAt: iso(now - 3_600_000) }, now, {
+      finished: true,
+    });
+    expect(t.elapsedMs).toBeNull();
+    expect(t.anomaly).toBe('inconsistent');
+  });
+
+  it('a start far in the future is inconsistent; small clock skew reads as 0', () => {
+    expect(missionTiming({ startedAt: iso(now + 3_600_000) }, now).anomaly).toBe('inconsistent');
+    expect(missionTiming({ startedAt: iso(now + 5_000) }, now).elapsedMs).toBe(0);
+  });
+
+  it('a finished mission without a reported end does not keep ticking', () => {
+    const t = missionTiming({ startedAt: iso(now - 60_000) }, now, { finished: true });
+    expect(t.elapsedMs).toBeNull();
+    expect(t.anomaly).toBe('end-unreported');
+    const bad = missionTiming({ startedAt: iso(now - 60_000), completedAt: 'not a date' }, now);
+    expect(bad.anomaly).toBe('end-unreported');
+  });
+
+  it('malformed start is "not started", not an elapsed time', () => {
+    expect(missionTiming({ startedAt: 'garbage' }, now).elapsedMs).toBeNull();
+  });
+
+  it('long missions keep counting past 99 hours (no wrap)', () => {
+    expect(formatClock(123 * 3_600_000 + 61_000)).toBe('123:01:01');
+  });
+});

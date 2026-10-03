@@ -1,8 +1,15 @@
 /*
- * Assembly Nexus design tokens.
- * Themes override these custom properties via [data-theme] on <html>.
- * Components reference tokens only — never raw colors — so themes and
- * third-party brands can restyle everything from one place.
+ * Assembly Nexus design tokens: the CORE semantic layer. The shipped default
+ * presentation is NEXUS SIGNATURE (Founder-approved Remock 02): a near-black
+ * foundation, luminous panel families and the protected Founder amber.
+ * Raw Nexus palette values live in nexus-palette.css.
+ *
+ * Components reference tokens only — never raw colours — so a downstream
+ * deployment can restyle everything from one place. `[data-theme]` on <html>
+ * selects a variant (Snow Wolf below); there is no second "classic" product.
+ *
+ * `--accent` (chrome) and `--brand` (house mark) are not aliased because
+ * Red Alert re-declares them on .shell.
  */
 :root,
 [data-theme='forge'] {
@@ -13,30 +20,89 @@
     'JetBrains Mono Variable', 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code',
     Menlo, Consolas, monospace;
 
-  --bg: #06090e;
-  --bg-grid: rgba(56, 189, 248, 0.045);
-  --surface: #0c121b;
-  --surface-2: #111a26;
-  --surface-3: #172333;
-  --line: #1c2837;
-  --line-strong: #2a3a50;
+  --bg: #04050a;
+  --bg-grid: rgba(60, 230, 255, 0.035);
+  --bg-wash-a: rgba(177, 76, 255, 0.07); /* UV atmosphere, top right */
+  --bg-wash-b: rgba(60, 230, 255, 0.05); /* cyan atmosphere, bottom left */
+  --surface: #080b12;
+  --surface-2: #0b0f18;
+  --surface-3: #111726;
+  --line: #161c2c;
+  --line-strong: #232c44;
   --text: #e7edf5;
   --text-dim: #9fb0c4;
   --text-faint: #8494aa; /* ≥4.7:1 on every surface (WCAG AA) */
 
-  --accent: #f59e0b; /* ember */
-  --accent-2: #22d3ee; /* instrument cyan */
+  --accent: #3ce6ff; /* Nexus chrome: instrument cyan */
+  --accent-2: #3ce6ff; /* links, instrument cyan */
+  --brand: #f59e0b; /* house mark (A•N): protected ember amber */
+  --eyebrow: #ff4fd8; /* page eyebrows: signal magenta */
   --ember: #fb923c;
   --focus: #fbbf24;
 
   --tone-neutral: #94a3b8;
   --tone-muted: #64748b;
-  --tone-info: #38bdf8;
-  --tone-active: #22d3ee;
-  --tone-progress: #a78bfa;
-  --tone-success: #34d399;
-  --tone-warning: #fbbf24;
-  --tone-danger: #f43f5e;
+  --tone-info: #5b8cff; /* systems / informational: cool blue */
+  --tone-active: #3ce6ff; /* running operations: cyan */
+  --tone-progress: #b14cff; /* review / held: ultraviolet */
+  --tone-success: #9dff3c; /* data-backed completion only: lime */
+  --tone-warning: #fbbf24; /* protected Founder amber */
+  --tone-danger: #f43f5e; /* actual failure */
+
+  /*
+   * Semantic roles split out of the shared tones (Visual DNA Wave A).
+   * Founder and simulated stay on the protected amber.
+   */
+  --tone-founder: var(--tone-warning); /* Founder attention, gates, authority */
+  --tone-simulated: var(--tone-warning); /* demo / simulated provenance */
+  --tone-connectivity: #2de2c4; /* live data flow / floor: turquoise */
+  --tone-verified: var(--tone-success); /* data-backed success */
+  --focus-ring: var(--focus);
+
+  /*
+   * Panel families (Nexus Signature). A family is the panel's place in the
+   * information architecture, chosen explicitly by the caller — never a
+   * status, never inferred from text. Status colour inside stays truthful.
+   */
+  --family-ops: #3ce6ff;
+  --family-floor: #2de2c4;
+  --family-signal: #ff4fd8;
+  --family-review: #b14cff;
+  --family-systems: #5b8cff;
+  --family-founder: #fbbf24;
+  --family-neutral: #64748b;
+
+  /*
+   * Decision actions vs decided states. APPROVE is a green action
+   * (Founder-directed); APPROVED is the lime state. They differ in hue
+   * intensity and in shape (outlined action vs filled state badge).
+   */
+  --action-approve: #4ade80;
+  --action-deny: var(--tone-danger);
+  --action-hold: var(--tone-progress);
+
+  /* Fixed-value roles that were literals in component styles. */
+  --surface-sunken: #070b11;
+  --surface-pit: #05080d;
+  --surface-void: #03060a;
+  --floor-bg: #04070b;
+  --overlay-scrim: rgba(2, 4, 8, 0.72);
+  --instrument-bezel: #0a0f16;
+  --instrument-grid: rgba(34, 211, 238, 0.04);
+  --simulated-stripe-a: #fbbf24;
+  --simulated-stripe-b: #f59e0b;
+  --on-simulated: #0b0f16;
+  --on-founder: #1a1200;
+  --on-progress: #120a24;
+  --on-danger: #fff;
+  --on-accent: #000;
+  --danger-strong: #9f1239;
+  --danger-soft: #fb7185;
+  --danger-text: #fda4af;
+  --red-alert-deep: #7f1d1d;
+  --red-alert-core: #be123c;
+  --red-alert-line: #5b1a28;
+  --crew-den: #7dd3fc;
 
   --equip-metal: #475569;
   --equip-dark: #1e293b;
@@ -78,6 +144,8 @@
   --ember: #93c5fd;
   --focus: #7dd3fc;
   --tone-active: #7dd3fc;
+  --family-ops: #7dd3fc;
+  --eyebrow: #7dd3fc;
   --equip-glow: #7dd3fc;
   --gate-lamp: #7dd3fc;
 }
@@ -89,5 +157,6 @@
 /* Red Alert overrides the accent family inside the shell only. */
 .shell[data-red-alert='true'] {
   --accent: #f43f5e;
-  --line-strong: #5b1a28;
+  --brand: #f43f5e;
+  --line-strong: var(--red-alert-line);
 }

@@ -23,7 +23,13 @@ export function ContractPanel({ snapshot, now }: { snapshot: DashboardSnapshot; 
   const env = snapshot.provenance.mode === 'demo' ? undefined : snapshot.provenance.environment;
 
   return (
-    <Panel title={t.title} className="span-2 contract" focusId="contract" id="contract">
+    <Panel
+      family="systems"
+      title={t.title}
+      className="span-2 contract"
+      focusId="contract"
+      id="contract"
+    >
       <p className="muted small">{t.lede}</p>
       <div className="contract__profile" data-profile-kind={profile.kind}>
         <span className="contract__kind">{t.kind[profile.kind]}</span>

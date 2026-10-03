@@ -142,7 +142,7 @@ export function ForgeFloorPage() {
       </div>
 
       <div className="floor-layout">
-        <Panel className="floor-panel">
+        <Panel family="floor" className="floor-panel">
           <ForgeFloorMap
             selectedId={selected}
             onSelect={(id) =>
@@ -172,7 +172,7 @@ export function ForgeFloorPage() {
               )}
             </>
           ) : (
-            <Panel title={t.selectTitle}>
+            <Panel family="floor" title={t.selectTitle}>
               <p className="muted">{t.selectBody}</p>
             </Panel>
           )}
@@ -195,6 +195,7 @@ function RoomPanel({ roomId, onClose }: { roomId: string; onClose: () => void })
 
   return (
     <Panel
+      family="floor"
       eyebrow={crew ? `${crew.label}${crew.status === 'reserved' ? t.reservedSuffix : ''}` : t.room}
       title={room.label}
       actions={

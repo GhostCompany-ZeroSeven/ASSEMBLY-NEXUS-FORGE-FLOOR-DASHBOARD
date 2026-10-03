@@ -4,6 +4,7 @@ import { describeEvent } from '@/domain/describe';
 import type { DashboardSnapshot } from '@/domain/snapshot';
 import { layoutFloor } from '@/features/forge-floor/layout';
 import { en, type Messages } from '@/i18n/en';
+import { missionLabel, resolveNumbering, type MissionNumbering } from '@/domain/missionNumber';
 
 export type SearchType =
   'mission' | 'worker' | 'room' | 'alert' | 'approval' | 'artifact' | 'event';
@@ -42,7 +43,9 @@ export function buildSearchIndex(
   s: DashboardSnapshot,
   floor: FloorConfig,
   m: Messages = en,
+  numbering?: Partial<MissionNumbering>,
 ): Entry[] {
+  const resolved = resolveNumbering(numbering);
   const entries: Entry[] = [];
   const t = m.search;
   const workerName = (id?: string) =>
@@ -101,7 +104,7 @@ export function buildSearchIndex(
         href: href.mission(mission.id),
         weight: 2,
       },
-      `${mission.objective} ${mission.priority} ${en.status.mission[mission.status]}`,
+      `${missionLabel(mission, resolved)} ${mission.objective} ${mission.priority} ${en.status.mission[mission.status]}`,
     );
     for (const art of mission.artifacts) {
       push({

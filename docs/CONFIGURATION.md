@@ -93,6 +93,32 @@ These apply only when the demo adapter is active. A real backend adapter ignores
 
 They combine, for example `?demo=stress,paused`.
 
+## Presentation: Nexus Signature
+
+Nexus Signature is the dashboard's one shipped presentation (Founder decision): near-black
+foundation, luminous panel families, protected Founder amber, the ambient dot field and the
+circular reticle on the Command Center. There is no "classic" theme. The `snow-wolf` theme is a
+colour variant of the same presentation.
+
+Customize through tokens in `src/styles/tokens.css`, never per component:
+
+| Token group                                                | Meaning                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------- |
+| `--bg`, `--surface*`, `--line*`, `--bg-wash-*`             | foundation and atmosphere                                     |
+| `--family-ops/floor/signal/review/systems/founder/neutral` | panel frame families (information architecture, not status)   |
+| `--tone-*`                                                 | truthful state colours (`success` = data-backed outcome only) |
+| `--tone-connectivity`                                      | live / reachable (not health)                                 |
+| `--action-approve/deny/hold`                               | decision ACTIONS (distinct from decided states)               |
+| `--brand`, `--accent`, `--eyebrow`                         | house mark, chrome, page eyebrows                             |
+
+Panels take an explicit `family` prop (`<Panel family="founder">`); Visual Forge Floor HUD frames
+take `data-family`. A family is chosen by the caller as a literal: never derived from the
+title text, status or DOM order (enforced by `src/components/panelFamily.test.tsx`).
+
+The dot field is on by default when `environment.ambientField` is true (Assembly Nexus);
+`?field=off` turns it off and `?field=reduced` freezes its colour cycle. A reduced-motion
+preference always freezes it. A deployment without `environment` never shows it.
+
 ## Viewer preferences
 
 Language (automatic / English / Español), theme, motion (system / reduced / full), density and

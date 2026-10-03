@@ -20,9 +20,9 @@ export function MissionInstrument({
   const { m, duration } = useI18n();
   const i = m.instrument;
   const meta = MISSION_STATUS_META[mission.status];
-  const t = missionTiming(mission, now);
   const finished =
     mission.status === 'COMPLETE' || mission.status === 'FAILED' || mission.status === 'CANCELLED';
+  const t = missionTiming(mission, now, { finished });
 
   return (
     <div className="instrument" data-tone={meta.tone} data-status={mission.status}>
@@ -36,7 +36,15 @@ export function MissionInstrument({
           ms={t.elapsedMs}
           tone={meta.tone}
           size={size}
-          caption={t.elapsedMs === null ? i.notStarted : undefined}
+          caption={
+            t.anomaly === 'inconsistent'
+              ? i.timesInconsistent
+              : t.anomaly === 'end-unreported'
+                ? i.endUnreported
+                : t.elapsedMs === null
+                  ? i.notStarted
+                  : undefined
+          }
         />
         {!finished && (
           <SegmentClock

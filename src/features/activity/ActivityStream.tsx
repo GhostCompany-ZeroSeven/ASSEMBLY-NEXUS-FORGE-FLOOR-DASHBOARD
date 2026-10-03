@@ -10,6 +10,7 @@ import { arrivedOutOfOrder, filterEvents, timelineOrder, type ActivityFilter } f
 import { eventRefs } from './refs';
 import { useI18n } from '@/i18n/useI18n';
 import { useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 type StateIndex = {
   missions: Map<string, DashboardSnapshot['missions'][number]>;
@@ -60,6 +61,7 @@ export function ActivityStream({
 }) {
   const snapshot = useSnapshot();
   const { m, pct, time, dateTime } = useI18n();
+  const missionRef = useMissionLabel();
   const late = useMemo(() => arrivedOutOfOrder(snapshot.events), [snapshot.events]);
   const index = useMemo<StateIndex | null>(
     () =>
@@ -144,7 +146,7 @@ export function ActivityStream({
                     )}
                     {e.missionId && (
                       <a className="mono" href={href.mission(e.missionId)}>
-                        {e.missionId}
+                        {missionRef(e.missionId)}
                       </a>
                     )}
                     {eventRefs(e).map((r) => (

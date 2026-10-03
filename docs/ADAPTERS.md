@@ -305,3 +305,27 @@ registerAdapter('my-backend', () => new MyAdapter(/* … */));
 5. **Transport:** polling is enough to start. An optional SSE stream is implemented against a
    mock contract (above). Whether Assembly Nexus exposes a stream, and in what format, is still
    to be decided.
+
+## ANN adapter readiness: what the UI never guesses
+
+A future ANN adapter (ANN / ADA / ALPHA / Forge systems → adapter → normalized snapshot → UI)
+plugs into the same `DashboardAdapter` contract. Nothing about it is implemented here, and no
+live ANN connection exists. These fields are **source truth**: the adapter must report them, and
+when it does not, the UI shows UNKNOWN / NOT REPORTED and never derives them:
+
+| Field                         | Never derived from                                | When missing or invalid                        |
+| ----------------------------- | ------------------------------------------------- | ---------------------------------------------- |
+| Mission ordinal               | array index, count, timestamp, sort order         | UNKNOWN; mission shown by its source id        |
+| Approval decision / authority | viewing, opening, worker capability, demo actions | gate stays pending; demo decisions "simulated" |
+| Certification                 | review state, completion, artifacts               | not certified                                  |
+| Health                        | "no error seen", a rendered page, demo simulation | UNKNOWN (neutral), never lime                  |
+| Live / connected              | demo data, cached data                            | SIMULATED / DISCONNECTED / LAST KNOWN          |
+| Elapsed / remaining time      | estimate guesses, `now` for a finished mission    | dashes + "not reported" / "inconsistent"       |
+| Worker identity / Associate   | Visual Forge Floor artwork, character art         | id only                                        |
+
+Colour follows the same rule: one function per family of facts (`healthTone`, the
+`*_STATUS_META` tables in `domain/status.ts`) decides the tone, and `success` (lime) is reserved
+for data-backed positive outcomes. `connected` (turquoise) only says data is flowing. A
+simulated "nominal" is simulated amber. Tests: `src/domain/truthfulColour.test.ts`,
+`src/app/truthfulHealth.test.tsx`, `src/app/hostileData.test.tsx` (malformed data on every
+route).

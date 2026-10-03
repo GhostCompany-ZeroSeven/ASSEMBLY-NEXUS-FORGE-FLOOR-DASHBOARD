@@ -19,6 +19,7 @@ import {
 import { ForgeScene } from './scene/ForgeScene';
 import { SCENE_H, SCENE_W, STATIONS, stationBox, type Station } from './scene/stations';
 import '@/styles/visual-floor.css';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 /**
  * VISUAL Forge Floor: a presentation/observation layer over the dashboard's
@@ -175,7 +176,11 @@ export function VisualForgeFloorPage() {
 
       <div className="vf__below">
         {selection && (
-          <section className="vf__panel vf__detail" aria-labelledby="vf-detail-title">
+          <section
+            className="vf__panel vf__detail"
+            data-family="ops"
+            aria-labelledby="vf-detail-title"
+          >
             <div className="vf__panel-head">
               <h2 id="vf-detail-title" tabIndex={-1} ref={detailRef}>
                 {t.detail.title}
@@ -187,7 +192,7 @@ export function VisualForgeFloorPage() {
             <Detail selection={selection} v={v} />
           </section>
         )}
-        <section className="vf__panel vf__flow" aria-labelledby="vf-flow-title">
+        <section className="vf__panel vf__flow" data-family="floor" aria-labelledby="vf-flow-title">
           <h2 id="vf-flow-title">{t.flow.title}</h2>
           <ol className="vf__flow-list">
             {v.board.stages.map((s) => (
@@ -200,7 +205,11 @@ export function VisualForgeFloorPage() {
           </ol>
           <p className="small muted">{v.source === 'preset' ? t.flow.presetNote : t.flow.note}</p>
         </section>
-        <section className="vf__panel vf__roster" aria-labelledby="vf-roster-title">
+        <section
+          className="vf__panel vf__roster"
+          data-family="review"
+          aria-labelledby="vf-roster-title"
+        >
           <h2 id="vf-roster-title">{t.roster.title}</h2>
           <ul>
             {ROSTER.map((name) => (
@@ -232,7 +241,11 @@ export function VisualForgeFloorPage() {
           </ul>
           <p className="small muted">{t.roster.note}</p>
         </section>
-        <section className="vf__panel vf__attention" aria-labelledby="vf-attn-title">
+        <section
+          className="vf__panel vf__attention"
+          data-family="founder"
+          aria-labelledby="vf-attn-title"
+        >
           <h2 id="vf-attn-title">{t.attention.title}</h2>
           {v.attentionIncomplete && <p className="vf__warn">{t.attention.incomplete}</p>}
           {v.attention.length === 0 ? (
@@ -331,12 +344,14 @@ function BoardHead({ id, title, onDetails }: { id: string; title: string; onDeta
 }
 
 function MissionBoard({ v, onDetails }: { v: VisualState; onDetails: () => void }) {
+  const missionRef = useMissionLabel();
   const { m } = useI18n();
   const t = m.visual.board;
   const timer = v.board.timer;
   return (
     <section
       className="vf__panel vf__board vf__hud vf__hud--mission"
+      data-family="ops"
       aria-labelledby="vf-board-title"
       data-timer={timer.kind}
       data-critical={timer.kind === 'time-left' && timer.critical ? 'true' : undefined}
@@ -348,7 +363,7 @@ function MissionBoard({ v, onDetails }: { v: VisualState; onDetails: () => void 
         ) : v.board.missionId ? (
           <a href={href.mission(v.board.missionId)}>
             <span className="mono" translate="no">
-              {v.board.missionId}
+              {missionRef(v.board.missionId)}
             </span>{' '}
             {v.board.title}
           </a>
@@ -414,7 +429,11 @@ function AlertsBoard({ v, onDetails }: { v: VisualState; onDetails: () => void }
     [t.queued, v.alerts.queued, 'queued'],
   ];
   return (
-    <section className="vf__panel vf__hud vf__hud--alerts" aria-labelledby="vf-alerts-title">
+    <section
+      className="vf__panel vf__hud vf__hud--alerts"
+      data-family="signal"
+      aria-labelledby="vf-alerts-title"
+    >
       <BoardHead id="vf-alerts-title" title={t.title} onDetails={onDetails} />
       <ul className="vf__alert-rows">
         {rows.map(([label, n, k]) => (
@@ -435,7 +454,11 @@ function SystemsBoard({ v, onDetails }: { v: VisualState; onDetails: () => void 
   const { m } = useI18n();
   const t = m.visual.systems;
   return (
-    <section className="vf__panel vf__hud vf__hud--systems" aria-labelledby="vf-systems-title">
+    <section
+      className="vf__panel vf__hud vf__hud--systems"
+      data-family="systems"
+      aria-labelledby="vf-systems-title"
+    >
       <BoardHead id="vf-systems-title" title={t.title} onDetails={onDetails} />
       <ul className="vf__systems">
         {v.systems.map((s) => (

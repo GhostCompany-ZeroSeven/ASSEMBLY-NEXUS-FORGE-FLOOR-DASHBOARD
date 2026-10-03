@@ -263,6 +263,7 @@ export const OPENING_SCRIPT: Beat[] = [
       payload: {
         mission: newMission(
           'AN-0149',
+          149,
           'Worker avatar asset pipeline',
           'Load production character art through the character registry.',
           at,
@@ -580,7 +581,7 @@ export function routineMissionBeats(ctx: BeatContext, missionNumber: number): Be
       {
         kind: 'mission.created',
         missionId: id,
-        payload: { mission: newMission(id, title, objective, at, estimate) },
+        payload: { mission: newMission(id, missionNumber, title, objective, at, estimate) },
       },
       { kind: 'worker.assigned', missionId: id, workerId: w, payload: { taskId } },
       state(w, 'PLANNING', `Planning: ${title}`, id, 0),
@@ -676,8 +677,14 @@ export function routineMissionBeats(ctx: BeatContext, missionNumber: number): Be
   ];
 }
 
+/**
+ * A mission the demo simulation creates. The demo is the (simulated) mission
+ * store here, so it assigns the next lifetime ordinal itself; a real
+ * ecosystem's store does that for live data, never the dashboard.
+ */
 export function newMission(
   id: string,
+  ordinal: number,
   title: string,
   objective: string,
   at: string,
@@ -685,6 +692,7 @@ export function newMission(
 ): Mission {
   return {
     id,
+    ordinal,
     title,
     objective,
     status: 'QUEUED',

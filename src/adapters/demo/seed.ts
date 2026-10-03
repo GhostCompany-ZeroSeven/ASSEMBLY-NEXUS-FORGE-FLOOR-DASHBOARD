@@ -220,12 +220,13 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
   const missions: Mission[] = [
     {
       id: 'AN-0139',
+      ordinal: 139,
       title: 'Mission timer instrumentation',
       objective: 'Add elapsed/remaining instrumentation to every mission lifecycle stage.',
       status: 'COMPLETE',
       priority: 'normal',
       assignedWorkerIds: ['w-ada', 'w-juniper'],
-      createdAt: at(-3 * HOUR),
+      createdAt: at(-380 * MIN), // created before AN-0140: ordinals follow creation order
       startedAt: at(-2.25 * HOUR),
       completedAt: at(-25 * MIN),
       estimate: { durationMs: 2 * HOUR, source: 'Planner estimate', confidence: 'medium' },
@@ -276,6 +277,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0140',
+      ordinal: 140,
       title: 'Legacy queue migration',
       objective: 'Move the legacy job queue onto the new event bus without downtime.',
       status: 'FAILED',
@@ -312,12 +314,13 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0141',
+      ordinal: 141,
       title: 'Q4 operations roadmap',
       objective: 'Draft the Q4 roadmap for the Forge Floor and adapter ecosystem.',
       status: 'ACTIVE',
       priority: 'normal',
       assignedWorkerIds: ['w-bramwell'],
-      createdAt: at(-50 * MIN),
+      createdAt: at(-300 * MIN),
       startedAt: at(-45 * MIN),
       progress: 0.4,
       dependsOn: [],
@@ -335,12 +338,13 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0142',
+      ordinal: 142,
       title: 'Forge Floor telemetry ingest',
       objective: 'Ingest worker telemetry into the event bus with backpressure and replay.',
       status: 'ACTIVE',
       priority: 'high',
       assignedWorkerIds: ['w-ada', 'w-otto'],
-      createdAt: at(-80 * MIN),
+      createdAt: at(-250 * MIN),
       startedAt: at(-72 * MIN),
       estimate: { durationMs: 2 * HOUR, source: 'Planner estimate', confidence: 'medium' },
       progress: 0.58,
@@ -376,12 +380,13 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0143',
+      ordinal: 143,
       title: 'Adapter contract hardening',
       objective: 'Stabilise the adapter contract so third-party backends can target it.',
       status: 'WAITING_REVIEW',
       priority: 'normal',
       assignedWorkerIds: ['w-juniper'],
-      createdAt: at(-4 * HOUR),
+      createdAt: at(-200 * MIN),
       startedAt: at(-3.07 * HOUR),
       progress: 0.9,
       dependsOn: [],
@@ -411,6 +416,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0144',
+      ordinal: 144,
       title: 'Credential rotation runbook',
       objective: 'Rotate the staging deploy key and document the rotation runbook.',
       status: 'WAITING_APPROVAL',
@@ -440,6 +446,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0145',
+      ordinal: 145,
       title: 'Research: realtime transport options',
       objective: 'Recommend polling vs SSE vs WebSocket for live dashboard updates.',
       status: 'ACTIVE',
@@ -463,6 +470,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0146',
+      ordinal: 146,
       title: 'Certify release candidate 0.9',
       objective: 'Run the certification suite against release candidate 0.9.',
       status: 'ACTIVE',
@@ -491,6 +499,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0147',
+      ordinal: 147,
       title: 'Nightly dependency audit',
       objective: 'Audit third-party dependencies for advisories and licence drift.',
       status: 'QUEUED',
@@ -506,6 +515,7 @@ export function buildSeedSnapshot(nowMs: number): DashboardSnapshot {
     },
     {
       id: 'AN-0148',
+      ordinal: 148,
       title: 'Snow Wolf recon: perimeter scan',
       objective: 'Placeholder mission reserved for the Snow Wolf crew.',
       status: 'QUEUED',
@@ -811,6 +821,7 @@ function buildSeedHistory(at: (ms: number) => string): DashboardEvent[] {
       payload: {
         mission: {
           id: 'AN-0148',
+          ordinal: 148,
           title: 'Snow Wolf recon: perimeter scan',
           objective: '',
           status: 'QUEUED',

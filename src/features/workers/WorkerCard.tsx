@@ -10,6 +10,7 @@ import { formatClock, toMs } from '@/domain/time';
 import { useI18n } from '@/i18n/useI18n';
 import type { Worker } from '@/domain/types';
 import { useConfig, useNow, useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
 
 /**
  * Worker card: identity, state, mission, task, progress, blockers, latest
@@ -25,6 +26,7 @@ export function WorkerCard({
 }) {
   const snapshot = useSnapshot();
   const { crews } = useConfig();
+  const missionRef = useMissionLabel();
   const now = useNow(1000);
   const { m, rel } = useI18n();
   const t = m.workerCard;
@@ -88,7 +90,7 @@ export function WorkerCard({
           <span>
             {mission ? (
               <a href={href.mission(mission.id)}>
-                <span className="mono">{mission.id}</span> {mission.title}
+                <span className="mono">{missionRef(mission)}</span> {mission.title}
               </a>
             ) : (
               <span className="muted">{m.common.none}</span>

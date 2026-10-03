@@ -213,6 +213,13 @@ export interface MissionResult {
 
 export interface Mission {
   id: string;
+  /**
+   * Lifetime mission ordinal assigned once by the authoritative mission store
+   * at creation (first mission = 0). Never reused, never changed by status.
+   * Absent/null when the source does not report one: the dashboard never
+   * derives it (see domain/missionNumber.ts).
+   */
+  ordinal?: number | null;
   title: string;
   objective: string;
   status: MissionStatus;

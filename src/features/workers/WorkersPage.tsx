@@ -134,6 +134,7 @@ export function WorkersPage() {
           if (members.length === 0 && crew.status !== 'reserved') return null;
           return (
             <Panel
+              family="floor"
               key={crew.id}
               eyebrow={crew.status === 'reserved' ? t.reservedCrew : t.crewEyebrow}
               title={crew.label}
@@ -154,7 +155,7 @@ export function WorkersPage() {
       )}
       {/* Workers whose crew is not configured still appear. */}
       {page.visible.some((w) => !crews.some((c) => c.id === w.crewId)) && (
-        <Panel title={t.other}>
+        <Panel family="floor" title={t.other}>
           <div className="worker-grid">
             {page.visible
               .filter((w) => visible.has(w.id) && !crews.some((c) => c.id === w.crewId))

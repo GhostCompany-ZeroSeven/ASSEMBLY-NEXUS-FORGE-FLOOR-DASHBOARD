@@ -9,9 +9,9 @@
   padding: 14px;
   border-radius: var(--radius);
   background:
-    linear-gradient(90deg, rgba(34, 211, 238, 0.04) 1px, transparent 1px) 0 0 / 18px 18px,
-    linear-gradient(rgba(34, 211, 238, 0.04) 1px, transparent 1px) 0 0 / 18px 18px,
-    #070b11;
+    linear-gradient(90deg, var(--instrument-grid) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(var(--instrument-grid) 1px, transparent 1px) 0 0 / 18px 18px,
+    var(--surface-sunken);
   border: 1px solid var(--line-strong);
   position: relative;
   margin-bottom: 10px;
@@ -39,7 +39,7 @@
   letter-spacing: 0.2em;
   color: var(--tone);
   border: 1px solid color-mix(in srgb, var(--tone) 55%, transparent);
-  background: color-mix(in srgb, var(--tone) 10%, #03060a);
+  background: color-mix(in srgb, var(--tone) 10%, var(--surface-void));
   border-radius: 4px;
   text-shadow: 0 0 10px color-mix(in srgb, var(--tone) 60%, transparent);
 }
@@ -77,14 +77,19 @@
   align-items: stretch;
   padding: 10px 12px 10px 0;
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tone) 9%, transparent), transparent 45%),
+    var(--surface-sunken);
+  border: 1px solid color-mix(in srgb, var(--tone) 32%, transparent);
+  box-shadow: -4px 0 14px -8px var(--tone);
   color: var(--text);
 }
 .mission-card:hover {
   text-decoration: none;
-  border-color: var(--line-strong);
-  background: var(--surface-2);
+  border-color: color-mix(in srgb, var(--tone) 60%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tone) 14%, transparent), transparent 55%),
+    var(--surface-sunken);
 }
 .mission-card__rail {
   background: var(--tone);
@@ -101,7 +106,7 @@
   flex-wrap: wrap;
 }
 .mission-card__id {
-  color: var(--text-faint);
+  color: color-mix(in srgb, var(--tone) 70%, var(--text));
 }
 .mission-card__title {
   font-weight: 650;
@@ -305,24 +310,56 @@
   display: grid;
   gap: 14px;
 }
+/* A gate's frame is its DECIDED STATE: amber pending (Founder authority),
+   lime approved, red denied, UV held, muted when unknown. */
 .gate {
+  --gate: var(--tone-founder);
   padding: 16px;
   border-radius: var(--radius-lg);
   background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-left: 4px solid var(--tone-warning);
+  border: 1px solid color-mix(in srgb, var(--gate) 40%, var(--line-strong));
+  border-left: 4px solid var(--gate);
+  box-shadow: -6px 0 18px -12px var(--gate);
 }
 .gate[data-status='APPROVED'] {
-  border-left-color: var(--tone-success);
+  --gate: var(--tone-success);
 }
 .gate[data-status='DENIED'] {
-  border-left-color: var(--tone-danger);
+  --gate: var(--tone-danger);
 }
 .gate[data-status='HELD'] {
-  border-left-color: var(--tone-progress);
+  --gate: var(--tone-progress);
+}
+.gate[data-status='UNKNOWN'],
+.gate[data-status='EXPIRED'],
+.gate[data-status='WITHDRAWN'] {
+  --gate: var(--tone-muted);
+}
+/* The decided STATE badge is filled (an outlined control is an action). */
+.gate[data-status='APPROVED'] .gate__head .badge,
+.gate[data-status='DENIED'] .gate__head .badge {
+  background: var(--tone);
+  border-color: var(--tone);
+  color: var(--on-accent);
+  box-shadow: 0 0 14px -4px var(--tone);
+}
+.gate[data-status='APPROVED'] .gate__head .badge__dot,
+.gate[data-status='DENIED'] .gate__head .badge__dot {
+  background: currentColor;
+  box-shadow: none;
 }
 .gate[data-status='PENDING'] {
-  background: linear-gradient(90deg, rgba(251, 191, 36, 0.07), transparent 40%), var(--surface);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tone-founder) 7%, transparent),
+      transparent 40%
+    ),
+    var(--surface);
+  border-color: color-mix(in srgb, var(--tone-founder) 60%, transparent);
+  box-shadow:
+    0 0 32px -16px var(--tone-founder),
+    -6px 0 18px -10px var(--tone-founder);
 }
 .gate__head {
   display: flex;
@@ -417,7 +454,7 @@
   padding: 12px;
   border-radius: var(--radius);
   border: 1px dashed var(--line-strong);
-  background: #05080d;
+  background: var(--surface-pit);
 }
 .gate__confirm[data-decision='APPROVE'] {
   border-color: var(--tone-success);
@@ -446,13 +483,13 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--c);
-  background: color-mix(in srgb, var(--c) 12%, #05080d);
+  color: color-mix(in srgb, var(--c) 85%, white);
+  background: color-mix(in srgb, var(--c) 10%, var(--surface-pit));
   border: 2px solid var(--c);
   border-radius: var(--radius);
   cursor: pointer;
   box-shadow:
-    0 0 0 0 transparent,
+    0 0 14px -6px color-mix(in srgb, var(--c) 70%, transparent),
     inset 0 -3px 0 rgba(0, 0, 0, 0.35);
   transition:
     background 0.15s ease,
@@ -460,7 +497,7 @@
     transform 0.05s ease;
 }
 .gate-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--c) 24%, #05080d);
+  background: color-mix(in srgb, var(--c) 24%, var(--surface-pit));
   box-shadow:
     0 0 18px color-mix(in srgb, var(--c) 40%, transparent),
     inset 0 -3px 0 rgba(0, 0, 0, 0.35);
@@ -472,14 +509,16 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* Decision ACTIONS (outlined controls). The decided STATE is a filled badge
+   and the gate frame; an action never looks like its outcome. */
 .gate-btn--approve {
-  --c: var(--tone-success);
+  --c: var(--action-approve);
 }
 .gate-btn--deny {
-  --c: var(--tone-danger);
+  --c: var(--action-deny);
 }
 .gate-btn--hold {
-  --c: var(--tone-warning);
+  --c: var(--action-hold);
 }
 
 .gate-mini {
@@ -495,13 +534,13 @@
   gap: 2px 8px;
   padding: 8px 10px;
   border-radius: var(--radius);
-  border: 1px solid color-mix(in srgb, var(--tone-warning) 35%, var(--line));
-  background: color-mix(in srgb, var(--tone-warning) 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tone-founder) 35%, var(--line));
+  background: color-mix(in srgb, var(--tone-founder) 6%, var(--surface));
   color: var(--text);
 }
 .gate-mini__item:hover {
   text-decoration: none;
-  border-color: var(--tone-warning);
+  border-color: var(--tone-founder);
 }
 .gate-mini__title {
   font-weight: 650;
@@ -621,7 +660,7 @@
   --cat: var(--tone-progress);
 }
 .stream__item[data-category='approval'] {
-  --cat: var(--tone-warning);
+  --cat: var(--tone-founder);
 }
 .stream__item[data-category='alert'] {
   --cat: var(--tone-danger);
@@ -738,7 +777,7 @@ a.target {
       color-mix(in srgb, var(--tone) 22%, transparent),
       transparent 70%
     ),
-    #070b11;
+    var(--surface-sunken);
   border: 1px solid var(--line);
   overflow: hidden;
 }
@@ -784,7 +823,7 @@ a.target {
   border-radius: var(--radius-sm);
   background: rgba(244, 63, 94, 0.08);
   border: 1px solid rgba(244, 63, 94, 0.35);
-  color: #fda4af;
+  color: var(--danger-text);
   font-size: 12px;
 }
 .worker-card__powers {
@@ -816,7 +855,7 @@ a.target {
   width: 44px;
   height: 50px;
   border-radius: var(--radius);
-  background: #070b11;
+  background: var(--surface-sunken);
   border: 1px solid var(--line);
   border-bottom: 2px solid var(--tone);
   overflow: hidden;
@@ -874,7 +913,7 @@ a.target {
       color-mix(in srgb, var(--tone) 30%, transparent),
       transparent 65%
     ),
-    #05080d;
+    var(--surface-pit);
   border: 1px solid color-mix(in srgb, var(--tone) 40%, var(--line));
 }
 .focus__portrait[data-state='WORKING'] svg {
@@ -995,7 +1034,7 @@ a.target {
   gap: 2px;
   padding: 8px;
   border-radius: var(--radius);
-  background: #070b11;
+  background: var(--surface-sunken);
   border: 1px solid var(--line);
 }
 
@@ -1041,7 +1080,7 @@ a.target {
 .gate__blocked svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--tone-warning);
+  color: var(--tone-founder);
 }
 .floor__empty {
   position: absolute;
@@ -1081,23 +1120,35 @@ a.target {
   min-width: 0;
   padding: 10px 12px 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--tone);
-  background: var(--surface);
+  /* Nexus: a full luminous frame in the answer's truthful tone. */
+  border: 1px solid color-mix(in srgb, var(--tone) 60%, transparent);
+  border-top: 2px solid var(--tone);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--tone) 7%, transparent), transparent 70%),
+    var(--surface-sunken);
+  box-shadow:
+    0 0 26px -12px var(--tone),
+    inset 0 0 18px -12px var(--tone);
   color: var(--text);
   text-decoration: none;
 }
 a.situation__cell:hover {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--tone) 12%, transparent), transparent 70%),
+    var(--surface-sunken);
+  border-color: color-mix(in srgb, var(--tone) 80%, transparent);
   border-top-color: var(--tone);
 }
 .situation__cell[data-primary] {
+  /* Founder "2 items": the protected amber glow, a touch stronger. */
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--tone) 14%, transparent), transparent 70%),
-    var(--surface);
-  border-color: color-mix(in srgb, var(--tone) 55%, var(--line));
-  border-top-width: 4px;
+    var(--surface-sunken);
+  border-color: color-mix(in srgb, var(--tone) 75%, transparent);
+  border-top-width: 3px;
+  box-shadow:
+    0 0 34px -12px var(--tone),
+    inset 0 0 24px -16px var(--tone);
 }
 .situation__q {
   display: flex;
@@ -1107,7 +1158,7 @@ a.situation__cell:hover {
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: color-mix(in srgb, var(--tone) 55%, var(--text-dim));
 }
 .situation__q svg {
   color: var(--tone);
@@ -1510,8 +1561,8 @@ a.situation__cell:hover {
   overflow-wrap: anywhere;
 }
 .marker[data-marker='founder'] {
-  border-color: var(--tone-warning);
-  color: var(--tone-warning);
+  border-color: var(--tone-founder);
+  color: var(--tone-founder);
 }
 .marker[data-marker='changed'] {
   border-color: var(--tone-info);
@@ -1629,9 +1680,9 @@ a.situation__cell:hover {
   gap: 6px;
   margin-top: 8px;
   padding: 4px 10px;
-  border: 1px dashed #67e8f9;
+  border: 1px dashed var(--nx-cyan-light);
   border-radius: 999px;
-  color: #a5f3fc;
+  color: var(--nx-cyan-pale);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;

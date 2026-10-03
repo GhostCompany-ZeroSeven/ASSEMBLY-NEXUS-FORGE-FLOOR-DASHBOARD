@@ -2,6 +2,7 @@ import type { WorkerStateMapping } from '@/domain/status';
 import type { WorkerState } from '@/domain/types';
 import type { CharacterDefinition } from '@/characters/types';
 import type { RestAdapterConfig } from '@/adapters/rest/config';
+import type { MissionNumbering } from '@/domain/missionNumber';
 
 /**
  * Open-source configuration surface. Everything product/brand specific lives
@@ -18,6 +19,14 @@ export interface DashboardConfig {
   /** Keyed by `Worker.characterId`. */
   characters: Record<string, CharacterDefinition>;
   features: FeatureFlags;
+  /** Optional environmental layers (none when omitted). */
+  environment?: EnvironmentConfig;
+  /**
+   * How lifetime mission ordinals are displayed. Optional: the default is no
+   * prefix and a 4-digit minimum width (`0000`, `0001`, …). The ordinal itself
+   * always comes from the data source.
+   */
+  missionNumbering?: Partial<MissionNumbering>;
   statusMapping: WorkerStateMapping;
   adapter: AdapterConfig;
 }
@@ -32,8 +41,35 @@ export interface BrandingConfig {
    * Rendered verbatim; do not normalise or abbreviate entries.
    */
   hierarchy: string[];
+  /**
+   * Optional typographic geometry of the hierarchy (a composed mark, not a
+   * list). Without it every line starts at the same x.
+   */
+  hierarchyLayout?: HierarchyLayout;
   tagline?: string;
 }
+
+/**
+ * Lines are positioned from measured glyph geometry, never with whitespace.
+ * Boundaries are written `left|right` inside the reference line, e.g.
+ * `Assem|bly` is the boundary between the `m` and the `b`.
+ */
+export interface HierarchyLayout {
+  /** Index of the reference line; the composition's axis is its centre. */
+  axis: number;
+  rules: HierarchyRule[];
+}
+
+export type HierarchyRule =
+  /**
+   * The lines share one start x; that block is centred on the axis. `nudge`
+   * (em; one value for the block, or one per line in `lines` order) then
+   * moves the lines right, after the composition is laid out, so no other
+   * line moves.
+   */
+  | { kind: 'center'; lines: number[]; nudge?: number | number[] }
+  /** Centre a line between two boundaries of a reference line. */
+  | { kind: 'between'; line: number; ref: number; from: string; to: string };
 
 export interface GovernanceConfig {
   /**
@@ -130,6 +166,19 @@ export interface FeatureFlags {
   workerMessaging: boolean;
   /** Critical alerts restyle the shell into Red Alert mode. */
   redAlertMode: boolean;
+}
+
+/**
+ * Optional environmental layers, separate from Dashboard Core features.
+ * Omit entirely for none.
+ */
+export interface EnvironmentConfig {
+  /**
+   * Makes the Nexus ambient dot field (C5 visual signature) available on the
+   * Command Center (prototype). Even when true it stays OFF until the viewer
+   * asks for it (`?field=full` / `?field=reduced`).
+   */
+  ambientField?: boolean;
 }
 
 export type AdapterConfig =

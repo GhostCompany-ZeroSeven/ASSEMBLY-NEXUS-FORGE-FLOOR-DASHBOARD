@@ -1,0 +1,60 @@
+/*
+ * Assembly Nexus primitive palette (Visual DNA v0.1, Wave A).
+ *
+ * Layering:  core semantic tokens (tokens.css)  →  theme mappings
+ * ([data-theme] blocks)  →  product theme  →  optional environment (future).
+ *
+ * This file only DEFINES raw palette values (`--nx-*`). Components never use
+ * them directly: a theme maps semantic tokens onto them. In Wave A nothing
+ * maps onto the new values yet, so they change nothing on screen; values that
+ * already exist in the dashboard are recorded at their current colour.
+ */
+:root {
+  /* Foundation */
+  --nx-void: #03050a;
+  --nx-deep: #06090e;
+  --nx-navy: #0a1220;
+
+  /* Glass surfaces */
+  --nx-glass-1: rgba(12, 18, 27, 0.86);
+  --nx-glass-2: rgba(17, 26, 38, 0.9);
+  --nx-glass-3: #172333;
+
+  /* Spectrum */
+  --nx-cyan: #22d3ee;
+  --nx-cyan-light: #67e8f9;
+  --nx-cyan-pale: #a5f3fc;
+  --nx-turquoise: #2dd4bf;
+  --nx-blue: #4f8cff;
+  --nx-violet: #a78bfa;
+  --nx-magenta: #ff4fd8;
+  --nx-lime: #b8ff3a;
+  --nx-lime-bloom: #7cff4f;
+  --nx-founder-amber: #fbbf24;
+  --nx-ember: #f59e0b;
+  --nx-red: #f43f5e;
+  --nx-cool-white: #f0f9ff;
+
+  /* Neutral text (the dashboard's current, WCAG AA values) */
+  --nx-text: #e7edf5;
+  --nx-text-dim: #9fb0c4;
+  --nx-text-faint: #8494aa;
+
+  /*
+   * Ambient dot field (C5 Manager visual signature, recovered reference).
+   * Environmental colour only: never a status, never mapped to semantic tones.
+   */
+  --nx-field-uv: #b14cff;
+  --nx-field-lime: #9dff3c;
+  --nx-field-cyan: #3ce6ff;
+  --nx-field-rest: #161b26;
+  --nx-field-ground: #07080b; /* reference ground; not applied to the dashboard */
+
+  /* Motion vocabulary (unused until Wave D) */
+  --nx-ease-glide: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --nx-ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --nx-dur-hover: 140ms;
+  --nx-dur-flare: 600ms;
+  --nx-dur-confirm: 1200ms;
+  --nx-dur-breathe: 4800ms;
+}

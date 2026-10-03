@@ -1,5 +1,6 @@
 import type { DashboardEvent } from '@/domain/events';
 import { EVENT_CATEGORY } from '@/domain/events';
+import { isOrdinal } from '@/domain/missionNumber';
 import type { DataIssue } from '@/domain/snapshot';
 import { isKnownWorkerState, mapWorkerState, type WorkerStateMapping } from '@/domain/status';
 import type {
@@ -279,6 +280,25 @@ export function normalizeArtifact(
   };
 }
 
+/**
+ * Two missions claiming one lifetime ordinal means the source's numbering
+ * cannot be trusted for either: both are shown with an unknown number.
+ */
+export function rejectDuplicateOrdinals(missions: Mission[], log: IssueLog): Mission[] {
+  const seen = new Map<number, number>();
+  for (const m of missions)
+    if (isOrdinal(m.ordinal)) seen.set(m.ordinal, (seen.get(m.ordinal) ?? 0) + 1);
+  return missions.map((m) => {
+    if (!isOrdinal(m.ordinal) || seen.get(m.ordinal)! < 2) return m;
+    log.add(
+      'warning',
+      `mission ${m.id}`,
+      `Ordinal ${m.ordinal} reported for more than one mission; mission number shown as unknown`,
+    );
+    return { ...m, ordinal: null };
+  });
+}
+
 export function normalizeMission(raw: unknown, i: number, log: IssueLog): Mission | null {
   const src = `missions[${i}]`;
   if (!isObj(raw)) return (log.add('error', src, 'Dropped: not an object'), null);
@@ -342,6 +362,13 @@ export function normalizeMission(raw: unknown, i: number, log: IssueLog): Missio
       : undefined;
   if (est && !estimate) log.add('warning', s, 'Invalid estimate ignored');
 
+  // The lifetime ordinal comes only from the backend's own field; it is never
+  // derived from the array index `i` or anything else.
+  let ordinal: number | null = null;
+  if (isOrdinal(raw.ordinal)) ordinal = raw.ordinal;
+  else if (raw.ordinal !== undefined && raw.ordinal !== null)
+    log.add('warning', s, 'Invalid mission ordinal ignored; mission number shown as unknown');
+
   const res = isObj(raw.result) ? raw.result : undefined;
   const result =
     res && str(res.summary)
@@ -361,6 +388,7 @@ export function normalizeMission(raw: unknown, i: number, log: IssueLog): Missio
 
   return {
     id,
+    ordinal,
     title,
     objective: str(raw.objective) ?? '',
     status,

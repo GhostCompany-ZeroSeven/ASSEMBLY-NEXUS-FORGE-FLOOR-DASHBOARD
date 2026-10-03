@@ -5,8 +5,9 @@ import { ProvenanceBadge } from '@/components/ProvenanceBadge';
 import { SimulationControlsBar } from '@/components/SimulationControlsBar';
 import { StatusBadge } from '@/components/ui';
 import { selectFreshness } from '@/domain/freshness';
-import { selectOverview, redAlertActive } from '@/domain/selectors';
-import { HEALTH_STATUS_META } from '@/domain/status';
+import { isStale, selectOverview, redAlertActive } from '@/domain/selectors';
+import { selectHealthReport } from '@/domain/operational';
+import { healthTone } from '@/domain/status';
 import { useI18n } from '@/i18n/useI18n';
 import { RedAlertBanner } from '@/features/alerts/RedAlertBanner';
 import { buildCommands, resultToCommand } from '@/features/command/commands';
@@ -31,6 +32,7 @@ import {
 // Ctrl+K are lost, and focus cannot be restored on close.
 import { CommandPalette } from '@/features/command/CommandPalette';
 import { ShortcutsDialog } from '@/features/command/ShortcutsDialog';
+import { BrandHierarchy } from '@/components/BrandHierarchy';
 
 interface NavItem {
   route: Route['name'];
@@ -117,10 +119,10 @@ export function Shell() {
   // One index per palette opening (rebuilt only when the data or language changes).
   const search = useMemo(() => {
     if (!snapshot || dialog !== 'palette') return undefined;
-    const index = buildSearchIndex(snapshot, config.floor, m);
+    const index = buildSearchIndex(snapshot, config.floor, m, config.missionNumbering);
     return (q: string) =>
       searchIndex(index, q).map((r) => resultToCommand(r, navigate, m, searchProvenance));
-  }, [dialog, snapshot, config.floor, m, searchProvenance]);
+  }, [dialog, snapshot, config.floor, config.missionNumbering, m, searchProvenance]);
 
   if (!snapshot) {
     return (
@@ -148,7 +150,14 @@ export function Shell() {
 
   const stats = selectOverview(snapshot);
   const redAlert = config.features.redAlertMode && redAlertActive(snapshot);
-  const health = HEALTH_STATUS_META[snapshot.health.status];
+  // The global badge follows the same rule as every other health surface.
+  const healthBadgeTone = healthTone({
+    status: snapshot.health.status,
+    connection: status,
+    stale: isStale(snapshot, now),
+    partial: snapshot.quality.partial,
+    simulated: selectHealthReport(snapshot).simulated,
+  });
 
   const nav: NavItem[] = [
     { route: 'command', label: m.nav.command, icon: 'command', href: href.command() },
@@ -260,7 +269,7 @@ export function Shell() {
             aria-label={m.shell.health(m.status.health[snapshot.health.status])}
           >
             <Icon name="health" size={16} />
-            <StatusBadge tone={health.tone} size="sm">
+            <StatusBadge tone={healthBadgeTone} size="sm">
               {m.status.health[snapshot.health.status]}
             </StatusBadge>
           </a>
@@ -302,11 +311,11 @@ export function Shell() {
             </ul>
             <div className="sidenav__footer">
               {config.branding.hierarchy.length > 0 && (
-                <ol className="hierarchy" aria-label={m.nav.identityHierarchy}>
-                  {config.branding.hierarchy.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ol>
+                <BrandHierarchy
+                  lines={config.branding.hierarchy}
+                  layout={config.branding.hierarchyLayout}
+                  label={m.nav.identityHierarchy}
+                />
               )}
             </div>
           </nav>

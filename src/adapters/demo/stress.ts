@@ -98,6 +98,8 @@ export function buildStressSnapshot(
     const started = status === 'QUEUED' ? undefined : at(Math.floor(rng() * 7_200_000));
     missions.push({
       id,
+      // Synthetic load only: a separate block far above the demo's sequence.
+      ordinal: 10_000 + i,
       title: `Stress mission ${i}`,
       objective: 'Synthetic load for performance testing.',
       status,

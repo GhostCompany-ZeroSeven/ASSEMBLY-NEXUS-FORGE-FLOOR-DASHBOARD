@@ -10,6 +10,7 @@ import { LOCALE_NAMES, SUPPORTED_LOCALES, isLocalePreference } from '@/i18n/loca
 import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useDashboard, useNow, usePreferences } from '@/store/hooks';
 import type { Density, MotionPreference } from '@/store/PreferencesProvider';
+import { BrandHierarchy } from '@/components/BrandHierarchy';
 
 /**
  * Viewer preferences, truthful transport diagnostics, and a read-only view of
@@ -26,7 +27,7 @@ export function SettingsPage() {
   const provenance = snapshot?.provenance ?? adapter.provenance();
   useFocusTarget();
   const yesNo = (b: boolean) => (
-    <StatusBadge tone={b ? 'success' : 'muted'} size="sm">
+    <StatusBadge tone={b ? 'info' : 'muted'} size="sm">
       {b ? m.common.yes : m.common.no}
     </StatusBadge>
   );
@@ -122,7 +123,7 @@ export function SettingsPage() {
           {provenance.note && <p className="small muted">{provenance.note}</p>}
         </Panel>
 
-        <Panel title={t.governance}>
+        <Panel family="founder" title={t.governance}>
           <KeyValue
             items={[
               [t.humanAuthority, <strong>{config.governance.humanAuthority}</strong>],
@@ -158,11 +159,12 @@ export function SettingsPage() {
             ]}
           />
           {config.branding.hierarchy.length > 0 && (
-            <ol className="hierarchy hierarchy--large" aria-label={m.nav.identityHierarchy}>
-              {config.branding.hierarchy.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ol>
+            <BrandHierarchy
+              large
+              lines={config.branding.hierarchy}
+              layout={config.branding.hierarchyLayout}
+              label={m.nav.identityHierarchy}
+            />
           )}
         </Panel>
 
@@ -315,6 +317,7 @@ function TransportPanel({ diagnostics: d }: { diagnostics: TransportDiagnostics 
 
   return (
     <Panel
+      family="systems"
       title={t.transport}
       id="transport"
       focusId="transport"

@@ -4,12 +4,21 @@ import { formatClock } from '@/domain/time';
 import { useI18n } from '@/i18n/useI18n';
 import { Icon, type IconName } from './Icon';
 
+/**
+ * Nexus Signature panel family: the panel's place in the information
+ * architecture (its frame colour), chosen explicitly by the caller.
+ * A family is never a status: state colour comes from `tone` and from the
+ * content, so a family can never make something look healthy or approved.
+ */
+export type PanelFamily = 'ops' | 'floor' | 'signal' | 'review' | 'systems' | 'founder' | 'neutral';
+
 export function Panel({
   title,
   eyebrow,
   actions,
   children,
   className = '',
+  family = 'neutral',
   tone,
   id,
   focusId,
@@ -19,6 +28,9 @@ export function Panel({
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Frame family (information architecture). Defaults to `neutral`. */
+  family?: PanelFamily;
+  /** Truthful state of the panel's subject; lights the panel's top rail. */
   tone?: Tone;
   id?: string;
   /** Deep-link target id (see useFocusTarget). */
@@ -28,6 +40,7 @@ export function Panel({
   return (
     <section
       className={`panel ${className}`}
+      data-family={family}
       data-tone={tone}
       aria-labelledby={title ? headingId : undefined}
       id={id}

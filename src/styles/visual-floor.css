@@ -14,6 +14,14 @@
   --vf-ink: #e8f6ff;
   --vf-glass: rgba(5, 9, 18, 0.82);
   --vf-line: rgba(103, 232, 249, 0.42);
+  /* HUD text and frame values (tokenized in Visual DNA Wave A, unchanged). */
+  --vf-edge: #1c2a40;
+  --vf-stage: var(--nx-void);
+  --vf-red-ink: #ffe4e6;
+  --vf-unknown-ink: #cbd5e1; /* unknown is neutral, not review UV */
+  --vf-critical-ink: #fecdd3;
+  --vf-queued-ink: #cbd5e1;
+  --vf-warn-ink: #fde68a;
 }
 
 .vf__header {
@@ -66,8 +74,8 @@
   cursor: pointer;
 }
 .vf__preset:has(input:checked) {
-  border-color: var(--vf-lime-strong);
-  color: var(--vf-lime);
+  border-color: var(--vf-cyan);
+  color: var(--vf-cyan);
   background: rgba(163, 230, 53, 0.08);
 }
 .vf__preset input {
@@ -88,7 +96,7 @@
   border: 1px solid var(--vf-red);
   border-radius: 8px;
   background: rgba(127, 29, 29, 0.35);
-  color: #ffe4e6;
+  color: var(--vf-red-ink);
   letter-spacing: 0.06em;
   overflow-wrap: anywhere;
 }
@@ -101,11 +109,11 @@
 .vf__stage-scroll {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid #1c2a40;
-  background: #03050a;
+  border: 1px solid color-mix(in srgb, var(--family-review) 45%, var(--vf-edge));
+  background: var(--vf-stage);
   box-shadow:
     inset 0 0 0 1px rgba(103, 232, 249, 0.08),
-    0 0 40px rgba(34, 211, 238, 0.06);
+    0 0 40px -18px color-mix(in srgb, var(--family-review) 70%, transparent);
 }
 .vf__stage-scroll:focus-visible {
   outline: 2px solid var(--vf-cyan);
@@ -164,8 +172,8 @@
   outline-offset: 2px;
 }
 .vf__hotspot[aria-pressed='true'] {
-  border: 2px solid var(--vf-lime-strong);
-  box-shadow: 0 0 14px rgba(163, 230, 53, 0.45);
+  border: 2px solid var(--vf-cyan);
+  box-shadow: 0 0 14px rgba(103, 232, 249, 0.45);
 }
 .vf__nameplate {
   position: absolute;
@@ -184,28 +192,47 @@
   font: 700 9.5px/1.5 var(--font-mono, 'JetBrains Mono Variable', monospace);
 }
 .vf__nameplate-state {
-  color: var(--vf-lime);
+  color: var(--vf-cyan);
   font-weight: 600;
 }
 
 /* ------------------------------ panels ------------------------------ */
 
+/* HUD frames take the same explicit Nexus families as dashboard panels
+   (data-family); headings use the family colour, never the lime that is
+   reserved for data-backed positive state. */
 .vf__panel {
+  --fam: var(--family-ops);
   background: var(--vf-glass);
-  border: 1px solid var(--vf-line);
+  border: 1px solid color-mix(in srgb, var(--fam) 55%, transparent);
   border-radius: 10px;
   padding: 10px 12px;
   color: var(--vf-ink);
-  box-shadow: 0 0 22px rgba(34, 211, 238, 0.12);
+  box-shadow: 0 0 24px -12px var(--fam);
   min-width: 0;
   overflow-wrap: anywhere;
+}
+.vf__panel[data-family='floor'] {
+  --fam: var(--family-floor);
+}
+.vf__panel[data-family='signal'] {
+  --fam: var(--family-signal);
+}
+.vf__panel[data-family='review'] {
+  --fam: var(--family-review);
+}
+.vf__panel[data-family='systems'] {
+  --fam: var(--family-systems);
+}
+.vf__panel[data-family='founder'] {
+  --fam: var(--family-founder);
 }
 .vf__panel h2 {
   margin: 0;
   font: 800 12px/1.4 var(--font-mono, 'JetBrains Mono Variable', monospace);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--vf-lime);
+  color: color-mix(in srgb, var(--fam) 80%, white);
 }
 .vf__panel-head {
   display: flex;
@@ -314,29 +341,32 @@
   padding: 8px 10px;
   margin: 4px 0 8px;
   border-radius: 8px;
-  border: 1px solid rgba(163, 230, 53, 0.55);
-  background: rgba(54, 83, 20, 0.18);
+  /* Timer emphasis uses the approved amber instrument language; lime is
+     reserved for a mission that is actually done (.vf__timer--done). */
+  border: 1px solid color-mix(in srgb, var(--tone-founder) 55%, transparent);
+  background: color-mix(in srgb, var(--tone-founder) 7%, transparent);
 }
 .vf__timer-label {
   font: 700 11px/1.3 var(--font-mono, 'JetBrains Mono Variable', monospace);
   letter-spacing: 0.14em;
-  color: var(--vf-lime);
+  color: var(--vf-warn-ink);
 }
 .vf__clock {
   font-size: 30px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: var(--vf-lime);
-  text-shadow: 0 0 12px rgba(163, 230, 53, 0.55);
+  color: var(--tone-founder);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--tone-founder) 55%, transparent);
 }
 .vf__timer[data-unknown='true'] {
+  /* Unknown is neutral: not review UV, not amber. */
   border-style: dashed;
-  border-color: var(--vf-purple);
-  background: rgba(76, 29, 149, 0.16);
+  border-color: var(--tone-muted);
+  background: color-mix(in srgb, var(--tone-muted) 10%, transparent);
 }
 .vf__timer[data-unknown='true'] .vf__clock,
 .vf__timer[data-unknown='true'] .vf__timer-label {
-  color: #ddd6fe;
+  color: var(--vf-unknown-ink);
   text-shadow: none;
   font-size: 20px;
 }
@@ -349,11 +379,11 @@
 }
 .vf__timer--critical .vf__clock,
 .vf__timer--critical .vf__timer-label {
-  color: #fecdd3;
+  color: var(--vf-critical-ink);
   text-shadow: 0 0 12px rgba(244, 63, 94, 0.6);
 }
 .vf__crit {
-  color: #fecdd3;
+  color: var(--vf-critical-ink);
 }
 .vf__timer--done {
   border-color: var(--vf-lime-strong);
@@ -397,7 +427,7 @@ li[data-status='pending'] .vf__stage-status,
 li[data-status='pending'] .vf__flow-status,
 li[data-status='not-required'] .vf__stage-status,
 li[data-status='not-required'] .vf__flow-status {
-  color: #94a3b8;
+  color: var(--tone-neutral);
 }
 li[data-status='blocked'] .vf__stage-status,
 li[data-status='blocked'] .vf__flow-status {
@@ -405,7 +435,7 @@ li[data-status='blocked'] .vf__flow-status {
 }
 li[data-status='unknown'] .vf__stage-status,
 li[data-status='unknown'] .vf__flow-status {
-  color: #ddd6fe;
+  color: var(--vf-unknown-ink);
 }
 
 /* Alerts board */
@@ -424,10 +454,10 @@ li[data-status='unknown'] .vf__flow-status {
   color: var(--vf-cyan);
 }
 .vf__alert-rows li[data-kind='queued'] strong {
-  color: #cbd5e1;
+  color: var(--vf-queued-ink);
 }
 .vf__alert-rows li[data-unknown='true'] strong {
-  color: #ddd6fe;
+  color: var(--vf-unknown-ink);
   font-size: 11px;
 }
 
@@ -454,15 +484,16 @@ li[data-status='unknown'] .vf__flow-status {
   font: 700 10.5px/1.6 var(--font-mono, 'JetBrains Mono Variable', monospace);
   letter-spacing: 0.06em;
 }
+/* Reachable / reported is connectivity, not success. */
 .vf__state[data-state='ONLINE'],
 .vf__state[data-state='DATA'] {
-  color: var(--vf-lime);
+  color: var(--tone-connectivity);
 }
 .vf__state[data-state='STANDBY'] {
   color: var(--vf-cyan);
 }
 .vf__state[data-state='UNKNOWN'] {
-  color: #ddd6fe;
+  color: var(--vf-unknown-ink);
   border-style: dashed;
 }
 .vf__state[data-state='BLOCKED'] {
@@ -520,7 +551,7 @@ li[data-status='unknown'] .vf__flow-status {
   font-size: 12.5px;
 }
 .vf__warn {
-  color: #fde68a;
+  color: var(--vf-warn-ink);
   font-size: 12px;
 }
 .vf__detail h2:focus {

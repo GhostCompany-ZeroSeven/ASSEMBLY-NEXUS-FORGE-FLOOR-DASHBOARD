@@ -25,7 +25,11 @@ export function MissionEvidencePanel({
   const t = m.evidence;
   const simulated = snapshot.provenance.mode === 'demo';
   return (
-    <Panel title={t.title(mission.artifacts.length)} className="span-2 mission-evidence">
+    <Panel
+      family="ops"
+      title={t.title(mission.artifacts.length)}
+      className="span-2 mission-evidence"
+    >
       <p className="muted small">{t.note}</p>
       {mission.artifacts.length === 0 ? (
         <EmptyState title={m.mission.noArtifacts} />

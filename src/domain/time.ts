@@ -6,8 +6,12 @@ export function toMs(iso: string | undefined | null): number | null {
   return Number.isNaN(ms) ? null : ms;
 }
 
-/** Formats a duration as HH:MM:SS (hours may exceed 24). Negative → 00:00:00. */
+/**
+ * Formats a duration as HH:MM:SS (hours may exceed 24). Negative → 00:00:00.
+ * A non-finite input is not a duration: it renders as dashes, never "NaN".
+ */
 export function formatClock(durationMs: number): string {
+  if (!Number.isFinite(durationMs)) return '--:--:--';
   const total = Math.max(0, Math.floor(durationMs / 1000));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
@@ -35,23 +39,41 @@ export function formatRelative(iso: string, nowMs: number): string {
 }
 
 export interface MissionTiming {
-  /** Elapsed ms since start (frozen at completion), or null if not started. */
+  /** Elapsed ms since start (frozen at completion), or null when not knowable. */
   elapsedMs: number | null;
   /** Remaining ms from the backend estimate, or null when no estimate exists. */
   remainingMs: number | null;
   /** True when elapsed has exceeded the estimate. */
   overrun: boolean;
+  /**
+   * Why a started mission has no elapsed time: its timestamps contradict each
+   * other (ends before it starts, starts in the future), or it is finished
+   * but its end time was not reported. Never rendered as a fake 00:00:00.
+   */
+  anomaly?: 'inconsistent' | 'end-unreported';
 }
+
+/** Clock skew tolerated between the backend and this browser before a time is distrusted. */
+export const CLOCK_SKEW_MS = 60_000;
 
 export function missionTiming(
   m: { startedAt?: string; completedAt?: string; estimate?: { durationMs: number } },
   nowMs: number,
+  opts: { finished?: boolean } = {},
 ): MissionTiming {
+  const none = { elapsedMs: null, remainingMs: null, overrun: false } as const;
   const start = toMs(m.startedAt);
-  if (start === null) return { elapsedMs: null, remainingMs: null, overrun: false };
-  const end = toMs(m.completedAt) ?? nowMs;
+  if (start === null) return none;
+  const reportedEnd = toMs(m.completedAt);
+  // A finished mission's duration needs its end time; "now" would keep it ticking.
+  if (reportedEnd === null && (opts.finished || m.completedAt))
+    return { ...none, anomaly: 'end-unreported' };
+  const end = reportedEnd ?? nowMs;
+  if (end < start - CLOCK_SKEW_MS) return { ...none, anomaly: 'inconsistent' };
   const elapsedMs = Math.max(0, end - start);
-  if (!m.estimate || m.completedAt) return { elapsedMs, remainingMs: null, overrun: false };
-  const remaining = m.estimate.durationMs - elapsedMs;
+  const estimateMs = m.estimate?.durationMs;
+  const estimated = typeof estimateMs === 'number' && Number.isFinite(estimateMs) && estimateMs > 0;
+  if (!estimated || reportedEnd !== null) return { elapsedMs, remainingMs: null, overrun: false };
+  const remaining = estimateMs - elapsedMs;
   return { elapsedMs, remainingMs: Math.max(0, remaining), overrun: remaining < 0 };
 }

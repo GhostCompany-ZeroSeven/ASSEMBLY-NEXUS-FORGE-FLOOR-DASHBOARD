@@ -21,6 +21,9 @@ import { MissionCard } from '@/features/missions/MissionCard';
 import { MissionInstrument } from '@/features/missions/MissionInstrument';
 import { useI18n } from '@/i18n/useI18n';
 import { useConfig, useNow, useSnapshot } from '@/store/hooks';
+import { useMissionLabel } from '@/hooks/useMissionLabel';
+import { NexusField } from '@/features/environment/NexusField';
+import { useFieldMode } from '@/features/environment/useFieldMode';
 
 /** Pick the mission most worth watching: approval-gated, then high priority, then oldest active. */
 function featuredMission(missions: Mission[]): Mission | undefined {
@@ -34,6 +37,8 @@ function featuredMission(missions: Mission[]): Mission | undefined {
 
 export function CommandCenter() {
   const snapshot = useSnapshot();
+  const field = useFieldMode();
+  const missionRef = useMissionLabel();
   const config = useConfig();
   const now = useNow(5000);
   const { m, rel } = useI18n();
@@ -54,7 +59,8 @@ export function CommandCenter() {
   useFocusTarget();
 
   return (
-    <div className="page page--wide">
+    <div className={field === 'off' ? 'page page--wide' : 'page page--wide page--field'}>
+      <NexusField mode={field} />
       <header className="page__header">
         <div>
           <div className="page__eyebrow">
@@ -74,11 +80,12 @@ export function CommandCenter() {
 
       <div className="grid grid--command">
         <Panel
+          family="ops"
           title={featured ? featured.title : t.noMission}
           eyebrow={
             featured ? (
               <span className="mono">
-                {t.featured} · {featured.id}
+                {t.featured} · {missionRef(featured)}
               </span>
             ) : (
               t.featuredMission
@@ -99,6 +106,7 @@ export function CommandCenter() {
         </Panel>
 
         <Panel
+          family="founder"
           title={t.gate}
           eyebrow={t.gateEyebrow(config.governance.humanAuthority)}
           tone={gates.length ? 'warning' : undefined}
@@ -135,6 +143,7 @@ export function CommandCenter() {
 
         {config.features.forgeFloor && (
           <Panel
+            family="floor"
             title={t.floor}
             className="span-2"
             actions={<MoreLink href={href.floor()}>{t.fullFloor}</MoreLink>}
@@ -152,7 +161,11 @@ export function CommandCenter() {
           </Panel>
         )}
 
-        <Panel title={t.alerts} actions={<MoreLink href={href.alerts()}>{t.allAlerts}</MoreLink>}>
+        <Panel
+          family="signal"
+          title={t.alerts}
+          actions={<MoreLink href={href.alerts()}>{t.allAlerts}</MoreLink>}
+        >
           {alerts.length === 0 ? (
             resourceUnavailable(snapshot, 'alerts') ? (
               <EmptyState title={t.alertUnavailable}>{t.alertUnavailableBody}</EmptyState>
@@ -169,6 +182,7 @@ export function CommandCenter() {
         </Panel>
 
         <Panel
+          family="ops"
           title={t.inFlight(allInFlight.length)}
           className="span-2"
           actions={
@@ -203,7 +217,11 @@ export function CommandCenter() {
         <div className="stack">
           <HealthReportPanel title={t.health} />
 
-          <Panel title={t.crew} actions={<MoreLink href={href.workers()}>{t.roster}</MoreLink>}>
+          <Panel
+            family="floor"
+            title={t.crew}
+            actions={<MoreLink href={href.workers()}>{t.roster}</MoreLink>}
+          >
             {snapshot.workers.length === 0 ? (
               resourceUnavailable(snapshot, 'workers') ? (
                 <EmptyState title={t.workerUnavailable}>{t.workerUnavailableBody}</EmptyState>
@@ -232,6 +250,7 @@ export function CommandCenter() {
         </div>
 
         <Panel
+          family="signal"
           title={t.activity}
           className="span-3"
           actions={<MoreLink href={href.activity()}>{t.fullLog}</MoreLink>}

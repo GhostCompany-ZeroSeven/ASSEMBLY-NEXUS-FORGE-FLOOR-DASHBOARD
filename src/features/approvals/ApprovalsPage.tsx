@@ -109,7 +109,11 @@ export function ApprovalsPage() {
       ) : (
         <>
           {(f.view === 'all' || f.view === 'open' || f.view === 'held') && (
-            <Panel title={t.sectionOpen(open.length)} tone={open.length ? 'warning' : undefined}>
+            <Panel
+              family="founder"
+              title={t.sectionOpen(open.length)}
+              tone={open.length ? 'warning' : undefined}
+            >
               {open.length === 0 ? (
                 <EmptyState title={t.noneOpen}>{t.noneOpenBody}</EmptyState>
               ) : (
@@ -122,7 +126,7 @@ export function ApprovalsPage() {
             </Panel>
           )}
           {unknown.length > 0 && (
-            <Panel title={t.sectionUnknown(unknown.length)} tone="warning">
+            <Panel family="founder" title={t.sectionUnknown(unknown.length)} tone="neutral">
               <p className="small muted">{t.unknownNote}</p>
               <div className="gate-list">
                 {unknown.map((r) => (
@@ -132,7 +136,7 @@ export function ApprovalsPage() {
             </Panel>
           )}
           {(f.view === 'all' || f.view === 'decided') && (
-            <Panel title={t.sectionHistory(decided.length)}>
+            <Panel family="review" title={t.sectionHistory(decided.length)}>
               {decided.length === 0 ? (
                 <EmptyState title={t.noneDecided} />
               ) : (

@@ -83,6 +83,14 @@ describe('visual floor presentation model', () => {
       kind: 'unknown',
     });
     expect(missionTimer({ ...m, status: 'QUEUED' } as Mission, NOW)).toEqual({ kind: 'unknown' });
+    // A bad estimate or contradictory start is UNKNOWN, never a made-up countdown.
+    for (const durationMs of [Number.NaN, 0, -1])
+      expect(
+        missionTimer({ ...m, estimate: { ...m.estimate!, durationMs } } as Mission, NOW),
+      ).toEqual({ kind: 'unknown' });
+    expect(
+      missionTimer({ ...m, startedAt: new Date(NOW + 86_400_000).toISOString() } as Mission, NOW),
+    ).toEqual({ kind: 'unknown' });
   });
 
   it('never claims an Assembly Nexus connection, memory or deployment', () => {

@@ -1,8 +1,9 @@
 import { Panel, SimulatedTag, StatusBadge } from '@/components/ui';
 import { selectHealthReport } from '@/domain/operational';
-import { HEALTH_STATUS_META } from '@/domain/status';
+import { isStale } from '@/domain/selectors';
+import { healthTone } from '@/domain/status';
 import { useI18n } from '@/i18n/useI18n';
-import { useNow, useSnapshot } from '@/store/hooks';
+import { useDashboard, useNow, useSnapshot } from '@/store/hooks';
 
 /**
  * Reported system health, explained (Phase 14): the status as REPORTED by the
@@ -15,10 +16,20 @@ export function HealthReportPanel({ title }: { title: string }) {
   const now = useNow(5000);
   const { m, num, rel, dateTime } = useI18n();
   const t = m.ops.health;
+  const { status: connection } = useDashboard();
   const r = selectHealthReport(snapshot);
-  const tone = HEALTH_STATUS_META[r.status].tone;
+  // Same rule as the Command Center cell: a stale, partial, disconnected or
+  // simulated "Nominal" never shows as real-looking lime health.
+  const stale = isStale(snapshot, now);
+  const tone = healthTone({
+    status: r.status,
+    connection,
+    stale,
+    partial: snapshot.quality.partial,
+    simulated: r.simulated,
+  });
   return (
-    <Panel title={title} id="health" tone={tone} focusId="health">
+    <Panel family="systems" title={title} id="health" tone={tone} focusId="health">
       <div className="health">
         <StatusBadge tone={tone} size="lg">
           {m.status.health[r.status]}
@@ -59,7 +70,10 @@ export function HealthReportPanel({ title }: { title: string }) {
         <ul className="health-list" aria-label={t.components}>
           {r.components.map((c) => (
             <li key={c.id} data-status={c.status}>
-              <StatusBadge tone={HEALTH_STATUS_META[c.status].tone} size="sm">
+              <StatusBadge
+                tone={healthTone({ status: c.status, stale, simulated: r.simulated })}
+                size="sm"
+              >
                 {m.status.health[c.status]}
               </StatusBadge>
               <span>{c.label}</span>

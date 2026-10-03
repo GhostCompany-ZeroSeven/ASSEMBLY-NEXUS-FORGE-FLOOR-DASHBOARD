@@ -123,6 +123,7 @@ export function MissionChangesPanel({
 
   return (
     <Panel
+      family="signal"
       id="mission-changes"
       focusId="changes"
       title={t.title}

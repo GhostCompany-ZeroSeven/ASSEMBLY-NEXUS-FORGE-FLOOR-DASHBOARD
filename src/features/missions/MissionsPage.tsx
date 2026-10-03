@@ -115,7 +115,7 @@ export function MissionsPage() {
           </>
         }
       />
-      <Panel>
+      <Panel family="ops">
         {missions.length === 0 ? (
           <FilteredEmpty
             resource="missions"

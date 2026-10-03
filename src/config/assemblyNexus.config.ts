@@ -8,6 +8,9 @@ import type { DashboardConfig } from './types';
  * their config to <App config={…} />. Nothing in the component tree imports
  * this file directly except the app entry point.
  */
+/** Advance width of a space in the brand font (Inter), in em. */
+const SPACE_EM = 0.281;
+
 export const assemblyNexusConfig: DashboardConfig = {
   branding: {
     productName: 'Assembly Nexus',
@@ -20,6 +23,18 @@ export const assemblyNexusConfig: DashboardConfig = {
       'Wolf◇Technologies',
       'Ghost○●Company-07',
     ],
+    hierarchyLayout: {
+      axis: 2, // 《Assembly▪︎Nexus》
+      rules: [
+        { kind: 'center', lines: [0] },
+        // A•N spans the Assembly word from the m|b region to the y|▪ transition.
+        { kind: 'between', line: 1, ref: 2, from: 'Assem|bly', to: 'Assembly|▪' },
+        // Wolf and Ghost start from a shared x. Founder review: Wolf sits a
+        // half-em right of it; Ghost sits one space (Inter's space advance,
+        // 0.281em) left of Wolf.
+        { kind: 'center', lines: [3, 4], nudge: [0.5, 0.5 - SPACE_EM] },
+      ],
+    },
     tagline: 'Operations floor for autonomous crews',
   },
   governance: {
@@ -30,12 +45,13 @@ export const assemblyNexusConfig: DashboardConfig = {
   themes: [
     {
       id: 'forge',
-      label: 'Forge',
-      description: 'Dark command floor with ember and cyan instrumentation.',
+      label: 'Nexus Signature',
+      description: 'Near-black command floor with luminous panel families and Founder amber.',
       i18n: {
         es: {
-          label: 'Forja',
-          description: 'Sala de mando oscura con instrumentación ámbar y cian.',
+          label: 'Nexus Signature',
+          description:
+            'Sala de mando casi negra con familias de paneles luminosos y ámbar del Founder.',
         },
       },
     },
@@ -379,6 +395,9 @@ export const assemblyNexusConfig: DashboardConfig = {
       appearance: { fur: '#ffffff', accent: '#a3e635', coat: '#4c1d95' },
     },
   },
+  // Assembly Nexus shows its mission ordinals in the AN- namespace (AN-0000,
+  // AN-0001, …). Other deployments may omit this: the default has no prefix.
+  missionNumbering: { prefix: 'AN-', minDigits: 4 },
   features: {
     forgeFloor: true,
     approvals: true,
@@ -386,6 +405,10 @@ export const assemblyNexusConfig: DashboardConfig = {
     workerMessaging: true,
     redAlertMode: true,
   },
+  // Nexus ambient dot field: available for Founder review only; the field
+  // itself defaults to OFF.
+  environment: { ambientField: true },
+
   statusMapping: DEFAULT_WORKER_STATE_MAPPING,
   adapter: { kind: 'demo', tickMs: 3500, seed: 7 },
 };
