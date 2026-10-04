@@ -53,8 +53,9 @@ export default defineConfig({
     },
     {
       // ANN local build (`--mode e2e-ann-local`): only the dashboard is served here.
-      command: 'npx vite preview --outDir dist-e2e-ann-local --port 4178 --strictPort',
-      url: 'http://localhost:4178',
+      command:
+        'npx vite preview --outDir dist-e2e-ann-local --host 127.0.0.1 --port 4178 --strictPort',
+      url: 'http://127.0.0.1:4178',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },
