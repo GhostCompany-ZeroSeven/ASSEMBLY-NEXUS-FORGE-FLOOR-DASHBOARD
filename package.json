@@ -26,6 +26,7 @@
     "test:visual:update": "npm run build && npm run build:e2e-rest && npm run build:e2e-ann && playwright test e2e/visual.spec.ts --update-snapshots",
     "mock:rest": "node scripts/mock-rest-server.ts",
     "mock:runtime": "node scripts/mock-runtime-server.ts",
+    "ann:host": "node scripts/ann-snapshot-host.ts",
     "test:visual:ci-image": "docker run --rm --ipc=host -v \"$PWD\":/work -w /work -e CI=1 mcr.microsoft.com/playwright:v1.56.1-noble npx playwright test e2e/visual.spec.ts",
     "test:visual:ci-image:update": "docker run --rm --ipc=host -v \"$PWD\":/work -w /work -e CI=1 mcr.microsoft.com/playwright:v1.56.1-noble npx playwright test e2e/visual.spec.ts --update-snapshots"
   },

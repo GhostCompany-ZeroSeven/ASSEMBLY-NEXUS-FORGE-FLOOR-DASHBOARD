@@ -501,3 +501,40 @@ Components only render the level; they never compute it.
 **J. Smallest safe next step:** a read-only local transport that reports `UNVERIFIED` honestly
 (load + parse + the existing normalizer, no write path, no credentials), with the trust fields
 plumbed to the UI. Signatures are a later, separate, Founder-gated mission.
+
+## Optional read-only ANN snapshot host (`scripts/ann-snapshot-host.ts`)
+
+A tiny, **optional** loopback host that serves the exact bytes of **one** snapshot file. It exists
+so a future mission can give the browser a same-machine read path. **The dashboard is NOT connected
+to it:** there is no `ann-local` adapter kind, no browser fetch of it, and no runtime configuration
+pointing at it. Nothing starts it automatically (no install hook, no build/test/dev hook, no
+service, no scheduled task); the operator starts it explicitly:
+
+```sh
+npm run ann:host -- --snapshot /absolute/path/to/ann-snapshot.json \
+  [--port 4380] [--allow-origin http://127.0.0.1:5173]
+```
+
+| Property     | Rule                                                                                                                                                                                                                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Bind         | `127.0.0.1` only; any other bind address (`0.0.0.0`, `::`, `localhost`, LAN) refuses to start. Ports 1024–65535 (0 in tests only).                                                                                                                                                                                       |
+| Route        | exactly `GET /ann/snapshot`. Any other path (query strings, trailing slash, encodings included) is 404; any other method (POST, PUT, PATCH, DELETE, OPTIONS, HEAD) is 405 `Allow: GET`. No health, status, reload, admin or write routes.                                                                                |
+| One file     | the path comes only from the `--snapshot` startup argument and must be absolute. Query, URL, headers, cookies and bodies never select a file. One host instance serves one file; request bodies are never read.                                                                                                          |
+| Regular file | `lstat` must report a regular file: symlinks (even to a regular file), directories, FIFOs, sockets and devices are refused (`NOT_FILE`). Open is `O_RDONLY \| O_NOFOLLOW \| O_NONBLOCK`, then the open handle must be the same regular file. On Windows the path must already be canonical (reparse points fail closed). |
+| Read-only    | inspect, open read-only, read, close. It never writes, creates, repairs, renames or deletes anything. No watchers, timers, processes, outbound network or dynamic code. Node built-ins only.                                                                                                                             |
+| Byte limit   | 32 MiB, checked before any buffer is allocated and again while reading; larger is `TOO_LARGE` (never truncated). ANN v1 snapshots at the contract's collection bounds with typical field sizes are a few MiB.                                                                                                            |
+| Response     | 200, `Content-Type: application/json; charset=utf-8`, `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, the exact bytes. It does not parse JSON: malformed content is returned as is and the browser's ANN v1 normalizer rejects it.                                                                         |
+| Host header  | must equal `127.0.0.1:<port>` exactly (DNS-rebinding defence); `localhost`, other names, other ports, missing or malformed values are 403 `HOST_REJECTED`.                                                                                                                                                               |
+| CORS         | explicit `--allow-origin` list, echoed exactly with `Vary: Origin`; never `*`, `null` or a reflected arbitrary origin (403 `ORIGIN_REJECTED`). No `Origin` (curl, same-origin) is served without any CORS grant. **CORS is not authentication.**                                                                         |
+| Errors       | `{"error":CODE}` only, codes `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `HOST_REJECTED`, `ORIGIN_REJECTED`, `UNAVAILABLE`, `NOT_FILE`, `EMPTY`, `TOO_LARGE`, `READ_FAILED`. No paths, usernames, stacks or contents; logs carry the file's base name only.                                                                       |
+
+**No ANN semantics.** A 200 means only "this host read bytes from its configured file". It is not
+ANN, not authority, not certification and not health, and it establishes no authenticity: a
+future browser source over it would be labelled `LOCAL_FILE_UNVERIFIED` (not implemented). Any
+local process can read the same port; loopback limits exposure to this machine, it does not
+authenticate the reader or the writer of the file.
+
+**Producer guidance (atomic writes).** The host never repairs a partial write; a size change during
+a read is `READ_FAILED`. Producers should write a temporary file in the same directory, `fsync` it,
+then `rename` it over the snapshot path, so every read sees a complete old or new snapshot. The
+host re-reads the file on every request (no cache), so a rename is visible on the next request.
