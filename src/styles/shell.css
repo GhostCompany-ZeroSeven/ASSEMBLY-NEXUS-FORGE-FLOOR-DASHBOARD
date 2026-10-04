@@ -296,7 +296,8 @@
   color: var(--tone-warning);
 }
 .sidenav__count[data-tone='danger'] {
-  background: var(--tone-danger);
+  /* Deeper rose than --tone-danger so white text meets WCAG AA (6.29:1). */
+  background: var(--red-alert-core);
   color: var(--on-danger);
 }
 

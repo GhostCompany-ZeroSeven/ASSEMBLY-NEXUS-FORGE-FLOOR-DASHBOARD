@@ -107,6 +107,28 @@ test('there is no Classic theme: Settings offers the Nexus Signature default and
   expect(options.join(' ')).not.toMatch(/classic/i);
 });
 
+test('the critical-alert sidenav count meets WCAG AA contrast (axe cannot judge 1–2 digit text)', async ({
+  page,
+}) => {
+  await openPaused(page, '/alerts');
+  for (let i = 0; i < 7; i++) await page.keyboard.press('n');
+  const count = page.locator('.sidenav__count[data-tone="danger"]');
+  await expect(count).toBeVisible();
+  const [fg, bg] = await count.evaluate((e) => {
+    const s = getComputedStyle(e);
+    return [s.color, s.backgroundColor];
+  });
+  const lum = (c: number[]) => {
+    const [r, g, b] = c.map((v) => {
+      const x = v / 255;
+      return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [hi, lo] = [lum(rgb(fg)), lum(rgb(bg))].sort((a, b) => b - a);
+  expect((hi + 0.05) / (lo + 0.05)).toBeGreaterThanOrEqual(4.5);
+});
+
 test('axe on the Visual Forge Floor with Nexus HUD frames', async ({ page }) => {
   await openPaused(page, '/visual-floor');
   expect(await axe(page)).toEqual([]);
