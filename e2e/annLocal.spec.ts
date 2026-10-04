@@ -272,10 +272,6 @@ test('17. Nexus Signature intact under ann-local: families, amber Founder gate, 
     page,
   } as unknown as ConstructorParameters<typeof AxeBuilder>[0])
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    // PRE-EXISTING (f20ba7f, also in the rest-down baseline): the DISCONNECTED
-    // provenance chip is white on #f43f5e (3.67:1). Visual freeze: reported to
-    // HQ, not restyled here. Exactly that one element is excluded; nothing else.
-    .exclude(".provenance[data-mode='disconnected'] .provenance__mode")
     .analyze();
   expect(r.violations.map((v) => v.id)).toEqual([]);
 });

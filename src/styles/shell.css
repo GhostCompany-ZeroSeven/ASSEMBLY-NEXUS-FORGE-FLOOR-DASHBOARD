@@ -108,7 +108,8 @@
   color: #03140d;
 }
 .provenance[data-mode='disconnected'] .provenance__mode {
-  background: var(--tone-danger);
+  /* Deeper rose than --tone-danger so white text meets WCAG AA (6.29:1). */
+  background: var(--red-alert-core);
   color: var(--on-danger);
 }
 .provenance[data-mode='replay'] .provenance__mode {
