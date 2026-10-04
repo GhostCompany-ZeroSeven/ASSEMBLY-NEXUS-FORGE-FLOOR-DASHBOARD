@@ -10,7 +10,11 @@ import { defineConfig, devices } from '@playwright/test';
  *   HTTP + SSE MOCK backend and its bounded injection controls
  *   (scripts/mock-runtime-server.ts), for the Phase 7 adversarial runtime suite.
  *
- * `npm run test:e2e` builds both first. Visual baselines live in e2e/__screenshots__.
+ * - ANN local build (port 4178, `--mode e2e-ann-local`): the read-only ANN adapter over
+ *   the optional local snapshot host, which e2e/annLocal.spec.ts starts itself on
+ *   127.0.0.1:4391 with a temporary fixture (the host is never a webServer here).
+ *
+ * `npm run test:e2e` builds all of them first. Visual baselines live in e2e/__screenshots__.
  */
 export default defineConfig({
   testDir: 'e2e',
@@ -44,6 +48,13 @@ export default defineConfig({
       // ANN v1 build (`--mode e2e-ann`): read-only adapter over the in-memory simulated mock feed.
       command: 'npx vite preview --outDir dist-e2e-ann --port 4177 --strictPort',
       url: 'http://localhost:4177',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    {
+      // ANN local build (`--mode e2e-ann-local`): only the dashboard is served here.
+      command: 'npx vite preview --outDir dist-e2e-ann-local --port 4178 --strictPort',
+      url: 'http://localhost:4178',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

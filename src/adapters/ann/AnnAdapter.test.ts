@@ -89,15 +89,31 @@ describe('AnnAdapter', () => {
   });
 
   it('is transport-neutral and passive: no network, timers or browser APIs in the module', () => {
+    // Every ANN module stays passive EXCEPT the one designated transport
+    // (localSnapshotSource.ts), which alone may perform the single authorized
+    // loopback GET and is audited separately below.
     const dir = 'src/adapters/ann';
-    for (const f of readdirSync(dir).filter((x) => x.endsWith('.ts') && !x.endsWith('.test.ts'))) {
-      const code = readFileSync(`${dir}/${f}`, 'utf8')
+    const TRANSPORT = 'localSnapshotSource.ts';
+    const files = readdirSync(dir).filter((x) => /\.tsx?$/.test(x) && !/\.test\.tsx?$/.test(x));
+    expect(files).toContain(TRANSPORT);
+    const strip = (f: string) =>
+      readFileSync(`${dir}/${f}`, 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/\/\/.*$/gm, '');
-      expect(code, f).not.toMatch(
-        /\bfetch\(|WebSocket|EventSource|XMLHttpRequest|setInterval|setTimeout|localStorage|window\.|document\.|navigator\./,
-      );
+    for (const f of files) {
+      const code = strip(f);
+      if (f !== TRANSPORT)
+        expect(code, f).not.toMatch(
+          /\bfetch\b|WebSocket|EventSource|XMLHttpRequest|setInterval|setTimeout|localStorage|window\.|document\.|navigator\./,
+        );
       expect(code, f).not.toMatch(/dangerouslySetInnerHTML|innerHTML/);
     }
+    // The transport: one GET through fetch, and nothing else of the browser.
+    const t = strip(TRANSPORT);
+    expect(t.match(/\bfetch\(/g)).toHaveLength(1);
+    expect(t).not.toMatch(
+      /WebSocket|EventSource|XMLHttpRequest|sendBeacon|setInterval|setTimeout|localStorage|sessionStorage|document\.|navigator\.|window\.|location\.|import\(/,
+    );
+    expect(t).not.toMatch(/'(POST|PUT|PATCH|DELETE|HEAD|OPTIONS)'|body:|headers:\s*\{/);
   });
 });

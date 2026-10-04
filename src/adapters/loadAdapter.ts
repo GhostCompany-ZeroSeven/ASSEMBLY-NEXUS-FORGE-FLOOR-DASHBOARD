@@ -31,6 +31,15 @@ export async function loadAdapter(config: AdapterConfig): Promise<DashboardAdapt
         { humanAuthority: config.humanAuthority },
       );
     }
+    case 'ann-local': {
+      const [{ AnnAdapter }, { LocalSnapshotSource }] = await Promise.all([
+        import('./ann/AnnAdapter'),
+        import('./ann/localSnapshotSource'),
+      ]);
+      return new AnnAdapter(new LocalSnapshotSource(config.endpoint), {
+        humanAuthority: config.humanAuthority,
+      });
+    }
     case 'custom':
       return customAdapter(config.id);
   }

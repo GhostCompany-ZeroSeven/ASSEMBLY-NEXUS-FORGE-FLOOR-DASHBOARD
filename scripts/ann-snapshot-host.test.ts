@@ -683,7 +683,11 @@ describe('E. capability', () => {
     ).toThrow(HostConfigError);
   });
 
-  it('37e. optional host: no lifecycle hook or auto-start, and the dashboard is not connected', () => {
+  // Phase boundary. Host-only preservation (b663c38) required NO dashboard
+  // connection. Founder #0007 then authorized exactly ONE governed, read-only
+  // connection: the explicit `ann-local` adapter via LocalSnapshotSource. This
+  // guard enforces that narrow architecture; it is not a whitelist.
+  it('37e. optional host: no lifecycle hook or auto-start; the dashboard reaches it only through the explicit ann-local boundary', () => {
     const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
@@ -707,20 +711,82 @@ describe('E. capability', () => {
     );
     expect(users.map(([name]) => name)).toEqual(['ann:host']);
     expect(Object.values(pkg.scripts).some((cmd) => cmd.includes('ann:host'))).toBe(false);
-    expect(existsSync(join(ROOT, 'src/adapters/ann/localSnapshotSource.ts'))).toBe(false);
-    const srcHits: string[] = [];
+
+    // Production browser code (tests excluded), comments stripped.
+    const strip = (t: string) =>
+      t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+    const code = new Map<string, string>();
     const walk = (d: string) => {
       for (const n of readdirSync(d)) {
         const p = join(d, n);
         if (statSync(p).isDirectory()) walk(p);
-        else if (/\.(ts|tsx)$/.test(n)) {
-          const t = readFileSync(p, 'utf8');
-          if (/ann-snapshot-host|\/ann\/snapshot|ann-local|4380/.test(t)) srcHits.push(p);
-        }
+        else if (/\.(ts|tsx)$/.test(n) && !/\.test\.tsx?$/.test(n))
+          code.set(p.slice(ROOT.length + 1).replace(/\\/g, '/'), strip(readFileSync(p, 'utf8')));
       }
     };
     walk(join(ROOT, 'src'));
-    expect(srcHits).toEqual([]);
+    const holders = (re: RegExp) =>
+      [...code]
+        .filter(([, t]) => re.test(t))
+        .map(([f]) => f)
+        .sort();
+
+    const SOURCE = 'src/adapters/ann/localSnapshotSource.ts';
+    // The browser never names, starts or imports the host program, nor its default port.
+    expect(holders(/ann-snapshot-host|\b4380\b/)).toEqual([]);
+    // Exactly one module knows the host route, and only as the anchored endpoint shape.
+    expect(holders(/ann\\?\/snapshot/)).toEqual([SOURCE]);
+    const src = code.get(SOURCE) ?? '';
+    expect(src.match(/ann\\?\/snapshot/g)).toHaveLength(1);
+    expect(src).toContain(
+      'const ENDPOINT_RE = /^http:\\/\\/127\\.0\\.0\\.1:([1-9][0-9]{3,4})\\/ann\\/snapshot$/;',
+    );
+    // One read-only GET: no credentials, no redirects, no other method, no filesystem.
+    expect(src).toMatch(/method: 'GET'/);
+    expect(src).toMatch(/credentials: 'omit'/);
+    expect(src).toMatch(/redirect: 'error'/);
+    expect(src).not.toMatch(
+      /'(POST|PUT|PATCH|DELETE)'|WebSocket|EventSource|setInterval|setTimeout/,
+    );
+    expect(src).not.toMatch(/node:|file:|FileReader|showOpenFilePicker|localStorage|location\./);
+    // Network capability lives in that one module only.
+    expect(holders(/\bfetch\s*\(/).filter((f) => f.startsWith('src/adapters/ann/'))).toEqual([
+      SOURCE,
+    ]);
+    // The source is instantiated only by the two adapter factories.
+    expect(holders(/new LocalSnapshotSource\(/)).toEqual([
+      'src/adapters/createAdapter.ts',
+      'src/adapters/loadAdapter.ts',
+    ]);
+    // `ann-local` exists only in the config type, the explicit opt-in and the factories.
+    expect(holders(/ann-local/)).toEqual([
+      'src/adapters/createAdapter.ts',
+      'src/adapters/loadAdapter.ts',
+      'src/config/runtime.ts',
+      'src/config/types.ts',
+    ]);
+    // Opt-in: selected only by the explicit build flag, endpoint only from build config.
+    const runtime = code.get('src/config/runtime.ts') ?? '';
+    expect(runtime).toContain("env.VITE_FORGE_ADAPTER === 'ann-local'");
+    expect(runtime.match(/VITE_FORGE_ANN_LOCAL_ENDPOINT/g)).toHaveLength(1);
+    expect(holders(/VITE_FORGE_ANN_LOCAL_ENDPOINT/)).toEqual(['src/config/runtime.ts']);
+    const block = runtime.slice(
+      runtime.indexOf("env.VITE_FORGE_ADAPTER === 'ann-local'"),
+      runtime.indexOf("env.VITE_FORGE_ADAPTER !== 'rest'"),
+    );
+    expect(block).toContain("endpoint: env.VITE_FORGE_ANN_LOCAL_ENDPOINT ?? '',");
+    expect(block).not.toMatch(/search|location|Storage|cookie|hash|prompt\(/);
+    // No default deployment config or default build env selects it.
+    for (const f of ['.env', '.env.local', '.env.production', '.env.development'])
+      if (existsSync(join(ROOT, f)))
+        expect(readFileSync(join(ROOT, f), 'utf8'), f).not.toMatch(/ann-local/);
+    for (const [f, t] of code)
+      if (
+        f.startsWith('src/config/') &&
+        f !== 'src/config/types.ts' &&
+        f !== 'src/config/runtime.ts'
+      )
+        expect(t, f).not.toMatch(/ann-local/);
   });
 });
 

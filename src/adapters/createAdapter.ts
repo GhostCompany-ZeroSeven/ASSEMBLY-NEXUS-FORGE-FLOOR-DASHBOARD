@@ -1,5 +1,6 @@
 import type { AdapterConfig } from '@/config/types';
 import { AnnAdapter } from './ann/AnnAdapter';
+import { LocalSnapshotSource } from './ann/localSnapshotSource';
 import { MockAnnFeedSource } from './ann/mockFeed';
 import { DemoAdapter } from './demo/DemoAdapter';
 import { customAdapter } from './registry';
@@ -23,6 +24,10 @@ export function createAdapter(config: AdapterConfig): DashboardAdapter {
         new MockAnnFeedSource(config.variant ?? 'normal', config.humanAuthority),
         { humanAuthority: config.humanAuthority },
       );
+    case 'ann-local':
+      return new AnnAdapter(new LocalSnapshotSource(config.endpoint), {
+        humanAuthority: config.humanAuthority,
+      });
     case 'custom':
       return customAdapter(config.id);
   }

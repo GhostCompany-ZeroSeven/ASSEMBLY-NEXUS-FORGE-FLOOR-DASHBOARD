@@ -504,10 +504,9 @@ plumbed to the UI. Signatures are a later, separate, Founder-gated mission.
 
 ## Optional read-only ANN snapshot host (`scripts/ann-snapshot-host.ts`)
 
-A tiny, **optional** loopback host that serves the exact bytes of **one** snapshot file. It exists
-so a future mission can give the browser a same-machine read path. **The dashboard is NOT connected
-to it:** there is no `ann-local` adapter kind, no browser fetch of it, and no runtime configuration
-pointing at it. Nothing starts it automatically (no install hook, no build/test/dev hook, no
+A tiny, **optional** loopback host that serves the exact bytes of **one** snapshot file. It gives the
+browser one same-machine read path, used ONLY by the explicit `ann-local` adapter (next section);
+no other dashboard code reaches it. Nothing starts it automatically (no install hook, no build/test/dev hook, no
 service, no scheduled task); the operator starts it explicitly:
 
 ```sh
@@ -529,8 +528,8 @@ npm run ann:host -- --snapshot /absolute/path/to/ann-snapshot.json \
 | Errors       | `{"error":CODE}` only, codes `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `HOST_REJECTED`, `ORIGIN_REJECTED`, `UNAVAILABLE`, `NOT_FILE`, `EMPTY`, `TOO_LARGE`, `READ_FAILED`. No paths, usernames, stacks or contents; logs carry the file's base name only.                                                                       |
 
 **No ANN semantics.** A 200 means only "this host read bytes from its configured file". It is not
-ANN, not authority, not certification and not health, and it establishes no authenticity: a
-future browser source over it would be labelled `LOCAL_FILE_UNVERIFIED` (not implemented). Any
+ANN, not authority, not certification and not health, and it establishes no authenticity: the
+browser labels data read through it `LOCAL_FILE_UNVERIFIED` (next section). Any
 local process can read the same port; loopback limits exposure to this machine, it does not
 authenticate the reader or the writer of the file.
 
@@ -538,3 +537,74 @@ authenticate the reader or the writer of the file.
 a read is `READ_FAILED`. Producers should write a temporary file in the same directory, `fsync` it,
 then `rename` it over the snapshot path, so every read sees a complete old or new snapshot. The
 host re-reads the file on every request (no cache), so a rename is visible on the next request.
+
+## `ann-local`: the read-only browser connection to the local snapshot host
+
+**Phase boundary.** The host was first preserved (b663c38) with NO dashboard connection, and its
+test suite enforced that. Founder #0007 then authorized exactly ONE governed, read-only connection.
+The host's guard (test 37e) moved from "no connection" to "one explicitly governed read-only
+connection": only `src/adapters/ann/localSnapshotSource.ts` knows the route, only the two adapter
+factories construct it, `ann-local` exists only in the config type, the explicit build opt-in and
+those factories, and the host still never auto-starts. This narrows what is allowed; it does not
+weaken the boundary. The host program itself is unchanged.
+
+```text
+operator: npm run ann:host -- --snapshot /absolute/path/to/ann-snapshot.json \
+            --port 4380 --allow-origin http://localhost:5173
+build:    VITE_FORGE_ADAPTER=ann-local \
+          VITE_FORGE_ANN_LOCAL_ENDPOINT=http://127.0.0.1:4380/ann/snapshot npm run build
+browser → one GET http://127.0.0.1:4380/ann/snapshot → LocalSnapshotSource (bytes → JSON)
+        → normalizeAnnFeed (the only semantic boundary) → read-only AnnAdapter → dashboard
+```
+
+**Opt-in only.** `ann-local` is selected only when the BUILD sets `VITE_FORGE_ADAPTER=ann-local`.
+The public default is unchanged (Local Demo Simulation). The endpoint comes only from
+`VITE_FORGE_ANN_LOCAL_ENDPOINT` at build time: never from the URL, hash, storage, cookies, the
+feed or a user field. There is no probing, port scanning, discovery or fallback; a missing or
+malformed endpoint fails closed (`LOCAL_ENDPOINT_NOT_CONFIGURED` / `LOCAL_ENDPOINT_INVALID`). The
+browser knows only the loopback endpoint, never a filesystem path.
+
+**Endpoint shape (anything else is refused).** Exactly `http://127.0.0.1:<1024-65535>/ann/snapshot`.
+Refused: `https`, other schemes, `localhost`, `::1`, `0.0.0.0`, `127.1`, `127.0.0.2`, decimal/hex/
+octal aliases, LAN and public addresses, names, userinfo, query, fragment, other/encoded/dot paths,
+a trailing slash, missing, privileged or leading-zero ports. Use `127.0.0.1`, not `localhost`: the
+host's Host-header check requires exactly `127.0.0.1:<port>`.
+
+**Allowed origin.** The host's `--allow-origin` must list the dashboard's exact origin (scheme,
+host and port as the browser sends it), for example `http://localhost:5173` for `npm run dev`,
+`http://localhost:4173` for `npm run preview`, or wherever the operator serves the build. Any
+other origin is refused by the host (403) and shows as a source error. CORS is not authentication.
+
+**The request.** One `GET` per explicit load (startup, or an explicit refresh): `credentials:
+'omit'`, `redirect: 'error'`, `cache: 'no-store'`, `referrerPolicy: 'no-referrer'`, no headers, no
+body. Redirects (301/302/303/307/308) are refused, never followed into data. No retries, polling,
+reconnect loops, WebSocket, EventSource or writes.
+
+**The response.** Only `200` with `application/json` (optionally `charset=utf-8`). At most
+33554432 bytes (32 MiB, mirroring the host): a larger `Content-Length` is refused before reading,
+and actual streamed bytes are counted and the stream cancelled past the bound (Content-Length is
+never trusted alone; no truncation, no partial parse). Strict UTF-8 (malformed bytes fail); a UTF-8
+BOM is refused. Then `JSON.parse`; the raw value goes to `normalizeAnnFeed`, which alone interprets
+it (prototype-looking keys are its sanitizer's concern).
+
+**Trust.** `AnnTrust.transport = LOCAL_FILE_UNVERIFIED`: the bytes came through the configured
+local snapshot transport. Who produced the file, and whether it is true, is not established:
+`snapshotAuthenticity` and `decisionAuthenticity` stay `NOT_ESTABLISHED`. Transport and
+`sourceMode` stay separate: a SIMULATED feed stays SIMULATED; a LIVE feed is a source CLAIM, shown
+as not verified (`DISCONNECTED` badge, "Source-declared LIVE; not verified by this adapter").
+Founder decisions remain `source-asserted` ("Reported by the data source — not independently
+verified") even when the decider is exactly the configured authority. HTTP 200, valid JSON or a
+successful normalization never imply health or certification: health stays evidence-backed
+(missing → UNKNOWN) and completion never certifies.
+
+**Read-only.** The adapter cannot decide approvals, acknowledge alerts, dispatch, certify, cancel,
+pause, resume or deploy; programmatic attempts reject with `READ_ONLY`.
+
+**Failures** are an error state, never an empty healthy dashboard. The UI shows
+`SOURCE_UNAVAILABLE` with one bounded code (`LOCAL_SOURCE_UNAVAILABLE`, `…_REDIRECT_REFUSED`,
+`…_HTTP_ERROR`, `…_CONTENT_TYPE`, `…_TOO_LARGE`, `…_DECODE_FAILED`, `…_PARSE_FAILED`, or the endpoint
+codes above); never the URL, response body, stack or platform error text.
+
+Tests: `src/adapters/ann/localSnapshotSource.test.ts` (fake fetch matrix),
+`scripts/ann-local-source.integration.test.ts` (the real host), `e2e/annLocal.spec.ts` (real browser,
+build `--mode e2e-ann-local`; the suite starts the host itself on `127.0.0.1:4391`).

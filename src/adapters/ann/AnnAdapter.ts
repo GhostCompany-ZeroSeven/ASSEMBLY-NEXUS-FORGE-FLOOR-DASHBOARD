@@ -7,6 +7,7 @@ import type {
   DashboardAdapter,
 } from '../types';
 import { AnnAdapterError, type AnnFeedSource, type AnnTrust } from './contract';
+import { ANN_LOCAL_SOURCE_ERROR_CODES } from './localSnapshotSource';
 import { normalizeAnnFeed } from './normalize';
 
 export interface AnnAdapterOptions {
@@ -118,9 +119,15 @@ export class AnnAdapter implements DashboardAdapter {
     let raw: unknown;
     try {
       raw = await this.source.load();
-    } catch {
-      // The transport's own error text never reaches the UI.
-      throw new AnnAdapterError('SOURCE_UNAVAILABLE', 'the feed could not be read');
+    } catch (e) {
+      // The transport's own error text never reaches the UI; only a code from
+      // the local source's bounded vocabulary may be named.
+      const code = (e as { code?: unknown } | null)?.code;
+      const known = ANN_LOCAL_SOURCE_ERROR_CODES.find((c) => c === code);
+      throw new AnnAdapterError(
+        'SOURCE_UNAVAILABLE',
+        known ? `the feed could not be read (${known})` : 'the feed could not be read',
+      );
     }
     const result = normalizeAnnFeed(raw, {
       now: (this.opts.now ?? Date.now)(),
@@ -132,7 +139,12 @@ export class AnnAdapter implements DashboardAdapter {
     this.snapshot = result.snapshot;
     this.lastTrust = {
       sourceMode: result.snapshot.provenance.mode === 'demo' ? 'SIMULATED' : 'LIVE',
-      transport: this.source.transport === 'in-memory-mock' ? 'IN_MEMORY_MOCK' : 'UNVERIFIED',
+      transport:
+        this.source.transport === 'in-memory-mock'
+          ? 'IN_MEMORY_MOCK'
+          : this.source.transport === 'local-snapshot'
+            ? 'LOCAL_FILE_UNVERIFIED'
+            : 'UNVERIFIED',
       snapshotAuthenticity: 'NOT_ESTABLISHED',
       decisionAuthenticity: 'NOT_ESTABLISHED',
     };

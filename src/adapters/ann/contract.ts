@@ -266,10 +266,10 @@ export interface AnnHealthV1 {
  */
 export interface AnnFeedSource {
   /**
-   * What carries the feed. v1 knows only an in-memory mock; any other source
-   * is UNVERIFIED until a future mission defines how it is verified.
+   * What carries the feed: the in-memory mock, or the optional local snapshot
+   * host (LocalSnapshotSource). Any other source is UNVERIFIED.
    */
-  readonly transport?: 'in-memory-mock';
+  readonly transport?: 'in-memory-mock' | 'local-snapshot';
   /** Resolves the current raw envelope (untrusted) or rejects when unavailable. */
   load(): Promise<unknown>;
 }
@@ -288,8 +288,12 @@ export interface AnnFeedSource {
 export interface AnnTrust {
   /** The source's declaration (a claim, never proof). */
   sourceMode: 'SIMULATED' | 'LIVE';
-  /** What the transport proves about who sent the bytes. v1: nothing. */
-  transport: 'IN_MEMORY_MOCK' | 'UNVERIFIED';
+  /**
+   * What carried the bytes. Proves nothing about who produced them.
+   * LOCAL_FILE_UNVERIFIED: received from the deployment-configured loopback
+   * snapshot host; the file's producer and its truth are NOT established.
+   */
+  transport: 'IN_MEMORY_MOCK' | 'LOCAL_FILE_UNVERIFIED' | 'UNVERIFIED';
   /** Whether the snapshot is proven to come from the claimed source. v1: never. */
   snapshotAuthenticity: 'NOT_ESTABLISHED';
   /** Whether any Founder decision is authenticated. v1: never. */

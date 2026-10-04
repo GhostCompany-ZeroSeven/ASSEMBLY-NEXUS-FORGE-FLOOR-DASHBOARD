@@ -5,6 +5,8 @@ import type { AdapterConfig, DashboardConfig } from './types';
  *
  *   VITE_FORGE_ADAPTER=rest VITE_FORGE_REST_BASE_URL=http://localhost:8787 npm run dev
  *   VITE_FORGE_ADAPTER=ann-mock npm run dev   (read-only ANN v1 over the simulated mock feed)
+ *   VITE_FORGE_ADAPTER=ann-local VITE_FORGE_ANN_LOCAL_ENDPOINT=http://127.0.0.1:4380/ann/snapshot npm run dev
+ *     (read-only ANN v1 over the optional local snapshot host; see docs/ADAPTERS.md)
  *   (+ VITE_FORGE_REST_STREAM=/stream to enable the optional SSE stream)
  *
  * Vite inlines `VITE_*` variables into the client bundle, so they must NEVER
@@ -41,6 +43,20 @@ export function withEnvOverrides(
     return {
       ...config,
       adapter: { kind: 'ann-mock', variant, humanAuthority: config.governance.humanAuthority },
+    };
+  }
+  // Read-only ANN v1 over the optional local snapshot host. Explicit build-time
+  // opt-in only: the endpoint comes from this deployment's build configuration,
+  // never from the URL, storage or the feed. A missing or malformed endpoint
+  // fails closed in LocalSnapshotSource (no fallback, no discovery).
+  if (env.VITE_FORGE_ADAPTER === 'ann-local') {
+    return {
+      ...config,
+      adapter: {
+        kind: 'ann-local',
+        endpoint: env.VITE_FORGE_ANN_LOCAL_ENDPOINT ?? '',
+        humanAuthority: config.governance.humanAuthority,
+      },
     };
   }
   if (env.VITE_FORGE_ADAPTER !== 'rest') return config;

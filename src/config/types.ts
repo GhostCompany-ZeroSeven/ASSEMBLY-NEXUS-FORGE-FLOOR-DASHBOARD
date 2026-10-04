@@ -202,4 +202,12 @@ export type AdapterConfig =
       variant?: 'normal' | 'stale' | 'unknown' | 'unavailable';
       humanAuthority: string;
     }
+  /**
+   * Read-only ANN v1 adapter over the OPTIONAL local snapshot host
+   * (scripts/ann-snapshot-host.ts). Explicit opt-in only, never a default.
+   * `endpoint` must be exactly `http://127.0.0.1:<1024-65535>/ann/snapshot`
+   * (anything else fails closed). Trust: LOCAL_FILE_UNVERIFIED; nothing about
+   * the snapshot or any Founder decision is authenticated.
+   */
+  | { kind: 'ann-local'; endpoint: string; humanAuthority: string }
   | { kind: 'custom'; id: string };
